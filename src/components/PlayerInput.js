@@ -1,3 +1,4 @@
+import {useState} from "react"
 import {
   TextField,
   Select,
@@ -5,6 +6,7 @@ import {
   FormControl,
   InputLabel,
   Typography,
+  Autocomplete,
 } from "@mui/material";
 
 const PlayerInput = ({
@@ -27,6 +29,9 @@ const PlayerInput = ({
   typeError,
   nameInputRef,
 }) => {
+
+  const [typeInput, setTypeInput] = useState("")
+
   const handleDigitChange = (input, setData) => {
     // Allow empty inputs
     if (input === "") {
@@ -104,51 +109,48 @@ const PlayerInput = ({
         />
       </div>
       <div style={{ display: "flex" }}>
-        <FormControl sx={{ width: 130, m: 1 }} size="small">
-          <InputLabel id="type-select-label" error={typeError}>
-            Type
-          </InputLabel>
-          <Select
-            labelId="type-select-label"
-            id="type-select"
-            label="Type"
+        <FormControl sx={{ width: 180, m: 1 }} size="small">
+          <Autocomplete
+            disablePortal
+            id="combo-box-demo"
+            options={["PC", "NPC", "Monster", "Legendary", "Other"]}
+            size="small"
             value={playerType}
-            onChange={(event) => setPlayerType(event.target.value)}
-            error={typeError}
-          >
-            <MenuItem value={"PC"}>PC</MenuItem>
-            <MenuItem value={"NPC"}>NPC</MenuItem>
-            <MenuItem value={"Monster"}>Monster</MenuItem>
-            <MenuItem value={"Legendary"}>Legendary</MenuItem>
-            <MenuItem value={"Other"}>Other</MenuItem>
-          </Select>
+            onChange={(event, newValue) => setPlayerType(newValue)}
+            inputValue={typeInput}
+            onInputChange={(event, newValue) => setTypeInput(newValue)}
+            renderInput={(params) => (
+              <TextField {...params} label="Type" error={typeError}/>
+            )}
+          />
         </FormControl>
         {playerType === "Legendary" && (
           <div style={{ display: "flex" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
-              <Typography>Legendary Actions: </Typography>
+              {console.log(legActions)}
               <TextField
                 id="legendary-actions-text-field"
+                label="Legendary Actions"
                 variant="outlined"
                 size="small"
                 value={legActions}
                 onChange={(event) =>
                   handleDigitChange(event.target.value, setLegActions)
                 }
-                sx={{ width: 55, m: 1 }}
+                sx={{ m: 1 }}
               />
             </div>
             <div style={{ display: "flex", alignItems: "center" }}>
-              <Typography>Legendary Resistances: </Typography>
               <TextField
                 id="legendary-actions-text-field"
+                label="Legendary Resistances"
                 variant="outlined"
                 size="small"
                 value={legResistances}
                 onChange={(event) =>
                   handleDigitChange(event.target.value, setLegResistances)
                 }
-                sx={{ width: 55, m: 1 }}
+                sx={{ m: 1 }}
               />
             </div>
           </div>

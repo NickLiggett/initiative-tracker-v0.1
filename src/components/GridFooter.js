@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import PlayerInput from "./PlayerInput";
 import { Box, Button, ButtonGroup } from "@mui/material";
 
-const GridFooter = ({ gridRows, setGridRows }) => {
+const GridFooter = ({ gridRows, setGridRows, monsters }) => {
   const [name, setName] = useState("");
   const [playerInitiative, setPlayerInitiative] = useState("");
   const [armorClass, setArmorClass] = useState("");
@@ -10,6 +10,7 @@ const GridFooter = ({ gridRows, setGridRows }) => {
   const [playerType, setPlayerType] = useState("");
   const [legActions, setLegActions] = useState("");
   const [legResistances, setLegResistances] = useState("");
+  const [monsterType, setMonsterType] = useState("");
   const [nameError, setNameError] = useState(false);
   const [initiativeError, setInitiativeError] = useState(false);
   const [typeError, setTypeError] = useState(false);
@@ -46,6 +47,7 @@ const handleSubmit = () => {
       hp: healthPoints === "" ? "" : parseInt(healthPoints),
       reaction: false,
       type: playerType,
+      monsterType: monsterType || null
     };
     if (playerType === "Legendary") {
       newPlayer.legendaryOptions = {
@@ -76,6 +78,7 @@ const handleSubmit = () => {
     setNameError(false);
     setInitiativeError(false);
     setTypeError(false);
+    setMonsterType("");
   };
 
   return (
@@ -103,10 +106,14 @@ const handleSubmit = () => {
         setLegActions={setLegActions}
         legResistances={legResistances}
         setLegResistances={setLegResistances}
+        monsterType={monsterType}
+        setMonsterType={setMonsterType}
         nameError={nameError}
         initiativeError={initiativeError}
         typeError={typeError}
         nameInputRef={nameInputRef}
+        handleSubmit={handleSubmit}
+        monsters={monsters}
       />
       <div
         style={{

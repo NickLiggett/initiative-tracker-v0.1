@@ -1,14 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import { DataGrid } from "@mui/x-data-grid";
-import { Checkbox, Typography } from "@mui/material";
+import { Checkbox, Typography, Tooltip, Dialog, DialogTitle } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
+import ArticleIcon from "@mui/icons-material/Article";
+
+import { fetchAllMonsters, fetchMonster } from "../utils";
 
 export default function App() {
   const [gridRows, setGridRows] = useState([]);
+  const [monsters, setMonsters] = useState([]); // TODO: useRef instead.
+  const [monsterInfo, setMonsterInfo] = useState({});
+  const [showMonsterModal, setShowMonsterModal] = useState(false);
 
-  const props = { gridRows: gridRows, setGridRows: setGridRows };
+  const toolbarProps = { gridRows: gridRows, setGridRows: setGridRows };
+  const footerProps = {
+    gridRows: gridRows,
+    setGridRows: setGridRows,
+    monsters: monsters,
+  };
+
+  useEffect(() => {
+    fetchAllMonsters().then((data) => {
+      setMonsters(data.results);
+    });
+  }, []);
 
   const columns = [
     { field: "initiative", headerName: "Initiative", editable: true },
@@ -46,6 +63,7 @@ export default function App() {
       field: "delete",
       sortable: false,
       width: 20,
+      flex: 1,
       renderHeader: () => null,
       renderCell: (params) => {
         return (
@@ -55,6 +73,7 @@ export default function App() {
               width: "100%",
               height: "100%",
               display: "flex",
+              alignItems: "center",
               flexDirection: "row-reverse",
             }}
           >
@@ -62,6 +81,17 @@ export default function App() {
               sx={{ width: 18, height: 18, m: 1 }}
               onClick={() => handleDelete(params.row.id)}
             />
+            {params.row.type === "Monster" && (
+              <Tooltip title="Monster Informtaion">
+                <ArticleIcon sx={{ width: 30, height: 30, m: 1 }} onClick={async () => {
+                  let monsterEndpoint = params.row.monsterType.url
+                  let data = await fetchMonster(monsterEndpoint)
+                  console.log("Monster Info: ", data)
+                  setShowMonsterModal(true)
+                  setMonsterInfo(data)
+                }}/>
+              </Tooltip>
+            )}
           </div>
         );
       },
@@ -133,15 +163,15 @@ export default function App() {
    */
   const selectInput = () => {
     setTimeout(() => {
-      let input = document.querySelector("input")
-      input.select()
-    }, 10)
-  }
+      let input = document.querySelector("input");
+      input.select();
+    }, 10);
+  };
 
   /**
    * Updates state when reaction checkboxes are toggled.
-   * @param {*} event 
-   * @param {*} params 
+   * @param {*} event
+   * @param {*} params
    */
   const handleReactionCheck = (event, params) => {
     let newRows = [...gridRows];
@@ -152,8 +182,8 @@ export default function App() {
 
   /**
    * Builds MUI Checkboxes for each element in a given array
-   * @param {*} data 
-   * @returns 
+   * @param {*} data
+   * @returns
    */
   const buildCheckboxes = (data) => {
     return data.map((element, index) => {
@@ -210,8 +240,8 @@ export default function App() {
             footer: GridFooter,
           }}
           slotProps={{
-            toolbar: props,
-            footer: props,
+            toolbar: toolbarProps,
+            footer: footerProps,
           }}
           localeText={{ noRowsLabel: "Add a character" }}
           onCellEditStart={() => selectInput()}
@@ -220,6 +250,9 @@ export default function App() {
           sx={{ border: "1px solid" }}
         />
       </div>
+      <Dialog open={showMonsterModal} onClose={() => setShowMonsterModal(false)}>
+        <DialogTitle>{monsterInfo.name}</DialogTitle>
+      </Dialog>
     </div>
   );
 }

@@ -1,12 +1,10 @@
-import {useState} from "react"
+import { useState } from "react";
 import {
   TextField,
-  Select,
-  MenuItem,
   FormControl,
-  InputLabel,
-  Typography,
   Autocomplete,
+  Typography,
+  Checkbox,
 } from "@mui/material";
 
 const PlayerInput = ({
@@ -24,16 +22,19 @@ const PlayerInput = ({
   setLegActions,
   legResistances,
   setLegResistances,
+  monsterType,
+  setMonsterType,
   nameError,
   initiativeError,
   typeError,
   nameInputRef,
+  handleSubmit,
+  monsters,
 }) => {
-
-  const [typeInput, setTypeInput] = useState("")
+  const [typeInput, setTypeInput] = useState("");
+  const [monsterTypeInput, setMonsterTypeInput] = useState("");
 
   const handleDigitChange = (input, setData) => {
-    console.log(input, setData)
     // Allow empty inputs
     if (input === "") {
       setData("");
@@ -61,7 +62,10 @@ const PlayerInput = ({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div
+      onSubmit={handleSubmit}
+      style={{ display: "flex", flexDirection: "column" }}
+    >
       <div>
         <TextField
           id="name-text-field"
@@ -112,16 +116,18 @@ const PlayerInput = ({
       <div style={{ display: "flex" }}>
         <FormControl sx={{ width: 180, m: 1 }} size="small">
           <Autocomplete
+            freeSolo={true}
             disablePortal
+            autoHighlight={true}
             id="combo-box-demo"
-            options={["", "PC", "NPC", "Monster", "Legendary", "Other"]}
+            options={["PC", "NPC", "Monster", "Legendary", "Other"]}
             size="small"
             value={playerType}
             onChange={(event, newValue) => setPlayerType(newValue)}
             inputValue={typeInput}
             onInputChange={(event, newValue) => setTypeInput(newValue)}
             renderInput={(params) => (
-              <TextField {...params} label="Type" error={typeError}/>
+              <TextField {...params} label="Type" error={typeError} />
             )}
           />
         </FormControl>
@@ -137,7 +143,7 @@ const PlayerInput = ({
                 onChange={(event) =>
                   handleDigitChange(event.target.value, setLegActions)
                 }
-                sx={{ m: 1 }}
+                sx={{ width: 170, m: 1 }}
               />
             </div>
             <div style={{ display: "flex", alignItems: "center" }}>
@@ -150,8 +156,51 @@ const PlayerInput = ({
                 onChange={(event) =>
                   handleDigitChange(event.target.value, setLegResistances)
                 }
-                sx={{ m: 1 }}
+                sx={{ width: 170, m: 1 }}
               />
+            </div>
+          </div>
+        )}
+        {playerType === "Monster" && (
+          <div style={{ display: "flex" }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <Autocomplete
+                freeSolo={true}
+                disablePortal
+                autoHighlight={true}
+                id="combo-box-demo"
+                value={monsterType}
+                onChange={(event, newValue) => setMonsterType(newValue)}
+                inputValue={monsterTypeInput}
+                onInputChange={(event, newValue) =>
+                  setMonsterTypeInput(newValue)
+                }
+                options={monsters}
+                getOptionLabel={(option) => {
+                  if (option) {
+                    return option.name;
+                  } else {
+                    return "";
+                  }
+                }}
+                size="small"
+                sx={{ width: 180, m: 1 }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Monster" />
+                )}
+              />
+            </div>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginLeft: 15,
+                }}
+              >
+                <Typography>Mob:</Typography>
+                <Checkbox />
+              </div>
             </div>
           </div>
         )}

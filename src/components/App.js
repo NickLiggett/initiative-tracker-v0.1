@@ -45,7 +45,7 @@ export default function App() {
     {
       field: "delete",
       sortable: false,
-      flex: 1,
+      width: 20,
       renderHeader: () => null,
       renderCell: (params) => {
         return (
@@ -129,6 +129,16 @@ export default function App() {
   };
 
   /**
+   * Selects the input of a cell when it starts to be edited
+   */
+  const selectInput = () => {
+    setTimeout(() => {
+      let input = document.querySelector("input")
+      input.select()
+    }, 10)
+  }
+
+  /**
    * Updates state when reaction checkboxes are toggled.
    * @param {*} event 
    * @param {*} params 
@@ -166,7 +176,7 @@ export default function App() {
     columns.splice(columns.length - 1, 0, {
       field: "legendaryOptions",
       headerName: "Legendary Options",
-      minWidth: 150,
+      flex: 1,
       sortable: false,
       renderCell: (params) => {
         if (params.row.type !== "Legendary") {
@@ -204,11 +214,7 @@ export default function App() {
             footer: props,
           }}
           localeText={{ noRowsLabel: "Add a character" }}
-          onCellEditStart={(params, event) => {
-            console.log(params);
-            console.log(event);
-            // find a way to highlight the selected cell
-          }}
+          onCellEditStart={() => selectInput()}
           onCellEditStop={(params, event) => handleEdit(params, event)}
           disableColumnMenu={true}
           sx={{ border: "1px solid" }}

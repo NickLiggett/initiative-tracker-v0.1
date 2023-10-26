@@ -33,6 +33,7 @@ const PlayerInput = ({
   const [typeInput, setTypeInput] = useState("")
 
   const handleDigitChange = (input, setData) => {
+    console.log(input, setData)
     // Allow empty inputs
     if (input === "") {
       setData("");
@@ -113,7 +114,7 @@ const PlayerInput = ({
           <Autocomplete
             disablePortal
             id="combo-box-demo"
-            options={["PC", "NPC", "Monster", "Legendary", "Other"]}
+            options={["", "PC", "NPC", "Monster", "Legendary", "Other"]}
             size="small"
             value={playerType}
             onChange={(event, newValue) => setPlayerType(newValue)}
@@ -127,7 +128,6 @@ const PlayerInput = ({
         {playerType === "Legendary" && (
           <div style={{ display: "flex" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
-              {console.log(legActions)}
               <TextField
                 id="legendary-actions-text-field"
                 label="Legendary Actions"

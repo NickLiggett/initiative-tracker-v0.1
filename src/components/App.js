@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import { DataGrid } from "@mui/x-data-grid";
-import { Checkbox, Typography, Tooltip, Dialog, DialogTitle } from "@mui/material";
+import { Checkbox, Typography, Tooltip } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArticleIcon from "@mui/icons-material/Article";
+import MonsterInfo from "../components/MonsterInfo";
 
 import { fetchAllMonsters, fetchMonster } from "../utils";
 
@@ -83,13 +84,16 @@ export default function App() {
             />
             {params.row.type === "Monster" && (
               <Tooltip title="Monster Informtaion">
-                <ArticleIcon sx={{ width: 30, height: 30, m: 1 }} onClick={async () => {
-                  let monsterEndpoint = params.row.monsterType.url
-                  let data = await fetchMonster(monsterEndpoint)
-                  console.log("Monster Info: ", data)
-                  setShowMonsterModal(true)
-                  setMonsterInfo(data)
-                }}/>
+                <ArticleIcon
+                  sx={{ width: 30, height: 30, m: 1 }}
+                  onClick={async () => {
+                    let monsterEndpoint = params.row.monsterType.url;
+                    let data = await fetchMonster(monsterEndpoint);
+                    console.log("Monster Info: ", data);
+                    setShowMonsterModal(true);
+                    setMonsterInfo(data);
+                  }}
+                />
               </Tooltip>
             )}
           </div>
@@ -250,9 +254,11 @@ export default function App() {
           sx={{ border: "1px solid" }}
         />
       </div>
-      <Dialog open={showMonsterModal} onClose={() => setShowMonsterModal(false)}>
-        <DialogTitle>{monsterInfo.name}</DialogTitle>
-      </Dialog>
+      <MonsterInfo
+        showMonsterModal={showMonsterModal}
+        setShowMonsterModal={setShowMonsterModal}
+        monsterInfo={monsterInfo}
+      />
     </div>
   );
 }

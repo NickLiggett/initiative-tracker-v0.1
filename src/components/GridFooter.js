@@ -2,7 +2,9 @@ import React, { useState, useRef } from "react";
 import PlayerInput from "./PlayerInput";
 import { Box, Button, ButtonGroup } from "@mui/material";
 
-const GridFooter = ({ gridRows, setGridRows, monsters }) => {
+import { fetchMonster } from "../utils";
+
+const GridFooter = ({ gridRows, setGridRows, monsters, submittedMonsters, setSubmittedMonsters }) => {
   const [name, setName] = useState("");
   const [playerInitiative, setPlayerInitiative] = useState("");
   const [armorClass, setArmorClass] = useState("");
@@ -38,7 +40,7 @@ const handleSubmit = () => {
     }
   };
 
-  const submitPlayer = () => {
+  const submitPlayer = async () => {
     let newPlayer = {
       id: gridRows.length + 1,
       initiative: parseInt(playerInitiative),
@@ -49,17 +51,18 @@ const handleSubmit = () => {
       type: playerType,
       monsterType: monsterType || null
     };
-    if (playerType === "Legendary") {
-      newPlayer.legendaryOptions = {
-        legendaryActions: new Array(parseInt(legActions)).fill(false),
-        legendaryResistances: new Array(parseInt(legResistances)).fill(false),
-      };
+    if (newPlayer.monsterType) {
+      let monsterEndpoint = newPlayer.monsterType.url;
+      let data = await fetchMonster(monsterEndpoint);
+      newPlayer.monsterData = data
+      setSubmittedMonsters([...submittedMonsters, data])
     }
     setGridRows([...gridRows, newPlayer]);
   };
 
   const clearRows = () => {
     setGridRows([]);
+    setSubmittedMonsters([])
   };
 
   const sortRows = () => {

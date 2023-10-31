@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { Dialog, DialogTitle, Tab, Tabs, Box, Typography } from "@mui/material";
+import { Dialog, DialogTitle, Tab, Tabs, Box } from "@mui/material";
+
+import GeneralTabPanel from "./GeneralTabPanel";
+import SkillsTabPanel from "./SkillsTabPanel";
+import ActionsTabPanel from "./ActionsTabPanel";
 
 const MonsterInfo = ({
   showMonsterModal,
@@ -8,51 +12,41 @@ const MonsterInfo = ({
 }) => {
   const [tabValue, setTabValue] = useState(1);
 
-  function CustomTabPanel(props) {
-    const { children, value, index, ...other } = props;
-
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${index}`}
-        aria-labelledby={`simple-tab-${index}`}
-        {...other}
-      >
-        {value === index && (
-          <Box sx={{ p: 3 }}>
-            <Typography>{children}</Typography>
-          </Box>
-        )}
-      </div>
-    );
-  }
-
   const handleChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
   return (
-    <Dialog open={showMonsterModal} onClose={() => setShowMonsterModal(false)}>
-      <DialogTitle>{monsterInfo.name}</DialogTitle>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+    <Dialog
+      open={showMonsterModal}
+      onClose={() => setShowMonsterModal(false)}
+    >
+      <DialogTitle
+        style={{
+          textAlign: "center",
+          fontSize: 30,
+          fontWeight: "bolder",
+        }}
+      >
+        {monsterInfo.name}
+      </DialogTitle>
+      <Box
+        sx={{
+          height: "50em",
+          width: "100%",
+          minWidth: 600,
+          overflow: "auto"
+        }}
+      >
         <Tabs value={tabValue} onChange={handleChange}>
-          <Tab value={1} label="General" />
-          <Tab value={2} label="Skills" />
-          <Tab value={3} label="Actions" />
+          <Tab value={1} label="General" style={{ flex: 1 }} />
+          <Tab value={2} label="Skills" style={{ flex: 1 }} />
+          <Tab value={3} label="Actions" style={{ flex: 1 }} />
         </Tabs>
+        <GeneralTabPanel value={tabValue} index={1} monsterInfo={monsterInfo} />
+        <SkillsTabPanel value={tabValue} index={2} monsterInfo={monsterInfo} />
+        <ActionsTabPanel value={tabValue} index={3} monsterInfo={monsterInfo} />
       </Box>
-      <CustomTabPanel value={tabValue} index={1}>
-        <div>
-            <Typography>Alignment: {monsterInfo.alignment.charAt(0).toUpperCase() + monsterInfo.alignment.substring(1)}</Typography>
-        </div>
-      </CustomTabPanel>
-      <CustomTabPanel value={tabValue} index={2}>
-        Item Two
-      </CustomTabPanel>
-      <CustomTabPanel value={tabValue} index={3}>
-        Item Three
-      </CustomTabPanel>
     </Dialog>
   );
 };

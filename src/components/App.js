@@ -7,12 +7,13 @@ import ClearIcon from "@mui/icons-material/Clear";
 import ArticleIcon from "@mui/icons-material/Article";
 import MonsterInfo from "../components/MonsterInfo";
 
-import { fetchAllMonsters, fetchMonster } from "../utils";
+import { fetchAllMonsters } from "../utils";
 
 export default function App() {
   const [gridRows, setGridRows] = useState([]);
-  const [monsters, setMonsters] = useState([]); // TODO: useRef instead.
-  const [monsterInfo, setMonsterInfo] = useState({});
+  const [monsters, setMonsters] = useState([]);
+  const [submittedMonsters, setSubmittedMonsters] = useState([]);
+  const [monsterInfo, setMonsterInfo] = useState(submittedMonsters[0]);
   const [showMonsterModal, setShowMonsterModal] = useState(false);
 
   const toolbarProps = { gridRows: gridRows, setGridRows: setGridRows };
@@ -20,6 +21,8 @@ export default function App() {
     gridRows: gridRows,
     setGridRows: setGridRows,
     monsters: monsters,
+    submittedMonsters: submittedMonsters,
+    setSubmittedMonsters: setSubmittedMonsters,
   };
 
   useEffect(() => {
@@ -61,6 +64,52 @@ export default function App() {
       },
     },
     {
+      field: "legendaryOptions",
+      flex: 1,
+      sortable: false,
+      renderHeader: () => {
+        let result = gridRows.some((row) => {
+          return row.monsterData && row.monsterData.legendary_actions.length > 0;
+        });
+        return result ? "Legendary Options" : null
+      },
+      renderCell: (params) => {
+        if (
+          params.row.monsterData &&
+          params.row.monsterData.legendary_actions.length > 0
+        ) {
+          return (
+            <div>
+              <div style={{ display: "flex" }}>
+                <Typography style={{ marginRight: 5 }}>Actions:</Typography>
+                {buildCheckboxes(
+                  params.row.monsterData.legendary_actions.length
+                )}
+              </div>
+              <div style={{ display: "flex" }}>
+                {params.row.monsterData.special_abilities.some(
+                  (ability) => ability.name === "Legendary Resistance"
+                ) && (
+                  <div style={{ display: "flex" }}>
+                    <Typography style={{ marginRight: 5 }}>
+                      Resistances:
+                    </Typography>
+                    {buildCheckboxes(
+                      params.row.monsterData.special_abilities[
+                        params.row.monsterData.special_abilities.findIndex(
+                          (ability) => ability.name === "Legendary Resistance"
+                        )
+                      ].usage.times
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+      },
+    },
+    {
       field: "delete",
       sortable: false,
       width: 20,
@@ -83,15 +132,17 @@ export default function App() {
               onClick={() => handleDelete(params.row.id)}
             />
             {params.row.type === "Monster" && (
-              <Tooltip title="Monster Informtaion">
+              <Tooltip title={`${params.row.monsterType.name} Information`}>
                 <ArticleIcon
                   sx={{ width: 30, height: 30, m: 1 }}
-                  onClick={async () => {
-                    let monsterEndpoint = params.row.monsterType.url;
-                    let data = await fetchMonster(monsterEndpoint);
-                    console.log("Monster Info: ", data);
+                  onClick={() => {
+                    let selectedMonster = submittedMonsters.find(
+                      (monster) =>
+                        monster.index === params.row.monsterType.index
+                    );
+                    console.log(selectedMonster);
                     setShowMonsterModal(true);
-                    setMonsterInfo(data);
+                    setMonsterInfo(selectedMonster);
                   }}
                 />
               </Tooltip>
@@ -189,48 +240,16 @@ export default function App() {
    * @param {*} data
    * @returns
    */
-  const buildCheckboxes = (data) => {
+  const buildCheckboxes = (number) => {
+    let data = [];
+    for (let i = 0; i < number; i++) {
+      data.push(false);
+    }
+
     return data.map((element, index) => {
       return <Checkbox key={index} size="small" sx={{ p: 0 }} />;
     });
   };
-
-  /**
-   * Determines whether a legendary type exists in the rows
-   * @returns boolean
-   */
-  const areThereLegendaries = () => {
-    return gridRows.some((row) => row.type === "Legendary");
-  };
-
-  /**
-   * Conditionally renders the Legendary column.
-   */
-  if (areThereLegendaries()) {
-    columns.splice(columns.length - 1, 0, {
-      field: "legendaryOptions",
-      headerName: "Legendary Options",
-      flex: 1,
-      sortable: false,
-      renderCell: (params) => {
-        if (params.row.type !== "Legendary") {
-          return;
-        }
-        return (
-          <div>
-            <div style={{ display: "flex" }}>
-              <Typography style={{ marginRight: 5 }}>Actions:</Typography>
-              {buildCheckboxes(params.value.legendaryActions)}
-            </div>
-            <div style={{ display: "flex" }}>
-              <Typography style={{ marginRight: 5 }}>Resistances:</Typography>
-              {buildCheckboxes(params.value.legendaryResistances)}
-            </div>
-          </div>
-        );
-      },
-    });
-  }
 
   return (
     <div style={appStyles}>
@@ -254,11 +273,13 @@ export default function App() {
           sx={{ border: "1px solid" }}
         />
       </div>
-      <MonsterInfo
-        showMonsterModal={showMonsterModal}
-        setShowMonsterModal={setShowMonsterModal}
-        monsterInfo={monsterInfo}
-      />
+      {monsterInfo && (
+        <MonsterInfo
+          showMonsterModal={showMonsterModal}
+          setShowMonsterModal={setShowMonsterModal}
+          monsterInfo={monsterInfo}
+        />
+      )}
     </div>
   );
 }

@@ -120,7 +120,7 @@ const PlayerInput = ({
             disablePortal
             autoHighlight={true}
             id="combo-box-demo"
-            options={["PC", "NPC", "Monster", "Legendary", "Other"]}
+            options={["PC", "NPC", "Monster", "Other"]}
             size="small"
             value={playerType}
             onChange={(event, newValue) => setPlayerType(newValue)}
@@ -131,36 +131,6 @@ const PlayerInput = ({
             )}
           />
         </FormControl>
-        {playerType === "Legendary" && (
-          <div style={{ display: "flex" }}>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <TextField
-                id="legendary-actions-text-field"
-                label="Legendary Actions"
-                variant="outlined"
-                size="small"
-                value={legActions}
-                onChange={(event) =>
-                  handleDigitChange(event.target.value, setLegActions)
-                }
-                sx={{ width: 170, m: 1 }}
-              />
-            </div>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <TextField
-                id="legendary-actions-text-field"
-                label="Legendary Resistances"
-                variant="outlined"
-                size="small"
-                value={legResistances}
-                onChange={(event) =>
-                  handleDigitChange(event.target.value, setLegResistances)
-                }
-                sx={{ width: 170, m: 1 }}
-              />
-            </div>
-          </div>
-        )}
         {playerType === "Monster" && (
           <div style={{ display: "flex" }}>
             <div style={{ display: "flex", alignItems: "center" }}>

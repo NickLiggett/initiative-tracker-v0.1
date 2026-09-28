@@ -1,5 +1,5 @@
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { Button } from "@mui/material";
 
 const GridToolbar = ({ gridRows, setGridRows }) => {
@@ -25,10 +25,10 @@ const GridToolbar = ({ gridRows, setGridRows }) => {
       }}
     >
       <Button onClick={handleBack}>
-        <ChevronLeftIcon />
+        <KeyboardArrowDownIcon />
       </Button>
       <Button onClick={handleNext}>
-        <ChevronRightIcon />
+        <KeyboardArrowUpIcon />
       </Button>
     </div>
   );

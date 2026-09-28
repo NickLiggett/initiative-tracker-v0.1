@@ -70,7 +70,7 @@ const GeneralTabPanel = (props) => {
           </div>
           <div style={generalInfoStyles}>
             <Typography style={genInfoStyles}>Armor Class:</Typography>
-            <Typography>{monsterInfo.armor_class[0].value}</Typography>
+            <Typography>{monsterInfo.armor_class[0].value}</Typography>{/*this will change to monsterInfo.armor_class*/}
           </div>
           <div style={generalInfoStyles}>
             <Typography style={genInfoStyles}>Challenge Rating:</Typography>
@@ -91,19 +91,19 @@ const GeneralTabPanel = (props) => {
           </div>
           <div style={generalInfoStyles}>
             <Typography style={genInfoStyles}>Type:</Typography>
-            <Typography>{capitalizeFirstLetter(monsterInfo.type)}</Typography>
+            <Typography>{capitalizeFirstLetter(monsterInfo.type)}</Typography> {/* will change to type.name */}
           </div>
           {monsterInfo.subtype && (
             <div style={generalInfoStyles}>
               <Typography style={genInfoStyles}>Sub-Type:</Typography>
               <Typography>
-                {capitalizeFirstLetter(monsterInfo.subtype)}
+                {capitalizeFirstLetter(monsterInfo.subtype)} {/* possibly changing to subcategory */}
               </Typography>
             </div>
           )}
           <div style={generalInfoStyles}>
             <Typography style={genInfoStyles}>Size:</Typography>
-            <Typography>{monsterInfo.size}</Typography>
+            <Typography>{monsterInfo.size}</Typography> {/* size.name */}
           </div>
           <div style={generalInfoStyles}>
             <Typography style={genInfoStyles}>Alignment:</Typography>
@@ -114,9 +114,10 @@ const GeneralTabPanel = (props) => {
             <Typography>
               {monsterInfo.languages
                 ? capitalizeFirstLetter(monsterInfo.languages)
-                : "None"}
+                : "None"} {/* languages.as_string */}
             </Typography>
           </div>
+          {/* monsterInfo.resistances_and_immunities.condition_immunities_display */}
           {monsterInfo.condition_immunities.length > 0 && (
             <div style={{marginTop: 20}}>
               <Typography style={genInfoStyles}>
@@ -136,8 +137,10 @@ const GeneralTabPanel = (props) => {
             <div style={{marginTop: 20}}>
               <Typography style={genInfoStyles}>Damage Immunities: </Typography>
               <Typography>
+                {/* monsterInfo.resistances_and_immunities.damage_immunities */}
                 {monsterInfo.damage_immunities.map((imun, index) => {
                   if (index + 1 === monsterInfo.damage_immunities.length) {
+                    {/* imun.name */}
                     return `${capitalizeWords(imun)}`;
                   }
                   return `${capitalizeWords(imun)}, `;

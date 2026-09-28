@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import { DataGrid } from "@mui/x-data-grid";
@@ -6,6 +6,9 @@ import { Checkbox, Typography, Tooltip } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArticleIcon from "@mui/icons-material/Article";
 import MonsterInfo from "../components/MonsterInfo";
+import TopToolbar from "./TopToolbar";
+import MainDrawer from "../components/MainDrawer";
+import { Pages } from "../utils"
 
 import { fetchAllMonsters } from "../utils";
 
@@ -15,6 +18,12 @@ export default function App() {
   const [submittedMonsters, setSubmittedMonsters] = useState([]);
   const [monsterInfo, setMonsterInfo] = useState(submittedMonsters[0]);
   const [showMonsterModal, setShowMonsterModal] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState("Initiative Tracker");
+
+  const toggleDrawer = (newOpen) => () => {
+    setDrawerOpen(newOpen);
+  };
 
   const toolbarProps = { gridRows: gridRows, setGridRows: setGridRows };
   const footerProps = {
@@ -69,9 +78,11 @@ export default function App() {
       sortable: false,
       renderHeader: () => {
         let result = gridRows.some((row) => {
-          return row.monsterData && row.monsterData.legendary_actions.length > 0;
+          return (
+            row.monsterData && row.monsterData.legendary_actions.length > 0
+          );
         });
-        return result ? "Legendary Options" : null
+        return result ? "Legendary Options" : null;
       },
       renderCell: (params) => {
         if (
@@ -88,7 +99,7 @@ export default function App() {
               </div>
               <div style={{ display: "flex" }}>
                 {params.row.monsterData.special_abilities.some(
-                  (ability) => ability.name === "Legendary Resistance"
+                  (ability) => ability.name === "Legendary Resistance",
                 ) && (
                   <div style={{ display: "flex" }}>
                     <Typography style={{ marginRight: 5 }}>
@@ -97,9 +108,9 @@ export default function App() {
                     {buildCheckboxes(
                       params.row.monsterData.special_abilities[
                         params.row.monsterData.special_abilities.findIndex(
-                          (ability) => ability.name === "Legendary Resistance"
+                          (ability) => ability.name === "Legendary Resistance",
                         )
-                      ].usage.times
+                      ].usage.times,
                     )}
                   </div>
                 )}
@@ -112,8 +123,8 @@ export default function App() {
     {
       field: "delete",
       sortable: false,
-      width: 20,
-      flex: 1,
+      // width: 20,
+      // flex: 1,
       renderHeader: () => null,
       renderCell: (params) => {
         return (
@@ -138,7 +149,7 @@ export default function App() {
                   onClick={() => {
                     let selectedMonster = submittedMonsters.find(
                       (monster) =>
-                        monster.index === params.row.monsterType.index
+                        monster.index === params.row.monsterType.index,
                     );
                     console.log(selectedMonster);
                     setShowMonsterModal(true);
@@ -253,8 +264,17 @@ export default function App() {
 
   return (
     <div style={appStyles}>
-      <div style={{ width: "80%", height: "80%" }}>
-        <DataGrid
+      <div style={{ width: "100%" }}>
+        <TopToolbar drawerOpen={drawerOpen} toggleDrawer={toggleDrawer} currentPage={currentPage}/>
+      </div>
+      <MainDrawer
+        drawerOpen={drawerOpen}
+        toggleDrawer={toggleDrawer}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+      />
+      <div style={{ width: "80%", height: "80%", marginTop: 40 }}>
+        {currentPage === Pages.INITIATIVE_TRACKER && <DataGrid
           rows={gridRows}
           columns={columns}
           columnHeaderHeight={50}
@@ -271,7 +291,7 @@ export default function App() {
           onCellEditStop={(params, event) => handleEdit(params, event)}
           disableColumnMenu={true}
           sx={{ border: "1px solid" }}
-        />
+        />}
       </div>
       {monsterInfo && (
         <MonsterInfo
@@ -286,7 +306,7 @@ export default function App() {
 
 const appStyles = {
   display: "flex",
-  justifyContent: "center",
+  flexDirection: "column",
   alignItems: " center",
   height: "100%",
   width: "100%",

@@ -1,70 +1,85 @@
-# Getting Started with Create React App
+# Initiative Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A D&D 5e initiative tracker in React. It keeps the turn order for a combat, tracks HP, reactions and legendary
+actions, and shows monster stat blocks. Monsters come from [open5e-backend](https://github.com/NickLiggett/open5e-backend),
+which serves the Open5e data.
 
-## Available Scripts
+## Running locally
 
-In the project directory, you can run:
+You need [Node.js](https://nodejs.org/) 20 or newer, and open5e-backend running on <http://localhost:8080> (see its
+README: `docker compose up -d --build`, then load the data with its importer).
 
-### `npm start`
+```sh
+npm install
+npm run dev
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The app is on <http://localhost:3000>. The dev server passes every request to `/api` on to the backend, so the
+browser only talks to one origin and the backend needs no CORS settings.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+| Command | What it does |
+|---|---|
+| `npm run dev` (or `npm start`) | Dev server with hot reload, on port 3000 |
+| `npm test` | Run the tests once |
+| `npm run test:watch` | Run the tests on every change |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serve the production build locally |
 
-### `npm test`
+### Configuration
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Copy `.env.example` to `.env.local` (gitignored) to change these:
 
-### `npm run build`
+| Variable | Default | |
+|---|---|---|
+| `VITE_API_PROXY_TARGET` | `http://localhost:8080` | Where the dev server sends `/api` requests |
+| `VITE_API_URL` | empty (same origin) | Call the backend at this URL instead of through `/api`. The backend then needs CORS for this app's origin |
+| `VITE_DEV_USER` | unset | Local development only: sent as the `X-User` header, which the backend's `dev` profile uses to pick the user |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Using it
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Add combatants** with the form under the grid: name, initiative, and optionally AC and HP. For a monster, choose
+  the type **Monster** and search for it; results show their source, since many monsters exist in several (e.g. the
+  2014 and 2024 rules).
+- **Sort** orders the grid by initiative, highest first. The arrows above the grid move to the next or previous
+  turn; the next combatant's reaction is cleared.
+- **Edit cells** by double-clicking them. HP takes `+5` to heal and `-7` to deal damage, as well as a new value.
+- **Monsters** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
+  uses. The document icon opens the monster's stat block.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Project structure
 
-### `npm run eject`
+```
+src/
+├── main.jsx            Entry point
+├── App.jsx             The shell: toolbar, navigation drawer, current page
+├── api/                The only code that calls the backend
+│   ├── client.js       apiGet: URLs, headers, errors (the backend's problem details)
+│   └── creatures.js    searchCreatures, getCreature
+├── components/layout/  TopToolbar, MainDrawer, UserMenu
+├── constants/          The page names
+├── features/
+│   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
+│   │                   monster search, and combatants.js (the turn-order rules, as plain functions)
+│   └── monsters/       The stat block dialog and its tabs, and creatureFormat.js (reading backend creature data)
+├── pages/              Placeholder for pages that don't exist yet
+├── utils/              Text helpers
+└── test/               Test setup, and a real creature from the backend as a fixture
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Logic that doesn't need React (turn order, HP edits, formatting creature data) lives in plain `.js` files next to
+the components that use it, with tests beside them (`*.test.js`).
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The monster data is the backend's creature JSON (`/api/creatures`): camelCase fields such as `hitPoints`,
+`armorClass`, `abilityScores`, and `actions` with an `actionType` of `ACTION`, `BONUS_ACTION`, `REACTION` or
+`LEGENDARY_ACTION`.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Future plans
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- **The other pages.** The drawer lists Monsters, Players and Settings, which are placeholders so far.
+- **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
+  save parties, encounters and homebrew monsters through its write endpoints instead of keeping them only in memory.
+- **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row
+  re-renders; the same goes for the Mob checkbox, which doesn't do anything yet.
+- **Filling in monster stats.** Prefill AC and HP from the chosen monster.
+- **Linting.** Create React App used to provide ESLint; add ESLint (and perhaps Prettier) for Vite.
+- **Smaller bundles.** Split MUI and the data grid into their own chunks.

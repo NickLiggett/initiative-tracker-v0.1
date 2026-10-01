@@ -1,6 +1,5 @@
 import { Checkbox, Tooltip, Typography } from "@mui/material";
-import ClearIcon from "@mui/icons-material/Clear";
-import ArticleIcon from "@mui/icons-material/Article";
+import { Clear as ClearIcon, Article as ArticleIcon } from "@mui/icons-material";
 import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../monsters/creatureFormat";
 
 /**

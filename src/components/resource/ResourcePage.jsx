@@ -13,17 +13,19 @@ import useOwnedDocuments from "./useOwnedDocuments";
  * @param {string} emptyText what to say before anything is chosen
  * @param {(props: {label?: string, value: object, onChange: Function, fullWidth: boolean}) => ReactNode} renderSearch
  * @param {(resource: object) => ReactNode} renderStatBlock
- * @param {(resources: object[]) => ReactNode} renderComparison
- * @param {(props: {resource: ?object, onSaved: Function, onCancel: Function}) => ReactNode} renderEditor
- *   `resource` is the one to change, or null to make a new one
- * @param {(resource: object) => Promise<object>} copy copies one into the user's homebrew; resolves to the copy
- * @param {(resource: object) => Promise} remove deletes one of the user's
+ * @param {ReactNode} [filters] shown under the search, while browsing
+ * @param {(resources: object[]) => ReactNode} [renderComparison] without it there is no Compare
+ * @param {(props: {resource: ?object, onSaved: Function, onCancel: Function}) => ReactNode} [renderEditor]
+ *   `resource` is the one to change, or null to make a new one. Without it there is no New, Duplicate, Edit or Delete
+ * @param {(resource: object) => Promise<object>} [copy] copies one into the user's homebrew; resolves to the copy
+ * @param {(resource: object) => Promise} [remove] deletes one of the user's
  */
 export default function ResourcePage({
   noun,
   emptyText,
   renderSearch,
   renderStatBlock,
+  filters,
   renderComparison,
   renderEditor,
   copy,
@@ -99,13 +101,17 @@ export default function ResourcePage({
               <Button onClick={stopComparing}>Stop comparing</Button>
             ) : (
               <>
-                <Button startIcon={<CompareArrows />} disabled={!resource} onClick={() => setComparing(true)}>
-                  Compare
-                </Button>
-                <Button startIcon={<ContentCopy />} disabled={!resource || busy} onClick={duplicate}>
-                  Duplicate
-                </Button>
-                {canChange && (
+                {renderComparison && (
+                  <Button startIcon={<CompareArrows />} disabled={!resource} onClick={() => setComparing(true)}>
+                    Compare
+                  </Button>
+                )}
+                {renderEditor && (
+                  <Button startIcon={<ContentCopy />} disabled={!resource || busy} onClick={duplicate}>
+                    Duplicate
+                  </Button>
+                )}
+                {renderEditor && canChange && (
                   <>
                     <Button startIcon={<Edit />} onClick={() => setEditing({ resource })}>
                       Edit
@@ -117,10 +123,13 @@ export default function ResourcePage({
                 )}
               </>
             )}
-            <Button variant="contained" startIcon={<Add />} onClick={() => setEditing({ resource: null })}>
-              New {noun}
-            </Button>
+            {renderEditor && (
+              <Button variant="contained" startIcon={<Add />} onClick={() => setEditing({ resource: null })}>
+                New {noun}
+              </Button>
+            )}
           </Box>
+          {filters}
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {error}

@@ -1,37 +1,86 @@
 import { Fragment } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 
 /**
- * A trait or action description. The source text uses a little markdown (**bold**, *italic*, "- " lists), which is
- * all this understands.
+ * A trait, action or item description. The source text uses a little markdown (**bold**, *italic*, "- " lists and
+ * "| tables |"), which is all this understands.
  */
 export default function Description({ text }) {
   const blocks = toBlocks(text ?? "");
   return (
     <Box sx={{ "& ul": { m: 0, pl: 3 } }}>
-      {blocks.map((block, index) =>
-        block.list ? (
-          <ul key={index}>
-            {block.list.map((item, position) => (
-              <li key={position}>
-                <Typography component="span">{inline(item)}</Typography>
-              </li>
-            ))}
-          </ul>
-        ) : (
+      {blocks.map((block, index) => {
+        if (block.list) {
+          return (
+            <ul key={index}>
+              {block.list.map((item, position) => (
+                <li key={position}>
+                  <Typography component="span">{inline(item)}</Typography>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (block.table) {
+          return <DescriptionTable key={index} table={block.table} />;
+        }
+        return (
           <Typography key={index} sx={{ mb: 0.5 }}>
             {inline(block.text)}
           </Typography>
-        ),
-      )}
+        );
+      })}
     </Box>
   );
 }
 
-/** Lines into paragraphs and bullet lists: [{text}, {list: [...]}] */
+function DescriptionTable({ table }) {
+  return (
+    <Box sx={{ overflowX: "auto", my: 1 }}>
+      <Table size="small" sx={{ width: "auto", minWidth: 240 }}>
+        {table.head && (
+          <TableHead>
+            <TableRow>
+              {table.head.map((cell, column) => (
+                <TableCell key={column} sx={{ fontWeight: "bold" }}>
+                  {inline(cell)}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+        )}
+        <TableBody>
+          {table.rows.map((row, position) => (
+            <TableRow key={position}>
+              {row.map((cell, column) => (
+                <TableCell key={column}>{inline(cell)}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
+/**
+ * Lines into paragraphs, bullet lists and tables: [{text}, {list: [...]}, {table: {head, rows}}]. A table is a run of
+ * lines starting with "|"; a row of dashes under the first line makes that line the head. The final "|" can be
+ * left off, and short rows are filled out to the widest.
+ */
 export function toBlocks(text) {
   const blocks = [];
+  let tableRows = null;
   for (const line of text.split("\n")) {
+    if (/^\s*\|/.test(line)) {
+      if (!tableRows) {
+        tableRows = [];
+        blocks.push({ tableRows });
+      }
+      tableRows.push(cellsOf(line));
+      continue;
+    }
+    tableRows = null;
     const bullet = line.match(/^\s*[-*]\s+(.*)$/);
     const last = blocks[blocks.length - 1];
     if (bullet) {
@@ -44,7 +93,21 @@ export function toBlocks(text) {
       blocks.push({ text: line.trim() });
     }
   }
-  return blocks;
+  return blocks.map((block) => (block.tableRows ? { table: toTable(block.tableRows) } : block));
+}
+
+/** "| a | b |" → ["a", "b"] */
+function cellsOf(line) {
+  const inner = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return inner.split("|").map((cell) => cell.trim());
+}
+
+function toTable(rows) {
+  const hasHead = rows.length >= 2 && rows[1].every((cell) => /^:?-+:?$/.test(cell));
+  const body = hasHead ? rows.slice(2) : rows;
+  const width = Math.max(...rows.map((row) => row.length));
+  const fill = (row) => [...row, ...Array(width - row.length).fill("")];
+  return { head: hasHead ? fill(rows[0]) : null, rows: body.map(fill) };
 }
 
 /** "a **b** *c*" → text with <strong> and <em> */

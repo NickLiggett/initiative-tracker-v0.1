@@ -1,0 +1,37 @@
+{
+  "key": "srd-2024_rope",
+  "name": "Rope",
+  "document": {
+    "key": "srd-2024",
+    "name": "System Reference Document 5.2",
+    "type": "SOURCE",
+    "permalink": "https://dnd.wizards.com/resources/systems-reference-document",
+    "publisher": {
+      "key": "wizards-of-the-coast",
+      "name": "Wizards of the Coast"
+    },
+    "gamesystem": {
+      "key": "5e-2024",
+      "name": "5th Edition 2024"
+    },
+    "displayName": "5e 2024 Rules"
+  },
+  "derivedFrom": null,
+  "desc": "As a Utilize action, you can tie a knot with Rope if you succeed on a DC 10 Dexterity (Sleight of Hand) check. The Rope can be burst with a successful DC 20 Strength (Athletics) check. You can bind an unwilling creature with the Rope only if the creature has the Grappled, Incapacitated, or Restrained condition. If the creature's legs are bound, the creature has the Restrained condition until it escapes. Escaping the Rope requires the creature to make a successful DC 15 Dexterity (Acrobatics) check as an action.",
+  "category": {
+    "key": "adventuring-gear",
+    "name": "Adventuring Gear"
+  },
+  "weapon": null,
+  "armor": null,
+  "size": {
+    "key": "tiny",
+    "name": "Tiny"
+  },
+  "weight": 5,
+  "weightUnit": "lb",
+  "cost": 1,
+  "crossreferences": {
+    "to": []
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "key": "srd-2024_longsword",
+  "name": "Longsword",
+  "document": {
+    "key": "srd-2024",
+    "name": "System Reference Document 5.2",
+    "type": "SOURCE",
+    "permalink": "https://dnd.wizards.com/resources/systems-reference-document",
+    "publisher": {
+      "key": "wizards-of-the-coast",
+      "name": "Wizards of the Coast"
+    },
+    "gamesystem": {
+      "key": "5e-2024",
+      "name": "5th Edition 2024"
+    },
+    "displayName": "5e 2024 Rules"
+  },
+  "derivedFrom": null,
+  "desc": "A longsword.",
+  "category": {
+    "key": "weapon",
+    "name": "Weapon"
+  },
+  "weapon": {
+    "key": "srd-2024_longsword",
+    "name": "Longsword",
+    "damageDice": "1d8",
+    "damageType": {
+      "key": "slashing",
+      "name": "Slashing"
+    },
+    "distanceUnit": "feet",
+    "isSimple": false,
+    "isMartial": true,
+    "isImprovised": false,
+    "properties": [
+      {
+        "detail": null,
+        "property": {
+          "name": "Sap",
+          "desc": "If you hit a creature with this weapon, that creature has Disadvantage on its next attack roll before the start of your next turn.",
+          "type": "Mastery"
+        }
+      },
+      {
+        "detail": "1d10",
+        "property": {
+          "name": "Versatile",
+          "desc": "A Versatile weapon can be used with one or two hands. A damage value in parentheses appears with the property. The weapon deals that damage when used with two hands to make a melee attack.",
+          "type": null
+        }
+      }
+    ]
+  },
+  "armor": null,
+  "size": {
+    "key": "tiny",
+    "name": "Tiny"
+  },
+  "weight": 3,
+  "weightUnit": "lb",
+  "cost": 15,
+  "crossreferences": {
+    "to": []
+  }
+}

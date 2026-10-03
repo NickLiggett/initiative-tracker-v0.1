@@ -1,0 +1,57 @@
+{
+  "key": "vom_anchor-of-striking",
+  "name": "Anchor of Striking",
+  "document": {
+    "key": "vom",
+    "name": "Vault of Magic",
+    "type": "SOURCE",
+    "permalink": "https://koboldpress.com/kpstore/product/vault-of-magic-for-5th-edition/",
+    "publisher": {
+      "key": "kobold-press",
+      "name": "Kobold Press"
+    },
+    "gamesystem": {
+      "key": "5e-2014",
+      "name": "5th Edition 2014"
+    },
+    "displayName": "Vault of Magic"
+  },
+  "derivedFrom": null,
+  "desc": "This small rusty iron anchor feels sturdy in spite of its appearance. You gain a +1 bonus to attack and damage rolls made with this magic war pick. When you roll a 20 on an attack roll made with this weapon, the target is wrapped in ethereal golden chains that extend from the bottom of the anchor. As an action, the chained target can make a DC 15 Strength or Dexterity check, freeing itself from the chains on a success. Alternatively, you can use a bonus action to command the chains to disappear, freeing the target. The chains are constructed of magical force and can't be damaged, though they can be destroyed with a disintegrate spell. While the target is wrapped in these chains, you and the target can't move further than 50 feet from each other.",
+  "category": {
+    "key": "weapon",
+    "name": "Weapon"
+  },
+  "rarity": {
+    "key": "rare",
+    "name": "Rare",
+    "rank": 3
+  },
+  "weapon": {
+    "key": "srd_war-pick",
+    "name": "War Pick",
+    "damageDice": "1d8",
+    "damageType": {
+      "key": "piercing",
+      "name": "Piercing"
+    },
+    "distanceUnit": "feet",
+    "isSimple": false,
+    "isMartial": true,
+    "isImprovised": false,
+    "properties": []
+  },
+  "armor": null,
+  "size": {
+    "key": "tiny",
+    "name": "Tiny"
+  },
+  "weight": 0,
+  "weightUnit": "lb",
+  "cost": 0,
+  "requiresAttunement": true,
+  "attunementDetail": null,
+  "crossreferences": {
+    "to": []
+  }
+}

@@ -14,6 +14,10 @@ const SEARCH_DELAY_MS = 300;
  * @param {string} [plural] e.g. "creatures"; "<noun>s" if left out
  * @param {(resource: object) => string} [secondary] the small text under an option's name; its source by default
  * @param {(a: object, b: object) => boolean} [isSame] whether two results are the same one; same `key` by default
+ * @param {(resource: object) => string} [optionKey] what tells results apart in the list; its `key` by default
+ *
+ * `search` is searched again when it changes (say, because a filter did), so it must stay the same function
+ * between renders otherwise: define it outside the component, or use `useCallback`.
  */
 export default function ResourceSearch({
   search,
@@ -22,6 +26,7 @@ export default function ResourceSearch({
   label = capitalizeFirstLetter(noun),
   secondary = (resource) => resource.document?.displayName,
   isSame = (a, b) => a.key === b.key,
+  optionKey = (resource) => resource.key,
   value,
   onChange,
   fullWidth = false,
@@ -58,8 +63,7 @@ export default function ResourceSearch({
       clearTimeout(timer);
       controller.abort();
     };
-    // `search` is left out on purpose: it is the same function for the life of the page.
-  }, [input, value]);
+  }, [input, value, search, plural]);
 
   return (
     <Autocomplete
@@ -78,7 +82,7 @@ export default function ResourceSearch({
       size="small"
       sx={fullWidth ? { width: "100%", my: 1 } : { width: 240, m: 1 }}
       renderOption={(props, resource) => (
-        <li {...props} key={resource.key}>
+        <li {...props} key={optionKey(resource)}>
           <div>
             <Typography>{resource.name}</Typography>
             <Typography variant="caption" color="text.secondary">

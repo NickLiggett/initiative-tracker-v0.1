@@ -1,0 +1,44 @@
+{
+  "key": "srd-2024_bag-of-holding",
+  "name": "Bag of Holding",
+  "document": {
+    "key": "srd-2024",
+    "name": "System Reference Document 5.2",
+    "type": "SOURCE",
+    "permalink": "https://dnd.wizards.com/resources/systems-reference-document",
+    "publisher": {
+      "key": "wizards-of-the-coast",
+      "name": "Wizards of the Coast"
+    },
+    "gamesystem": {
+      "key": "5e-2024",
+      "name": "5th Edition 2024"
+    },
+    "displayName": "5e 2024 Rules"
+  },
+  "derivedFrom": null,
+  "desc": "This bag has an interior space considerably larger than its outside dimensions—roughly 2 feet square and 4 feet deep on the inside. The bag can hold up to 500 pounds, not exceeding a volume of 64 cubic feet. The bag weighs 5 pounds, regardless of its contents. Retrieving an item from the bag requires a Utilize action. If the bag is overloaded, pierced, or torn, it is destroyed, and its contents are scattered in the Astral Plane. If the bag is turned inside out, its contents spill forth unharmed, but the bag must be put right before it can be used again. The bag holds enough air for 10 minutes of breathing, divided by the number of breathing creatures inside. Placing a Bag of Holding inside an extradimensional space created by a Handy Haversack, Portable Hole, or similar item instantly destroys both items and opens a gate to the Astral Plane. The gate originates where the one item was placed inside the other. Any creature within a 10-foot-radius Sphere centered on the gate is sucked through it to a random location on the Astral Plane. The gate then closes. The gate is one-way and can't be reopened.",
+  "category": {
+    "key": "wondrous-item",
+    "name": "Wondrous Item"
+  },
+  "rarity": {
+    "key": "uncommon",
+    "name": "Uncommon",
+    "rank": 2
+  },
+  "weapon": null,
+  "armor": null,
+  "size": {
+    "key": "tiny",
+    "name": "Tiny"
+  },
+  "weight": 0,
+  "weightUnit": "lb",
+  "cost": 0,
+  "requiresAttunement": false,
+  "attunementDetail": null,
+  "crossreferences": {
+    "to": []
+  }
+}

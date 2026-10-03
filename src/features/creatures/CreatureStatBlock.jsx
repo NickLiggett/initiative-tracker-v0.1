@@ -1,4 +1,5 @@
-import { Box, Chip, Divider, Paper, Typography } from "@mui/material";
+import { Box, Chip, Paper, Typography } from "@mui/material";
+import { Section, SourceChip, StatTile } from "../../components/resource/StatBlockParts";
 import { capitalizeFirstLetter, capitalizeWords } from "../../utils/text";
 import {
   ABILITY_ORDER,
@@ -72,25 +73,7 @@ function Header({ creature }) {
       <Typography color="text.secondary" sx={{ fontStyle: "italic" }}>
         {[subtitle, alignment].filter(Boolean).join(", ")}
       </Typography>
-      {document && (
-        <Chip
-          size="small"
-          sx={{ mt: 1 }}
-          label={document.displayName ?? document.name}
-          {...(document.permalink && {
-            component: "a",
-            href: document.permalink,
-            target: "_blank",
-            rel: "noreferrer",
-            clickable: true,
-          })}
-        />
-      )}
-      {document?.publisher?.name && (
-        <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-          {[document.publisher.name, document.gamesystem?.name].filter(Boolean).join(" · ")}
-        </Typography>
-      )}
+      <SourceChip document={document} />
     </Box>
   );
 }
@@ -102,17 +85,17 @@ function KeyStats({ creature }) {
 
   return (
     <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", mb: 2 }}>
-      <Tile label="Armor Class">{armor}</Tile>
-      <Tile label="Hit Points">{hitPoints}</Tile>
-      <Tile label="Speed">{formatSpeed(creature.speedAll ?? creature.speed)}</Tile>
-      <Tile label="Initiative">
+      <StatTile label="Armor Class">{armor}</StatTile>
+      <StatTile label="Hit Points">{hitPoints}</StatTile>
+      <StatTile label="Speed">{formatSpeed(creature.speedAll ?? creature.speed)}</StatTile>
+      <StatTile label="Initiative">
         {creature.initiativeBonus == null ? "—" : formatModifier(creature.initiativeBonus)}
-      </Tile>
-      <Tile label="Challenge">
+      </StatTile>
+      <StatTile label="Challenge">
         {formatChallengeRating(creature.challengeRating)}
         {creature.experiencePoints != null && ` (${formatExperience(creature.experiencePoints)})`}
-      </Tile>
-      <Tile label="Proficiency">{proficiency === null ? "—" : formatModifier(proficiency)}</Tile>
+      </StatTile>
+      <StatTile label="Proficiency">{proficiency === null ? "—" : formatModifier(proficiency)}</StatTile>
     </Box>
   );
 }
@@ -211,18 +194,6 @@ function actionNotes(action) {
   return notes.filter(Boolean).join("; ");
 }
 
-function Section({ title, children }) {
-  return (
-    <Box sx={{ mb: 2 }}>
-      <Typography variant="h6" component="h3" sx={{ fontWeight: "bolder" }}>
-        {title}
-      </Typography>
-      <Divider sx={{ mb: 1 }} />
-      {children}
-    </Box>
-  );
-}
-
 function Entry({ name, notes, desc, shared = false }) {
   return (
     <Box sx={{ mb: 1.5 }}>
@@ -233,16 +204,5 @@ function Entry({ name, notes, desc, shared = false }) {
       </Typography>
       <Description text={desc} />
     </Box>
-  );
-}
-
-function Tile({ label, children }) {
-  return (
-    <Paper variant="outlined" sx={{ p: 1 }}>
-      <Typography variant="caption" color="text.secondary" component="div">
-        {label}
-      </Typography>
-      <Typography component="div">{children}</Typography>
-    </Paper>
   );
 }

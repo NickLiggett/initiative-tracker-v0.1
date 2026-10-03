@@ -1,0 +1,47 @@
+{
+  "key": "srd-2024_chain-mail",
+  "name": "Chain Mail",
+  "document": {
+    "key": "srd-2024",
+    "name": "System Reference Document 5.2",
+    "type": "SOURCE",
+    "permalink": "https://dnd.wizards.com/resources/systems-reference-document",
+    "publisher": {
+      "key": "wizards-of-the-coast",
+      "name": "Wizards of the Coast"
+    },
+    "gamesystem": {
+      "key": "5e-2024",
+      "name": "5th Edition 2024"
+    },
+    "displayName": "5e 2024 Rules"
+  },
+  "derivedFrom": null,
+  "desc": "A chain mail.",
+  "category": {
+    "key": "armor",
+    "name": "Armor"
+  },
+  "weapon": null,
+  "armor": {
+    "key": "srd-2024_chain-mail",
+    "name": "Chain Mail",
+    "category": "heavy",
+    "acDisplay": "16",
+    "acBase": 16,
+    "acAddDexmod": false,
+    "acCapDexmod": null,
+    "grantsStealthDisadvantage": true,
+    "strengthScoreRequired": 13
+  },
+  "size": {
+    "key": "tiny",
+    "name": "Tiny"
+  },
+  "weight": 55,
+  "weightUnit": "lb",
+  "cost": 75,
+  "crossreferences": {
+    "to": []
+  }
+}

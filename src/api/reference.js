@@ -23,3 +23,15 @@ export async function listConditions({ signal } = {}) {
   const page = await apiGet("/api/conditions", { pageSize: 100, sort: "name" }, { signal });
   return page.content;
 }
+
+/** The item categories (Weapon, Armor, Potion, ...), by name. @returns {Promise<object[]>} */
+export async function listItemCategories({ signal } = {}) {
+  const page = await apiGet("/api/itemcategories", { pageSize: 100, sort: "name" }, { signal });
+  return page.content;
+}
+
+/** The magic item rarities, from common to artifact. @returns {Promise<object[]>} */
+export async function listItemRarities({ signal } = {}) {
+  const page = await apiGet("/api/itemrarities", { pageSize: 100, sort: "rank" }, { signal });
+  return page.content;
+}

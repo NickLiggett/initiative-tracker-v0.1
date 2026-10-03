@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import red from "../../test/fixtures/adult-red-dragon.json";
 import black from "../../test/fixtures/adult-black-dragon.json";
-import { blankDraft, creatureFromDraft, draftFromCreature, draftProblems } from "./creatureDraft";
+import { blankDraft, creatureFromDraft, draftFromCreature, draftProblems, moveEntry, newAction, newTrait } from "./creatureDraft";
+import { actionsOfType } from "./creatureFormat";
 
 describe("a new creature", () => {
   it("needs a name", () => {
@@ -83,7 +84,6 @@ describe("a draft from an existing creature", () => {
 
   it("keeps what the form doesn't show", () => {
     const saved = creatureFromDraft(draftFromCreature(black));
-    expect(saved.actions).toEqual(black.actions);
     expect(saved.traits).toEqual(black.traits);
     expect(saved.resistancesAndImmunities).toEqual(black.resistancesAndImmunities);
   });
@@ -107,5 +107,71 @@ describe("a draft from an existing creature", () => {
     expect(creatureFromDraft(draft)).toMatchObject({ proficiencyBonus: 6, experiencePoints: 25000 });
     draft.challengeRating = 21;
     expect(creatureFromDraft(draft)).toMatchObject({ proficiencyBonus: 7, savingThrows: { dexterity: 9 } });
+  });
+});
+
+describe("traits and actions", () => {
+  it.each([
+    ["red", red],
+    ["black", black],
+  ])("save the %s dragon's back unchanged", (name, dragon) => {
+    const saved = creatureFromDraft(draftFromCreature(dragon));
+
+    expect(saved.traits).toEqual(dragon.traits);
+    expect(saved.actions).toHaveLength(dragon.actions.length);
+    for (const type of ["ACTION", "BONUS_ACTION", "REACTION", "LEGENDARY_ACTION"]) {
+      // same actions in the same order within each type, with the same details (the order numbers may be renumbered)
+      const strip = ({ orderInStatblock, ...rest }) => rest;
+      expect(actionsOfType(saved, type).map(strip)).toEqual(actionsOfType(dragon, type).map(strip));
+    }
+  });
+
+  it("numbers each type's actions from 0 in the order of the form", () => {
+    const draft = { ...blankDraft(), name: "X" };
+    draft.actions = [
+      { ...newAction("ACTION"), name: "Claw" },
+      { ...newAction("LEGENDARY_ACTION"), name: "Roar" },
+      { ...newAction("ACTION"), name: "Bite" },
+    ];
+
+    const saved = creatureFromDraft(draft).actions;
+    expect(saved.map((a) => [a.name, a.orderInStatblock])).toEqual([["Claw", 0], ["Roar", 0], ["Bite", 1]]);
+    expect(saved[1].legendaryActionCost).toBe(1); // a legendary action costs at least one
+    expect(saved[0].legendaryActionCost).toBeNull();
+  });
+
+  it("saves usage limits, and drops them when there are none", () => {
+    const draft = { ...blankDraft(), name: "X" };
+    draft.actions = [
+      { ...newAction("ACTION"), name: "Breath", usageType: "RECHARGE_ON_ROLL", usageParam: "5" },
+      { ...newAction("ACTION"), name: "Spell", usageType: "PER_DAY", usageParam: "3", limitedToForm: " Bear " },
+      { ...newAction("ACTION"), name: "Bite" },
+    ];
+
+    const [breath, spell, bite] = creatureFromDraft(draft).actions;
+    expect(breath.usageLimits).toEqual({ type: "RECHARGE_ON_ROLL", param: 5 });
+    expect(spell).toMatchObject({ usageLimits: { type: "PER_DAY", param: 3 }, limitedToForm: "Bear" });
+    expect(bite).toMatchObject({ usageLimits: null, limitedToForm: null, attacks: [] });
+  });
+
+  it("leaves out empty entries from the preview but won't save them", () => {
+    const draft = { ...blankDraft(), name: "X", traits: [newTrait(), { ...newTrait(), name: "Keen Smell" }] };
+
+    expect(creatureFromDraft(draft).traits).toEqual([{ name: "Keen Smell", desc: "" }]);
+    expect(draftProblems(draft)).toEqual(["Name each trait and action, or remove the empty ones."]);
+  });
+
+  it("moves an entry among its own group, and stays put at the ends", () => {
+    const a = { ...newAction("ACTION"), name: "A" };
+    const l = { ...newAction("LEGENDARY_ACTION"), name: "L" };
+    const b = { ...newAction("ACTION"), name: "B" };
+    const names = (list) => list.map((entry) => entry.name).join("");
+    const groupOf = (entry) => entry.actionType;
+
+    expect(names(moveEntry([a, l, b], b.id, -1, groupOf))).toBe("BLA"); // swaps with A, skipping L
+    expect(names(moveEntry([a, l, b], a.id, 1, groupOf))).toBe("BLA");
+    expect(names(moveEntry([a, l, b], a.id, -1, groupOf))).toBe("ALB");
+    expect(names(moveEntry([a, l, b], l.id, 1, groupOf))).toBe("ALB");
+    expect(names(moveEntry([a, b], b.id, -1))).toBe("BA");
   });
 });

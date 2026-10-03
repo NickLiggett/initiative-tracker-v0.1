@@ -1,5 +1,6 @@
 import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, Paper, TextField, Typography } from "@mui/material";
 import { capitalizeFirstLetter } from "../../utils/text";
+import { ActionsEditor, TraitsEditor } from "./AbilitiesEditor";
 import { ALIGNMENTS, CHALLENGE_RATINGS, SPEED_MODES } from "./creatureDraft";
 import { ABILITY_ORDER, abilityModifier, formatChallengeRating, formatModifier } from "./creatureFormat";
 
@@ -12,7 +13,7 @@ export default function CreatureForm({ draft, onChange, sizes, types }) {
   return (
     <Box component="form" aria-label="Creature details" noValidate onSubmit={(event) => event.preventDefault()} sx={{ display: "grid", gap: 2 }}>
       <FormSection title="Basics">
-        <TextField label="Name" required value={draft.name} onChange={(event) => set({ name: event.target.value })} />
+        <TextField label="Creature name" required value={draft.name} onChange={(event) => set({ name: event.target.value })} />
         <Box sx={rowStyles}>
           <ReferenceSelect label="Size" options={sizes} value={draft.size} onChange={(size) => set({ size })} />
           <ReferenceSelect label="Type" options={types} value={draft.type} onChange={(type) => set({ type })} />
@@ -92,6 +93,9 @@ export default function CreatureForm({ draft, onChange, sizes, types }) {
           })}
         </Box>
       </FormSection>
+
+      <TraitsEditor traits={draft.traits} onChange={(traits) => set({ traits })} />
+      <ActionsEditor actions={draft.actions} onChange={(actions) => set({ actions })} />
     </Box>
   );
 }

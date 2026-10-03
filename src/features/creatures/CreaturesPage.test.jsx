@@ -71,7 +71,7 @@ describe("CreaturesPage", () => {
     render(<CreaturesPage />);
 
     fireEvent.click(screen.getByRole("button", { name: "New creature" }));
-    fireEvent.change(await screen.findByLabelText(/^Name/), { target: { value: "Gribble" } });
+    fireEvent.change(await screen.findByLabelText(/^Creature name/), { target: { value: "Gribble" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await screen.findByRole("button", { name: "Duplicate" }); // back from the editor, which has its own preview
@@ -97,9 +97,9 @@ describe("CreaturesPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Edit Adult Red Dragon" })).toBeInTheDocument();
     expect(screen.getByText(`Based on ${dragon.key}`)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Name/)).toHaveValue("Adult Red Dragon");
+    expect(screen.getByLabelText(/^Creature name/)).toHaveValue("Adult Red Dragon");
 
-    fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: "Elder Red Dragon" } });
+    fireEvent.change(screen.getByLabelText(/^Creature name/), { target: { value: "Elder Red Dragon" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await screen.findByRole("button", { name: "Duplicate" });

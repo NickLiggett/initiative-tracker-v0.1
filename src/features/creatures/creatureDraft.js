@@ -4,7 +4,7 @@
 // them out, so a creature saved from here has to carry them. A draft starts from an existing creature (when
 // editing or duplicating) and its fields the form doesn't show are kept as they were.
 
-import { ABILITY_ORDER, abilityModifier, proficiencyBonusFor } from "./creatureFormat";
+import { ABILITY_ORDER, ACTION_TYPES, abilityModifier, actionsOfType, proficiencyBonusFor } from "./creatureFormat";
 
 export const SPEED_MODES = ["walk", "fly", "swim", "climb", "burrow", "crawl"];
 
@@ -32,6 +32,17 @@ export const SKILL_ABILITIES = {
   stealth: "dexterity",
   survival: "wisdom",
 };
+
+/** How often an action can be used, as the form offers it (the values are the backend's). */
+export const USAGE_TYPES = [
+  { value: "", label: "No limit" },
+  { value: "PER_DAY", label: "Times per day" },
+  { value: "RECHARGE_ON_ROLL", label: "Recharge on a roll" },
+  { value: "RECHARGE", label: "Recharges after a rest" },
+];
+
+/** What the usage number means for each usage type; the types not here have none. */
+export const USAGE_PARAM_DEFAULTS = { PER_DAY: "1", RECHARGE_ON_ROLL: "5" };
 
 export const ALIGNMENTS = [
   "lawful good",
@@ -86,6 +97,52 @@ const EXPERIENCE_BY_CHALLENGE_RATING = {
   30: 155000,
 };
 
+let lastEntryId = 0;
+const newEntryId = () => `entry-${++lastEntryId}`;
+
+/** A trait for the form; `id` only tells entries apart while editing and is not saved. */
+export function newTrait(trait = {}) {
+  return { id: newEntryId(), name: trait.name ?? "", desc: trait.desc ?? "" };
+}
+
+/** An action for the form, of one of the backend's action types. */
+export function newAction(actionType, action = {}) {
+  return {
+    id: newEntryId(),
+    name: action.name ?? "",
+    desc: action.desc ?? "",
+    actionType,
+    legendaryActionCost: action.legendaryActionCost ?? null,
+    usageType: action.usageLimits?.type ?? "",
+    usageParam: text(action.usageLimits?.param),
+    limitedToForm: action.limitedToForm ?? "",
+    // not edited here; kept so a duplicate keeps them
+    attacks: action.attacks ?? [],
+    crossreferences: action.crossreferences ?? { to: [] },
+  };
+}
+
+/**
+ * Moves the entry one place up (-1) or down (1) among the entries of its own group (`groupOf` names the group; by
+ * default they are all one). Returns the same list if it can't move.
+ */
+export function moveEntry(entries, id, direction, groupOf = () => null) {
+  const index = entries.findIndex((entry) => entry.id === id);
+  if (index === -1) {
+    return entries;
+  }
+  let target = index + direction;
+  while (target >= 0 && target < entries.length && groupOf(entries[target]) !== groupOf(entries[index])) {
+    target += direction;
+  }
+  if (target < 0 || target >= entries.length) {
+    return entries;
+  }
+  const moved = [...entries];
+  [moved[index], moved[target]] = [moved[target], moved[index]];
+  return moved;
+}
+
 /**
  * What the form edits. Numbers are strings, as typed, so a field can be empty.
  * `base` is the creature this started from, if any; `saveLevels` and `skillLevels` are 0 (not proficient), 1
@@ -108,6 +165,8 @@ export function blankDraft() {
     languages: "",
     saveLevels: {},
     skillLevels: {},
+    traits: [],
+    actions: [],
   };
 }
 
@@ -146,6 +205,10 @@ export function draftFromCreature(creature) {
     languages: creature.languages?.asString ?? "",
     saveLevels,
     skillLevels,
+    traits: (creature.traits ?? []).map(newTrait),
+    actions: ACTION_TYPES.flatMap(({ type }) => actionsOfType(creature, type)).map((action) =>
+      newAction(action.actionType, action),
+    ),
   };
 }
 
@@ -159,7 +222,14 @@ function levelOf(bonus, modifier, proficiencyBonus) {
 
 /** Whether the draft has what the backend needs to save it. */
 export function draftProblems(draft) {
-  return draft.name.trim() ? [] : ["Give the creature a name."];
+  const problems = [];
+  if (!draft.name.trim()) {
+    problems.push("Give the creature a name.");
+  }
+  if ([...draft.traits, ...draft.actions].some((entry) => !entry.name.trim())) {
+    problems.push("Name each trait and action, or remove the empty ones.");
+  }
+  return problems;
 }
 
 /**
@@ -241,11 +311,37 @@ export function creatureFromDraft(draft) {
     skillBonuses,
     skillBonusesAll,
     passivePerception: 10 + skillBonusesAll.perception + passiveOffset,
+    traits: draft.traits.filter(hasName).map(({ name, desc }) => ({ name: name.trim(), desc })),
+    actions: actionsFromDraft(draft.actions),
     languages: {
       asString: languages,
       data: base?.languages?.asString === languages ? (base.languages.data ?? []) : [],
     },
   };
+}
+
+const hasName = (entry) => entry.name.trim() !== "";
+
+/** The backend's actions: each type's in the form's order, numbered from 0 to give the stat block order. */
+function actionsFromDraft(actions) {
+  const countByType = {};
+  return actions.filter(hasName).map((action) => {
+    const order = (countByType[action.actionType] = (countByType[action.actionType] ?? -1) + 1);
+    return {
+      name: action.name.trim(),
+      desc: action.desc,
+      actionType: action.actionType,
+      orderInStatblock: order,
+      legendaryActionCost:
+        action.actionType === "LEGENDARY_ACTION" ? (action.legendaryActionCost ?? 1) : action.legendaryActionCost,
+      usageLimits: action.usageType
+        ? { type: action.usageType, param: toInteger(action.usageParam) }
+        : null,
+      limitedToForm: action.limitedToForm.trim() || null,
+      attacks: action.attacks,
+      crossreferences: action.crossreferences,
+    };
+  });
 }
 
 function toInteger(value) {

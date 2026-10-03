@@ -54,6 +54,11 @@ export default function CreatureEditor({ creature, onSaved, onCancel }) {
           <Typography variant="h5" component="h2">
             {creature?.key ? `Edit ${creature.name}` : "New creature"}
           </Typography>
+          {problems.length > 0 && (
+            <Typography variant="body2" color="text.secondary" role="status">
+              {problems.join(" ")}
+            </Typography>
+          )}
           {creature?.derivedFrom && (
             <Typography variant="caption" color="text.secondary">
               Based on {creature.derivedFrom}

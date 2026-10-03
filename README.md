@@ -56,19 +56,20 @@ src/
 │   ├── client.js       apiGet, apiSend: URLs, headers, errors (the backend's problem details)
 │   ├── resource.js     createResourceApi: search, get, create, replace, copy and remove for any collection
 │   ├── creatures.js    The creatures collection
-│   ├── items.js        Items and magic items, and searchItems across both
+│   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
 │   ├── ownership.js    Which documents the signed-in user owns (so which creatures they can change)
 │   └── reference.js    The sizes, creature types, damage types and conditions the editor offers
 ├── components/
 │   ├── layout/         TopToolbar, MainDrawer, UserMenu
 │   ├── resource/       What every kind of content (creatures, items, ...) shares: ResourcePage (search, compare, new,
-│   │                   duplicate, edit, delete), ResourceSearch, ComparisonTable (and compareRows.js, its row builders), EditorShell, ConfirmDeleteDialog
+│   │                   duplicate, edit, delete), ResourceSearch, ComparisonTable (and compareRows.js, its row builders), EditorShell, FormSection, ConfirmDeleteDialog
 │   └── Description.jsx Trait, action and item text (bold, italic, lists, tables)
 ├── constants/          The page names
 ├── features/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
 │   │                   and combatants.js (the turn-order rules, as plain functions)
-│   ├── items/          ItemsPage, ItemFilters, ItemStatBlock, ItemComparison, itemFormat.js (reading backend item data) and compareItems.js
+│   ├── items/          ItemsPage, ItemFilters, ItemStatBlock, ItemComparison, ItemEditor and its form, itemFormat.js (reading backend item data), compareItems.js and
+│                   itemDraft.js (editor form state to backend JSON)
 │   └── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its form, and plain-function
 │                   helpers: creatureFormat.js (reading backend creature data), compareCreatures.js, creatureDraft.js (editor
 │                   form state to backend JSON)
@@ -86,7 +87,7 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
 
 ## Future plans
 
-- **The other pages.** The drawer lists Creatures, Items, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one), and edits or deletes the ones in your own homebrew document; Items searches items and magic items together (filter by kind, category and rarity), shows weapon and armor details, and compares two items, with descriptions
+- **The other pages.** The drawer lists Creatures, Items, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one), and edits or deletes the ones in your own homebrew document; Items searches items and magic items together (filter by kind, category and rarity), shows weapon and armor details, compares two items, and makes new ones (**New item**, or **Duplicate**) in the same way as creatures, with descriptions
   that include tables; Players and Settings are placeholders so far.
   Saving needs a signed-in user: in development that is `VITE_DEV_USER`. Creatures are saved to the user's homebrew document. The backend stores derived numbers (modifiers, saves, passive perception, ...) rather than working them out, so the editor calculates them.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and

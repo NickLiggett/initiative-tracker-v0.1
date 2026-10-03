@@ -1,5 +1,6 @@
-import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, Paper, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import { capitalizeFirstLetter } from "../../utils/text";
+import FormSection from "../../components/resource/FormSection";
 import { ActionsEditor, TraitsEditor } from "./AbilitiesEditor";
 import { DefensesEditor, SensesEditor } from "./DefensesEditor";
 import ProficienciesEditor from "./ProficienciesEditor";
@@ -120,17 +121,6 @@ export default function CreatureForm({ draft, onChange, computed, references }) 
 }
 
 const rowStyles = { display: "grid", gap: 2, gridTemplateColumns: "1fr 1fr" };
-
-function FormSection({ title, children }) {
-  return (
-    <Paper variant="outlined" sx={{ p: 2, display: "grid", gap: 2 }}>
-      <Typography variant="h6" component="h3">
-        {title}
-      </Typography>
-      {children}
-    </Paper>
-  );
-}
 
 /** A whole number; anything else typed is dropped. */
 function NumberField({ label, value, onChange, helperText }) {

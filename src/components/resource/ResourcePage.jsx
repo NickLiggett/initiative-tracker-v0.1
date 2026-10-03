@@ -16,9 +16,9 @@ import useOwnedDocuments from "./useOwnedDocuments";
  * @param {ReactNode} [filters] shown under the search, while browsing
  * @param {(resources: object[]) => ReactNode} [renderComparison] without it there is no Compare
  * @param {(props: {resource: ?object, onSaved: Function, onCancel: Function}) => ReactNode} [renderEditor]
- *   `resource` is the one to change, or null to make a new one. Without it there is no New, Duplicate, Edit or Delete
+ *   `resource` is the one to change, or null to make a new one. Without it there is no New, Duplicate or Edit
  * @param {(resource: object) => Promise<object>} [copy] copies one into the user's homebrew; resolves to the copy
- * @param {(resource: object) => Promise} [remove] deletes one of the user's
+ * @param {(resource: object) => Promise} [remove] deletes one of the user's; without it there is no Delete
  */
 export default function ResourcePage({
   noun,
@@ -116,9 +116,11 @@ export default function ResourcePage({
                     <Button startIcon={<Edit />} onClick={() => setEditing({ resource })}>
                       Edit
                     </Button>
-                    <Button color="error" startIcon={<Delete />} disabled={busy} onClick={() => setConfirmingDelete(true)}>
-                      Delete
-                    </Button>
+                    {remove && (
+                      <Button color="error" startIcon={<Delete />} disabled={busy} onClick={() => setConfirmingDelete(true)}>
+                        Delete
+                      </Button>
+                    )}
                   </>
                 )}
               </>

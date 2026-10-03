@@ -35,3 +35,9 @@ export async function listItemRarities({ signal } = {}) {
   const page = await apiGet("/api/itemrarities", { pageSize: 100, sort: "rank" }, { signal });
   return page.content;
 }
+
+/** The weapon properties (Finesse, Versatile, ...) and masteries, for both rulesets, by name. @returns {Promise<object[]>} */
+export async function listWeaponProperties({ signal } = {}) {
+  const page = await apiGet("/api/weaponproperties", { pageSize: 100, sort: "name" }, { signal });
+  return page.content;
+}

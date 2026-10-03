@@ -22,3 +22,16 @@ export async function searchItems(name, { kind = "all", category, rarity, pageSi
     .sort((a, b) => a.name.localeCompare(b.name) || a.key.localeCompare(b.key))
     .slice(0, pageSize);
 }
+
+/**
+ * Magic items and ordinary items have the same shape, but only magic items have a `rarity` field (null or not), so
+ * that is how to tell them apart.
+ */
+export function isMagicItem(item) {
+  return "rarity" in item || "requiresAttunement" in item;
+}
+
+/** The calls for the collection this item is in. */
+export function apiFor(item) {
+  return isMagicItem(item) ? magicItemsApi : itemsApi;
+}

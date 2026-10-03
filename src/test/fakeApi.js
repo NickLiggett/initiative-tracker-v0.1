@@ -65,3 +65,33 @@ export const OWNERSHIP_ROUTES = {
     ],
   },
 };
+
+export const ITEM_CATEGORIES = {
+  content: [
+    { key: "adventuring-gear", name: "Adventuring Gear" },
+    { key: "armor", name: "Armor" },
+    { key: "weapon", name: "Weapon" },
+  ],
+};
+
+export const ITEM_RARITIES = {
+  content: [
+    { key: "uncommon", name: "Uncommon", rank: 2 },
+    { key: "rare", name: "Rare", rank: 3 },
+  ],
+};
+
+export const WEAPON_PROPERTIES = {
+  content: [
+    { key: "srd-2024_versatile-wp", name: "Versatile", type: null, desc: "One or two hands.", document: { displayName: "5e 2024 Rules" } },
+    { key: "srd-2024_sap-mastery", name: "Sap", type: "Mastery", desc: "Disadvantage on the next attack.", document: { displayName: "5e 2024 Rules" } },
+  ],
+};
+
+/** The routes for the lists the item editor offers. */
+export const ITEM_REFERENCE_ROUTES = {
+  "GET /api/itemcategories": ITEM_CATEGORIES,
+  "GET /api/itemrarities": ITEM_RARITIES,
+  "GET /api/damagetypes": DAMAGE_TYPES,
+  "GET /api/weaponproperties": WEAPON_PROPERTIES,
+};

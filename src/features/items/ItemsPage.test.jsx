@@ -53,15 +53,17 @@ describe("ItemsPage", () => {
     expect(screen.getByText("Magic item · Wondrous Item · Uncommon")).toBeInTheDocument();
   });
 
-  it("offers to compare, but not yet to make or change items", async () => {
+  it("offers to compare, duplicate and make items, but not to change or delete default ones", async () => {
     stubBackend();
     render(<ItemsPage />);
     type("rope");
     fireEvent.click((await results()).find((option) => option.textContent.startsWith("Rope")));
     await screen.findByRole("heading", { name: "Rope" });
 
-    expect(screen.getByRole("button", { name: "Compare" })).toBeEnabled();
-    for (const name of [/Duplicate/, /New item/, /Edit/, /Delete/]) {
+    for (const name of ["Compare", "Duplicate", "New item"]) {
+      expect(screen.getByRole("button", { name })).toBeEnabled();
+    }
+    for (const name of [/Edit/, /Delete/]) {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
   });

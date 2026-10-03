@@ -1,14 +1,9 @@
 // Reading and formatting open5e-backend item data (/api/items and /api/magicitems) for display.
 
+import { isMagicItem } from "../../api/items";
 import { capitalizeFirstLetter } from "../../utils/text";
 
-/**
- * Magic items and ordinary items have the same shape, but only magic items have a `rarity` field (null or not), so
- * that is how to tell them apart.
- */
-export function isMagicItem(item) {
-  return "rarity" in item || "requiresAttunement" in item;
-}
+export { isMagicItem };
 
 /** What to call the kind of item. */
 export function itemKindName(item) {

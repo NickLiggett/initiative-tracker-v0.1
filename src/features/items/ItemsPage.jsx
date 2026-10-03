@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { searchItems } from "../../api/items";
+import { apiFor, searchItems } from "../../api/items";
 import { listItemCategories, listItemRarities } from "../../api/reference";
 import ResourcePage from "../../components/resource/ResourcePage";
 import ResourceSearch from "../../components/resource/ResourceSearch";
 import ItemComparison from "./ItemComparison";
+import ItemEditor from "./ItemEditor";
 import ItemFilters, { NO_FILTERS } from "./ItemFilters";
 import ItemStatBlock from "./ItemStatBlock";
 import { isMagicItem } from "./itemFormat";
 
-/** Search for an item or magic item and read it, or compare it with another. */
+/** Search for an item or magic item and read it, compare it with another, or make your own. */
 export default function ItemsPage() {
   const [filters, setFilters] = useState(NO_FILTERS);
   const [lists, setLists] = useState({ categories: [], rarities: [] });
@@ -43,6 +44,8 @@ export default function ItemsPage() {
       filters={<ItemFilters filters={filters} onChange={setFilters} {...lists} />}
       renderStatBlock={(item) => <ItemStatBlock item={item} />}
       renderComparison={(items) => <ItemComparison items={items} />}
+      renderEditor={({ resource, onSaved, onCancel }) => <ItemEditor item={resource} onSaved={onSaved} onCancel={onCancel} />}
+      copy={(item) => apiFor(item).copy(item.key)}
     />
   );
 }

@@ -1,5 +1,6 @@
 // Lining two creatures up, row by row, for the comparison table.
 
+import { numberRow, textRow, withoutEmptyRows } from "../../components/resource/compareRows";
 import { capitalizeFirstLetter, labelFromCamelCase } from "../../utils/text";
 import {
   ABILITY_ORDER,
@@ -11,16 +12,6 @@ import {
   immunityText,
   proficiencyBonusFor,
 } from "./creatureFormat";
-
-/**
- * One line of the table.
- * @typedef {object} CompareRow
- * @property {string} label
- * @property {string[]} values what to show for each creature
- * @property {?number} delta the second creature's number minus the first's, when both have one
- * @property {?number} higher the index of the creature with the bigger number; null when equal or not numeric
- * @property {boolean} differs whether the values are different
- */
 
 const DEFENSES = [
   ["Damage Vulnerabilities", "damageVulnerabilitiesDisplay", "damageVulnerabilities"],
@@ -87,9 +78,7 @@ export function compareCreatures(first, second) {
       ],
     },
   ];
-  return sections
-    .map((section) => ({ ...section, rows: section.rows.filter((row) => row.values.some((value) => value !== "—")) }))
-    .filter((section) => section.rows.length > 0);
+  return withoutEmptyRows(sections);
 }
 
 /** Lower-cased names of the traits and actions both creatures have. */
@@ -115,23 +104,4 @@ function skillRows(pair) {
     .map(({ key, label }) =>
       numberRow(label, pair, (c) => (c.skillBonusesAll ?? c.skillBonuses)?.[key] ?? c.skillBonuses?.[key], formatModifier),
     );
-}
-
-/** A row of numbers; `format(number, creature)` makes the text, defaulting to the number itself. */
-function numberRow(label, pair, read, format = (number) => `${number}`) {
-  const numbers = pair.map((creature) => read(creature) ?? null);
-  const values = numbers.map((number, index) => (number === null ? "—" : (format(number, pair[index]) ?? "—")));
-  const delta = numbers[0] !== null && numbers[1] !== null ? numbers[1] - numbers[0] : null;
-  return {
-    label,
-    values,
-    delta,
-    higher: delta ? (delta > 0 ? 1 : 0) : null,
-    differs: values[0] !== values[1],
-  };
-}
-
-function textRow(label, pair, read) {
-  const values = pair.map((creature) => read(creature) || "—");
-  return { label, values, delta: null, higher: null, differs: values[0] !== values[1] };
 }

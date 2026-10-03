@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 
 /**
- * Two things side by side as a table of rows (see `compareCreatures`: sections of `{label, values, delta, higher,
+ * Two things side by side as a table of rows (see `compareRows`: sections of `{label, values, delta, higher, deltaText,
  * differs}`). The bigger number is bold with how much bigger it is; rows that differ have a background.
  * @param {object[]} resources the two things compared, for the column headings (`name`, `document`)
  */
@@ -12,8 +12,8 @@ export default function ComparisonTable({ resources, sections }) {
         <TableHead>
           <TableRow>
             <TableCell />
-            {resources.map((resource) => (
-              <TableCell key={resource.key} sx={{ width: "40%" }}>
+            {resources.map((resource, index) => (
+              <TableCell key={`${index}:${resource.key}`} sx={{ width: "40%" }}>
                 <Typography sx={{ fontWeight: "bolder" }}>{resource.name}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   {resource.document?.displayName}
@@ -43,9 +43,9 @@ export default function ComparisonTable({ resources, sections }) {
                     }}
                   >
                     {value}
-                    {row.higher === index && (
+                    {row.higher === index && row.deltaText && (
                       <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                        {`+${Math.abs(row.delta)}`}
+                        {row.deltaText}
                       </Typography>
                     )}
                   </TableCell>

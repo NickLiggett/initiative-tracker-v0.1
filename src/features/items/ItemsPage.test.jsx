@@ -53,14 +53,15 @@ describe("ItemsPage", () => {
     expect(screen.getByText("Magic item · Wondrous Item · Uncommon")).toBeInTheDocument();
   });
 
-  it("offers only what can be done so far: look things up", async () => {
+  it("offers to compare, but not yet to make or change items", async () => {
     stubBackend();
     render(<ItemsPage />);
     type("rope");
     fireEvent.click((await results()).find((option) => option.textContent.startsWith("Rope")));
     await screen.findByRole("heading", { name: "Rope" });
 
-    for (const name of [/Compare/, /Duplicate/, /New item/, /Edit/, /Delete/]) {
+    expect(screen.getByRole("button", { name: "Compare" })).toBeEnabled();
+    for (const name of [/Duplicate/, /New item/, /Edit/, /Delete/]) {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
   });

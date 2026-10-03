@@ -32,3 +32,8 @@ export function replaceCreature(key, creature) {
 export function copyCreature(key) {
   return apiSend("POST", `/api/creatures/${encodeURIComponent(key)}/copy`, {});
 }
+
+/** Deletes one of the user's creatures. */
+export function deleteCreature(key) {
+  return apiSend("DELETE", `/api/creatures/${encodeURIComponent(key)}`);
+}

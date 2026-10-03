@@ -41,8 +41,9 @@ export function apiGet(path, params, { signal } = {}) {
 }
 
 /**
- * Sends JSON to the API (POST, PUT, PATCH) and returns the JSON it answers with.
- * @param {"POST"|"PUT"|"PATCH"} method
+ * Sends JSON to the API (POST, PUT, PATCH, DELETE) and returns the JSON it answers with, or null if it answers with
+ * nothing (as it does to a DELETE).
+ * @param {"POST"|"PUT"|"PATCH"|"DELETE"} method
  * @param {string} path e.g. "/api/creatures"
  * @param {object} [body]
  * @throws {ApiError} for error responses
@@ -74,5 +75,5 @@ async function request(method, url, body, signal) {
     }
     throw new ApiError(response.status, detail);
   }
-  return response.json();
+  return response.status === 204 ? null : response.json();
 }

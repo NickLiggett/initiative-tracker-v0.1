@@ -56,7 +56,7 @@ describe("CreaturesPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "New creature" }));
     expect(screen.getByRole("heading", { name: "New creature" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Creature" })).not.toBeInTheDocument();
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/api/conditions"), expect.anything())); // the lists have loaded
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByRole("combobox", { name: "Creature" })).toBeInTheDocument();

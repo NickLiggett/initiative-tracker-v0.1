@@ -54,8 +54,9 @@ src/
 ├── App.jsx             The shell: toolbar, navigation drawer, current page
 ├── api/                The only code that calls the backend
 │   ├── client.js       apiGet, apiSend: URLs, headers, errors (the backend's problem details)
-│   ├── creatures.js    searchCreatures, getCreature, createCreature, replaceCreature, copyCreature
-│   └── reference.js    The sizes and creature types the editor offers
+│   ├── creatures.js    searchCreatures, getCreature, createCreature, replaceCreature, copyCreature, deleteCreature
+│   ├── ownership.js    Which documents the signed-in user owns (so which creatures they can change)
+│   └── reference.js    The sizes, creature types, damage types and conditions the editor offers
 ├── components/layout/  TopToolbar, MainDrawer, UserMenu
 ├── constants/          The page names
 ├── features/
@@ -76,7 +77,7 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
 
 ## Future plans
 
-- **The other pages.** The drawer lists Creatures, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one); Players and Settings are placeholders so far.
+- **The other pages.** The drawer lists Creatures, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one), and edits or deletes the ones in your own homebrew document; Players and Settings are placeholders so far.
   Saving needs a signed-in user: in development that is `VITE_DEV_USER`. Creatures are saved to the user's homebrew document. The backend stores derived numbers (modifiers, saves, passive perception, ...) rather than working them out, so the editor calculates them.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
   save parties, encounters and homebrew creatures through its write endpoints instead of keeping them only in memory.

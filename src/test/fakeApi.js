@@ -53,3 +53,15 @@ export const REFERENCE_ROUTES = {
   "GET /api/damagetypes": DAMAGE_TYPES,
   "GET /api/conditions": CONDITIONS,
 };
+
+/** The routes that say whose documents are whose: the user is 1, and owns `u1-homebrew`. */
+export const OWNERSHIP_ROUTES = {
+  "GET /api/me": { id: 1, username: "dev" },
+  "GET /api/documents": {
+    content: [
+      { key: "u1-homebrew", ownerId: 1 },
+      { key: "u2-homebrew", ownerId: 2 },
+      { key: "srd-2014", ownerId: null },
+    ],
+  },
+};

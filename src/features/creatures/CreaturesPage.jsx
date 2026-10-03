@@ -1,21 +1,26 @@
 import { useState } from "react";
-import { Alert, Box, Button, Typography } from "@mui/material";
-import { Add, CompareArrows, ContentCopy } from "@mui/icons-material";
-import { copyCreature } from "../../api/creatures";
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from "@mui/material";
+import { Add, CompareArrows, ContentCopy, Delete, Edit } from "@mui/icons-material";
+import { copyCreature, deleteCreature } from "../../api/creatures";
 import CreatureComparison from "./CreatureComparison";
 import CreatureEditor from "./CreatureEditor";
 import CreatureSearch from "./CreatureSearch";
 import CreatureStatBlock from "./CreatureStatBlock";
+import useOwnedDocuments from "./useOwnedDocuments";
 
-/** Search for a creature and read its stat block, compare it with another, or make a new one. */
+/** Search for a creature and read its stat block, compare it with another, or make, change and delete your own. */
 export default function CreaturesPage() {
   const [creature, setCreature] = useState(null);
   const [other, setOther] = useState(null);
   const [comparing, setComparing] = useState(false);
   // While set, the editor is showing: { creature } is the one being changed, or null for a new creature.
   const [editing, setEditing] = useState(null);
-  const [copying, setCopying] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState(null);
+  const { owned, refresh: refreshOwned } = useOwnedDocuments();
+
+  const canChange = Boolean(creature && owned.has(creature.document?.key));
 
   const stopComparing = () => {
     setComparing(false);
@@ -23,21 +28,37 @@ export default function CreaturesPage() {
   };
 
   const duplicate = async () => {
-    setCopying(true);
+    setBusy(true);
     setError(null);
     try {
       setEditing({ creature: await copyCreature(creature.key) });
+      refreshOwned(); // the copy may be the first thing in their homebrew document
       stopComparing();
     } catch (e) {
       setError(`Couldn't duplicate ${creature.name}: ${e.message}`);
     } finally {
-      setCopying(false);
+      setBusy(false);
+    }
+  };
+
+  const remove = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteCreature(creature.key);
+      setCreature(null);
+    } catch (e) {
+      setError(`Couldn't delete ${creature.name}: ${e.message}`);
+    } finally {
+      setConfirmingDelete(false);
+      setBusy(false);
     }
   };
 
   const saved = (savedCreature) => {
     setCreature(savedCreature);
     setEditing(null);
+    refreshOwned();
   };
 
   return (
@@ -67,9 +88,19 @@ export default function CreaturesPage() {
                 <Button startIcon={<CompareArrows />} disabled={!creature} onClick={() => setComparing(true)}>
                   Compare
                 </Button>
-                <Button startIcon={<ContentCopy />} disabled={!creature || copying} onClick={duplicate}>
+                <Button startIcon={<ContentCopy />} disabled={!creature || busy} onClick={duplicate}>
                   Duplicate
                 </Button>
+                {canChange && (
+                  <>
+                    <Button startIcon={<Edit />} onClick={() => setEditing({ creature })}>
+                      Edit
+                    </Button>
+                    <Button color="error" startIcon={<Delete />} disabled={busy} onClick={() => setConfirmingDelete(true)}>
+                      Delete
+                    </Button>
+                  </>
+                )}
               </>
             )}
             <Button variant="contained" startIcon={<Add />} onClick={() => setEditing({ creature: null })}>
@@ -100,6 +131,21 @@ export default function CreaturesPage() {
           )}
         </>
       )}
+
+      <Dialog open={confirmingDelete} onClose={() => !busy && setConfirmingDelete(false)}>
+        <DialogTitle>Delete {creature?.name}?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>It will be removed from your homebrew for good. This can't be undone.</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmingDelete(false)} disabled={busy}>
+            Cancel
+          </Button>
+          <Button color="error" onClick={remove} disabled={busy}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

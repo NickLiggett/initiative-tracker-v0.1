@@ -1,8 +1,8 @@
 import { Autocomplete, Checkbox, FormControl, TextField, Typography } from "@mui/material";
 import { useState } from "react";
-import MonsterSearch from "./MonsterSearch";
+import CreatureSearch from "../creatures/CreatureSearch";
 
-export const COMBATANT_TYPES = ["PC", "NPC", "Monster", "Other"];
+export const COMBATANT_TYPES = ["PC", "NPC", "Creature", "Other"];
 
 const MAX_NAME_LENGTH = 25;
 const MAX_DIGITS = { initiative: 2, armorClass: 2, hitPoints: 4 };
@@ -11,7 +11,7 @@ const MAX_DIGITS = { initiative: 2, armorClass: 2, hitPoints: 4 };
 export const EMPTY_COMBATANT = { name: "", initiative: "", armorClass: "", hitPoints: "", type: "", creature: null };
 
 /**
- * The fields for adding a combatant. Monsters are picked from the backend's creatures.
+ * The fields for adding a combatant. Creatures are picked from the backend's creatures.
  * @param {{form: object, errors: object, onChange: (changes: object) => void, nameInputRef: object}} props
  */
 export default function CombatantForm({ form, errors, onChange, nameInputRef }) {
@@ -77,15 +77,15 @@ export default function CombatantForm({ form, errors, onChange, nameInputRef }) 
             options={COMBATANT_TYPES}
             size="small"
             value={form.type}
-            onChange={(event, type) => onChange({ type: type ?? "", creature: type === "Monster" ? form.creature : null })}
+            onChange={(event, type) => onChange({ type: type ?? "", creature: type === "Creature" ? form.creature : null })}
             inputValue={typeInput}
             onInputChange={(event, text) => setTypeInput(text)}
             renderInput={(params) => <TextField {...params} label="Type" error={errors.type} />}
           />
         </FormControl>
-        {form.type === "Monster" && (
+        {form.type === "Creature" && (
           <div style={{ display: "flex", alignItems: "center" }}>
-            <MonsterSearch value={form.creature} onChange={(creature) => onChange({ creature })} />
+            <CreatureSearch value={form.creature} onChange={(creature) => onChange({ creature })} />
             <div style={{ display: "flex", alignItems: "center", marginLeft: 15 }}>
               <Typography>Mob:</Typography>
               <Checkbox />

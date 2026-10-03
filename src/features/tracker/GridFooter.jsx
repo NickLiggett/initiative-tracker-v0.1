@@ -24,7 +24,7 @@ export default function GridFooter({ onAdd, onClear, onSort }) {
       hp: form.hitPoints === "" ? "" : parseInt(form.hitPoints, 10),
       reaction: false,
       type: form.type,
-      creature: form.type === "Monster" ? form.creature : null,
+      creature: form.type === "Creature" ? form.creature : null,
     });
     setForm(EMPTY_COMBATANT);
     setErrors(NO_ERRORS);

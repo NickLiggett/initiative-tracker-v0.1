@@ -3,7 +3,7 @@ import { Box, Typography } from "@mui/material";
 /** One tab's content; rendered only while its tab is selected. */
 export function TabPanel({ value, index, children }) {
   return (
-    <div role="tabpanel" hidden={value !== index} id={`monster-tabpanel-${index}`} aria-labelledby={`monster-tab-${index}`}>
+    <div role="tabpanel" hidden={value !== index} id={`creature-tabpanel-${index}`} aria-labelledby={`creature-tab-${index}`}>
       {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );

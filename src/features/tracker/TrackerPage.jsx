@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
-import MonsterInfoDialog from "../monsters/MonsterInfoDialog";
+import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
 import { buildColumns } from "./trackerColumns";
 import {
   applyHpInput,
@@ -86,7 +86,7 @@ export default function TrackerPage() {
         sx={{ border: "1px solid" }}
       />
       {shownCreature && (
-        <MonsterInfoDialog open onClose={() => setShownCreature(null)} creature={shownCreature} />
+        <CreatureInfoDialog open onClose={() => setShownCreature(null)} creature={shownCreature} />
       )}
     </div>
   );

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import dragon from "../../test/fixtures/adult-red-dragon.json";
-import MonsterInfoDialog from "./MonsterInfoDialog";
+import CreatureInfoDialog from "./CreatureInfoDialog";
 
 function openDialog() {
-  render(<MonsterInfoDialog open onClose={() => {}} creature={dragon} />);
+  render(<CreatureInfoDialog open onClose={() => {}} creature={dragon} />);
   return screen.getByRole("dialog");
 }
 
-describe("MonsterInfoDialog", () => {
+describe("CreatureInfoDialog", () => {
   it("shows the creature's name, source and general stats", () => {
     const dialog = openDialog();
 

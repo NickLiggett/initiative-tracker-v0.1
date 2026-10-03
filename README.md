@@ -1,7 +1,7 @@
 # Initiative Tracker
 
 A D&D 5e initiative tracker in React. It keeps the turn order for a combat, tracks HP, reactions and legendary
-actions, and shows monster stat blocks. Monsters come from [open5e-backend](https://github.com/NickLiggett/open5e-backend),
+actions, and shows creature stat blocks. Creatures come from [open5e-backend](https://github.com/NickLiggett/open5e-backend),
 which serves the Open5e data.
 
 ## Running locally
@@ -37,14 +37,14 @@ Copy `.env.example` to `.env.local` (gitignored) to change these:
 
 ## Using it
 
-- **Add combatants** with the form under the grid: name, initiative, and optionally AC and HP. For a monster, choose
-  the type **Monster** and search for it; results show their source, since many monsters exist in several (e.g. the
+- **Add combatants** with the form under the grid: name, initiative, and optionally AC and HP. For a creature, choose
+  the type **Creature** and search for it; results show their source, since many creatures exist in several (e.g. the
   2014 and 2024 rules).
 - **Sort** orders the grid by initiative, highest first. The arrows above the grid move to the next or previous
   turn; the next combatant's reaction is cleared.
 - **Edit cells** by double-clicking them. HP takes `+5` to heal and `-7` to deal damage, as well as a new value.
-- **Monsters** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
-  uses. The document icon opens the monster's stat block.
+- **Creatures** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
+  uses. The document icon opens the creature's stat block.
 
 ## Project structure
 
@@ -59,8 +59,8 @@ src/
 ├── constants/          The page names
 ├── features/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
-│   │                   monster search, and combatants.js (the turn-order rules, as plain functions)
-│   └── monsters/       The stat block dialog and its tabs, and creatureFormat.js (reading backend creature data)
+│   │                   and combatants.js (the turn-order rules, as plain functions)
+│   └── creatures/      CreatureSearch, the stat block dialog and its tabs, and creatureFormat.js (reading backend creature data)
 ├── pages/              Placeholder for pages that don't exist yet
 ├── utils/              Text helpers
 └── test/               Test setup, and a real creature from the backend as a fixture
@@ -69,17 +69,17 @@ src/
 Logic that doesn't need React (turn order, HP edits, formatting creature data) lives in plain `.js` files next to
 the components that use it, with tests beside them (`*.test.js`).
 
-The monster data is the backend's creature JSON (`/api/creatures`): camelCase fields such as `hitPoints`,
+The creature data is the backend's creature JSON (`/api/creatures`): camelCase fields such as `hitPoints`,
 `armorClass`, `abilityScores`, and `actions` with an `actionType` of `ACTION`, `BONUS_ACTION`, `REACTION` or
 `LEGENDARY_ACTION`.
 
 ## Future plans
 
-- **The other pages.** The drawer lists Monsters, Players and Settings, which are placeholders so far.
+- **The other pages.** The drawer lists Creatures, Players and Settings, which are placeholders so far.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
-  save parties, encounters and homebrew monsters through its write endpoints instead of keeping them only in memory.
+  save parties, encounters and homebrew creatures through its write endpoints instead of keeping them only in memory.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row
   re-renders; the same goes for the Mob checkbox, which doesn't do anything yet.
-- **Filling in monster stats.** Prefill AC and HP from the chosen monster.
+- **Filling in creature stats.** Prefill AC and HP from the chosen creature.
 - **Linting.** Create React App used to provide ESLint; add ESLint (and perhaps Prettier) for Vite.
 - **Smaller bundles.** Split MUI and the data grid into their own chunks.

@@ -5,7 +5,7 @@ import SkillsTab from "./SkillsTab";
 import ActionsTab from "./ActionsTab";
 
 /** A creature's stat block, in tabs. */
-export default function MonsterInfoDialog({ open, onClose, creature }) {
+export default function CreatureInfoDialog({ open, onClose, creature }) {
   const [tab, setTab] = useState(1);
 
   return (
@@ -20,9 +20,9 @@ export default function MonsterInfoDialog({ open, onClose, creature }) {
       </DialogTitle>
       <Box sx={{ height: "50em", width: "100%", minWidth: 600, overflow: "auto" }}>
         <Tabs value={tab} onChange={(event, value) => setTab(value)}>
-          <Tab value={1} label="General" id="monster-tab-1" style={{ flex: 1 }} />
-          <Tab value={2} label="Skills" id="monster-tab-2" style={{ flex: 1 }} />
-          <Tab value={3} label="Actions" id="monster-tab-3" style={{ flex: 1 }} />
+          <Tab value={1} label="General" id="creature-tab-1" style={{ flex: 1 }} />
+          <Tab value={2} label="Skills" id="creature-tab-2" style={{ flex: 1 }} />
+          <Tab value={3} label="Actions" id="creature-tab-3" style={{ flex: 1 }} />
         </Tabs>
         <GeneralTab value={tab} index={1} creature={creature} />
         <SkillsTab value={tab} index={2} creature={creature} />

@@ -9,7 +9,7 @@ const SEARCH_DELAY_MS = 300;
  * Picks a creature by searching the backend as you type. The same name often exists in several sources
  * (e.g. the 2014 and 2024 rules), so each option shows its source too.
  */
-export default function MonsterSearch({ value, onChange }) {
+export default function CreatureSearch({ value, onChange }) {
   const [input, setInput] = useState("");
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export default function MonsterSearch({ value, onChange }) {
         setOptions(await searchCreatures(text, { signal: controller.signal }));
       } catch (e) {
         if (e.name !== "AbortError") {
-          setError("Couldn't load monsters. Is the backend running?");
+          setError("Couldn't load creatures. Is the backend running?");
           setOptions([]);
         }
       } finally {
@@ -54,7 +54,7 @@ export default function MonsterSearch({ value, onChange }) {
       filterOptions={(all) => all} // the backend already filtered
       getOptionLabel={(creature) => creature?.name ?? ""}
       isOptionEqualToValue={(option, selected) => option.key === selected.key}
-      noOptionsText={input.trim().length < MIN_SEARCH_LENGTH ? "Type to search" : "No monsters found"}
+      noOptionsText={input.trim().length < MIN_SEARCH_LENGTH ? "Type to search" : "No creatures found"}
       loading={loading}
       autoHighlight
       disablePortal
@@ -73,7 +73,7 @@ export default function MonsterSearch({ value, onChange }) {
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Monster"
+          label="Creature"
           error={Boolean(error)}
           helperText={error}
           InputProps={{

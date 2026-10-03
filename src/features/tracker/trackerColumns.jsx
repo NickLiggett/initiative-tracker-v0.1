@@ -1,6 +1,6 @@
 import { Checkbox, Tooltip, Typography } from "@mui/material";
 import { Clear as ClearIcon, Article as ArticleIcon } from "@mui/icons-material";
-import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../monsters/creatureFormat";
+import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatures/creatureFormat";
 
 /**
  * The initiative grid's columns.

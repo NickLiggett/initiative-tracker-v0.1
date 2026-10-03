@@ -2,6 +2,7 @@ import { useState } from "react";
 import TopToolbar from "./components/layout/TopToolbar";
 import MainDrawer from "./components/layout/MainDrawer";
 import TrackerPage from "./features/tracker/TrackerPage";
+import CreaturesPage from "./features/creatures/CreaturesPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import { Pages } from "./constants/pages";
 
@@ -23,7 +24,11 @@ export default function App() {
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
       />
-      {currentPage === Pages.INITIATIVE_TRACKER ? <TrackerPage /> : <PlaceholderPage title={currentPage} />}
+      {currentPage === Pages.INITIATIVE_TRACKER && <TrackerPage />}
+      {currentPage === Pages.CREATURES && <CreaturesPage />}
+      {currentPage !== Pages.INITIATIVE_TRACKER && currentPage !== Pages.CREATURES && (
+        <PlaceholderPage title={currentPage} />
+      )}
     </div>
   );
 }

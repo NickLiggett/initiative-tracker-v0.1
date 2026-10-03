@@ -9,7 +9,7 @@ const SEARCH_DELAY_MS = 300;
  * Picks a creature by searching the backend as you type. The same name often exists in several sources
  * (e.g. the 2014 and 2024 rules), so each option shows its source too.
  */
-export default function CreatureSearch({ value, onChange }) {
+export default function CreatureSearch({ value, onChange, fullWidth = false }) {
   const [input, setInput] = useState("");
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,7 @@ export default function CreatureSearch({ value, onChange }) {
       autoHighlight
       disablePortal
       size="small"
-      sx={{ width: 240, m: 1 }}
+      sx={fullWidth ? { width: "100%", my: 1 } : { width: 240, m: 1 }}
       renderOption={(props, creature) => (
         <li {...props} key={creature.key}>
           <div>

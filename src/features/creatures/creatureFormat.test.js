@@ -5,12 +5,15 @@ import {
   actionsOfType,
   bonusList,
   formatChallengeRating,
+  formatExperience,
   formatModifier,
   formatSpeed,
   formatUsageLimits,
   immunityText,
+  isLegendaryPreamble,
   legendaryActionsPerRound,
   legendaryResistancesPerDay,
+  proficiencyBonusFor,
 } from "./creatureFormat";
 
 describe("creature formatting", () => {
@@ -78,5 +81,27 @@ describe("the Adult Red Dragon from the backend", () => {
     expect(legendaryActionsPerRound({ actions: [{ actionType: "ACTION", name: "Bite" }] })).toBe(0);
     expect(legendaryActionsPerRound(null)).toBe(0);
     expect(legendaryResistancesPerDay({ traits: [] })).toBe(0);
+  });
+
+  it("works out the proficiency bonus from the challenge rating when the backend has none", () => {
+    expect(proficiencyBonusFor({ challengeRating: 0 })).toBe(2);
+    expect(proficiencyBonusFor({ challengeRating: 4 })).toBe(2);
+    expect(proficiencyBonusFor({ challengeRating: 5 })).toBe(3);
+    expect(proficiencyBonusFor({ challengeRating: 17 })).toBe(6);
+    expect(proficiencyBonusFor({ challengeRating: 30 })).toBe(9);
+    expect(proficiencyBonusFor({ challengeRating: 17, proficiencyBonus: 7 })).toBe(7);
+    expect(proficiencyBonusFor({})).toBeNull();
+  });
+
+  it("formats experience points", () => {
+    expect(formatExperience(18000)).toBe("18,000 XP");
+    expect(formatExperience(null)).toBeNull();
+  });
+
+  it("recognises the legendary action preamble", () => {
+    expect(
+      isLegendaryPreamble({ name: "The dragon can take 3 legendary actions", actionType: "LEGENDARY_ACTION" }),
+    ).toBe(true);
+    expect(isLegendaryPreamble({ name: "Roar", desc: "Frightens.", actionType: "LEGENDARY_ACTION" })).toBe(false);
   });
 });

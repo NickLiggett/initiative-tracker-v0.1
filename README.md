@@ -60,7 +60,7 @@ src/
 ├── features/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
 │   │                   and combatants.js (the turn-order rules, as plain functions)
-│   └── creatures/      CreatureSearch, the stat block dialog and its tabs, and creatureFormat.js (reading backend creature data)
+│   └── creatures/      CreaturesPage, CreatureSearch, CreatureStatBlock (also used by the dialog), and creatureFormat.js (reading backend creature data)
 ├── pages/              Placeholder for pages that don't exist yet
 ├── utils/              Text helpers
 └── test/               Test setup, and a real creature from the backend as a fixture
@@ -75,7 +75,7 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
 
 ## Future plans
 
-- **The other pages.** The drawer lists Creatures, Players and Settings, which are placeholders so far.
+- **The other pages.** The drawer lists Creatures, Players and Settings. Creatures is a search page that shows a full stat block; Players and Settings are placeholders so far.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
   save parties, encounters and homebrew creatures through its write endpoints instead of keeping them only in memory.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row

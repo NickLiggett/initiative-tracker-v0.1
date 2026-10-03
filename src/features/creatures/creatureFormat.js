@@ -12,6 +12,16 @@ export const ACTION_TYPES = [
 /** In the order the tracker has always shown them. */
 export const ABILITIES = ["charisma", "constitution", "dexterity", "intelligence", "strength", "wisdom"];
 
+/** In the order a stat block lists them, with the abbreviations it uses. */
+export const ABILITY_ORDER = [
+  ["strength", "STR"],
+  ["dexterity", "DEX"],
+  ["constitution", "CON"],
+  ["intelligence", "INT"],
+  ["wisdom", "WIS"],
+  ["charisma", "CHA"],
+];
+
 const FRACTIONAL_CR = { 0.125: "1/8", 0.25: "1/4", 0.5: "1/2" };
 
 /** 0.25 → "1/4", 17 → "17" */
@@ -25,6 +35,25 @@ export function formatChallengeRating(challengeRating) {
 /** 5 → "+5", -1 → "-1", 0 → "+0" */
 export function formatModifier(modifier) {
   return modifier < 0 ? `${modifier}` : `+${modifier}`;
+}
+
+/** The creature's proficiency bonus: the backend's when it has one, else worked out from the challenge rating. */
+export function proficiencyBonusFor(creature) {
+  if (creature?.proficiencyBonus !== null && creature?.proficiencyBonus !== undefined) {
+    return creature.proficiencyBonus;
+  }
+  const challengeRating = creature?.challengeRating;
+  if (challengeRating === null || challengeRating === undefined) {
+    return null;
+  }
+  return Math.max(2, Math.ceil(challengeRating / 4) + 1);
+}
+
+/** 18000 → "18,000 XP" */
+export function formatExperience(experiencePoints) {
+  return experiencePoints === null || experiencePoints === undefined
+    ? null
+    : `${experiencePoints.toLocaleString("en-US")} XP`;
 }
 
 /** The modifier for an ability score: 18 → 4. */
@@ -69,6 +98,13 @@ export function actionsOfType(creature, type) {
     .sort((a, b) => (a.orderInStatblock ?? 0) - (b.orderInStatblock ?? 0) || a.name.localeCompare(b.name));
 }
 
+const LEGENDARY_PREAMBLE = /can take (\d+) legendary actions/i;
+
+/** The "can take 3 legendary actions" entry, which is an introduction rather than an action. */
+export function isLegendaryPreamble(action) {
+  return LEGENDARY_PREAMBLE.test(`${action.name} ${action.desc ?? ""}`) && action.actionType === "LEGENDARY_ACTION";
+}
+
 /**
  * How many legendary actions the creature can take per round: the number its stat block states ("can take 3
  * legendary actions"), otherwise the usual 3. 0 if it has none.
@@ -79,7 +115,7 @@ export function legendaryActionsPerRound(creature) {
     return 0;
   }
   for (const action of legendary) {
-    const match = `${action.name} ${action.desc ?? ""}`.match(/can take (\d+) legendary actions/i);
+    const match = `${action.name} ${action.desc ?? ""}`.match(LEGENDARY_PREAMBLE);
     if (match) {
       return parseInt(match[1], 10);
     }

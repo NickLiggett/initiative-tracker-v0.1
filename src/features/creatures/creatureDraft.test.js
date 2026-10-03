@@ -76,6 +76,12 @@ describe("a draft from an existing creature", () => {
       "experiencePoints",
       "speed",
       "speedAll",
+      "darkvisionRange",
+      "blindsightRange",
+      "tremorsenseRange",
+      "truesightRange",
+      "normalSightRange",
+      "resistancesAndImmunities",
     ]) {
       expect(saved[field], field).toEqual(dragon[field]);
     }

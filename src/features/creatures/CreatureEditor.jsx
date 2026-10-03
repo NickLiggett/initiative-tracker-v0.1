@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, Button, Typography } from "@mui/material";
 import { createCreature, replaceCreature } from "../../api/creatures";
-import { listCreatureTypes, listSizes } from "../../api/reference";
+import { listConditions, listCreatureTypes, listDamageTypes, listSizes } from "../../api/reference";
 import CreatureForm from "./CreatureForm";
 import CreatureStatBlock from "./CreatureStatBlock";
 import { blankDraft, creatureFromDraft, draftFromCreature, draftProblems } from "./creatureDraft";
@@ -12,27 +12,25 @@ import { blankDraft, creatureFromDraft, draftFromCreature, draftProblems } from 
  */
 export default function CreatureEditor({ creature, onSaved, onCancel }) {
   const [draft, setDraft] = useState(() => (creature ? draftFromCreature(creature) : blankDraft()));
-  const [sizes, setSizes] = useState([]);
-  const [types, setTypes] = useState([]);
+  const [references, setReferences] = useState({ sizes: [], types: [], damageTypes: [], conditions: [] });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    Promise.all([listSizes({ signal: controller.signal }), listCreatureTypes({ signal: controller.signal })])
-      .then(([loadedSizes, loadedTypes]) => {
-        setSizes(loadedSizes);
-        setTypes(loadedTypes);
-      })
+    const { signal } = controller;
+    Promise.all([listSizes({ signal }), listCreatureTypes({ signal }), listDamageTypes({ signal }), listConditions({ signal })])
+      .then(([sizes, types, damageTypes, conditions]) => setReferences({ sizes, types, damageTypes, conditions }))
       .catch((e) => {
         if (e.name !== "AbortError") {
-          setError("Couldn't load the sizes and types. Is the backend running?");
+          setError("Couldn't load the sizes, types, damage types and conditions. Is the backend running?");
         }
       });
     return () => controller.abort();
   }, []);
 
-  const preview = useMemo(() => ({ ...creatureFromDraft(draft), name: draft.name.trim() || "Untitled creature" }), [draft]);
+  const computed = useMemo(() => creatureFromDraft(draft), [draft]);
+  const preview = { ...computed, name: draft.name.trim() || "Untitled creature" };
   const problems = draftProblems(draft);
 
   const save = async () => {
@@ -78,7 +76,7 @@ export default function CreatureEditor({ creature, onSaved, onCancel }) {
         </Alert>
       )}
       <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) minmax(0, 1fr)" } }}>
-        <CreatureForm draft={draft} onChange={setDraft} sizes={sizes} types={types} />
+        <CreatureForm draft={draft} onChange={setDraft} computed={computed} references={references} />
         <Box sx={{ position: { lg: "sticky" }, top: 16, alignSelf: "start" }} aria-label="Preview">
           <Typography variant="overline" color="text.secondary">
             Preview

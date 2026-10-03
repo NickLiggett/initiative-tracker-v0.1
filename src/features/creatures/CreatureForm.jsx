@@ -1,11 +1,17 @@
 import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, Paper, TextField, Typography } from "@mui/material";
 import { capitalizeFirstLetter } from "../../utils/text";
 import { ActionsEditor, TraitsEditor } from "./AbilitiesEditor";
+import { DefensesEditor, SensesEditor } from "./DefensesEditor";
+import ProficienciesEditor from "./ProficienciesEditor";
 import { ALIGNMENTS, CHALLENGE_RATINGS, SPEED_MODES } from "./creatureDraft";
 import { ABILITY_ORDER, abilityModifier, formatChallengeRating, formatModifier } from "./creatureFormat";
 
-/** The fields of a creature draft. `onChange` is given the new draft. */
-export default function CreatureForm({ draft, onChange, sizes, types }) {
+/**
+ * The fields of a creature draft. `onChange` is given the new draft; `computed` is the creature the draft makes,
+ * for the numbers worked out from it. `references` has the backend's sizes, types, damage types and conditions.
+ */
+export default function CreatureForm({ draft, onChange, computed, references }) {
+  const { sizes, types, damageTypes, conditions } = references;
   const set = (changes) => onChange({ ...draft, ...changes });
   const setIn = (group, changes) => set({ [group]: { ...draft[group], ...changes } });
   const suggestedHitDie = sizes.find((size) => size.key === draft.size?.key)?.suggestedHitDice;
@@ -93,6 +99,19 @@ export default function CreatureForm({ draft, onChange, sizes, types }) {
           })}
         </Box>
       </FormSection>
+
+      <ProficienciesEditor draft={draft} computed={computed} onChange={set} />
+      <SensesEditor
+        senses={draft.senses}
+        passivePerception={computed.passivePerception}
+        onChange={(senses) => set({ senses })}
+      />
+      <DefensesEditor
+        defenses={draft.defenses}
+        damageTypes={damageTypes}
+        conditions={conditions}
+        onChange={(defenses) => set({ defenses })}
+      />
 
       <TraitsEditor traits={draft.traits} onChange={(traits) => set({ traits })} />
       <ActionsEditor actions={draft.actions} onChange={(actions) => set({ actions })} />

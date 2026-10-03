@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import black from "../../test/fixtures/adult-black-dragon.json";
-import { SIZES, TYPES, bodiesSentTo, stubApi } from "../../test/fakeApi";
+import { REFERENCE_ROUTES, bodiesSentTo, stubApi } from "../../test/fakeApi";
 import CreatureEditor from "./CreatureEditor";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -12,7 +12,7 @@ const type = (label, value) =>
 
 describe("CreatureEditor", () => {
   it("won't save without a name, and previews the creature as it's filled in", async () => {
-    stubApi({ "GET /api/sizes": SIZES, "GET /api/creaturetypes": TYPES });
+    stubApi({ ...REFERENCE_ROUTES });
     render(<CreatureEditor creature={null} onSaved={() => {}} onCancel={() => {}} />);
 
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
@@ -24,13 +24,12 @@ describe("CreatureEditor", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
     expect(within(screen.getByLabelText("Preview")).getByRole("heading", { name: "Gribble" })).toBeInTheDocument();
     expect(screen.getByText("Modifier +4")).toBeInTheDocument();
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2)); // sizes and types, so nothing updates after the test
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4)); // the lists, so nothing updates after the test
   });
 
   it("creates a new creature, with its derived numbers", async () => {
     const fetchMock = stubApi({
-      "GET /api/sizes": SIZES,
-      "GET /api/creaturetypes": TYPES,
+      ...REFERENCE_ROUTES,
       "POST /api/creatures": (body) => ({ ...body, key: "dev_gribble" }),
     });
     const onSaved = vi.fn();
@@ -49,8 +48,7 @@ describe("CreatureEditor", () => {
   it("replaces an existing creature, keeping what the form doesn't show", async () => {
     const mine = { ...black, key: "dev_adult-black-dragon", derivedFrom: black.key };
     const fetchMock = stubApi({
-      "GET /api/sizes": SIZES,
-      "GET /api/creaturetypes": TYPES,
+      ...REFERENCE_ROUTES,
       "PUT /api/creatures/dev_adult-black-dragon": (body) => body,
     });
     const onSaved = vi.fn();
@@ -67,7 +65,7 @@ describe("CreatureEditor", () => {
   });
 
   it("shows the backend's message when saving fails", async () => {
-    stubApi({ "GET /api/sizes": SIZES, "GET /api/creaturetypes": TYPES });
+    stubApi({ ...REFERENCE_ROUTES });
     const onSaved = vi.fn();
     render(<CreatureEditor creature={null} onSaved={onSaved} onCancel={() => {}} />);
 
@@ -84,8 +82,7 @@ describe("CreatureEditor", () => {
     const entry = (label) => within(form().getByRole("group", { name: label }));
     const renderNew = () => {
       const fetchMock = stubApi({
-        "GET /api/sizes": SIZES,
-        "GET /api/creaturetypes": TYPES,
+        ...REFERENCE_ROUTES,
         "POST /api/creatures": (body) => ({ ...body, key: "dev_x" }),
       });
       const onSaved = vi.fn();

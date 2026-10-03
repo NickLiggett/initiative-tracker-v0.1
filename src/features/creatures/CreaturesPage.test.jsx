@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import dragon from "../../test/fixtures/adult-red-dragon.json";
 import blackDragon from "../../test/fixtures/adult-black-dragon.json";
-import { SIZES, TYPES, bodiesSentTo, stubApi } from "../../test/fakeApi";
+import { REFERENCE_ROUTES, bodiesSentTo, stubApi } from "../../test/fakeApi";
 import CreaturesPage from "./CreaturesPage";
 
 describe("CreaturesPage", () => {
@@ -50,13 +50,13 @@ describe("CreaturesPage", () => {
   });
 
   it("opens an empty editor for a new creature, and goes back on cancel", async () => {
-    stubApi({ "GET /api/sizes": SIZES, "GET /api/creaturetypes": TYPES });
+    stubApi({ ...REFERENCE_ROUTES });
     render(<CreaturesPage />);
 
     fireEvent.click(screen.getByRole("button", { name: "New creature" }));
     expect(screen.getByRole("heading", { name: "New creature" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Creature" })).not.toBeInTheDocument();
-    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByRole("combobox", { name: "Creature" })).toBeInTheDocument();
@@ -64,8 +64,7 @@ describe("CreaturesPage", () => {
 
   it("shows a new creature's stat block once it's saved", async () => {
     stubApi({
-      "GET /api/sizes": SIZES,
-      "GET /api/creaturetypes": TYPES,
+      ...REFERENCE_ROUTES,
       "POST /api/creatures": (body) => ({ ...body, key: "dev_gribble", document: { displayName: "Dev's homebrew" } }),
     });
     render(<CreaturesPage />);
@@ -84,8 +83,7 @@ describe("CreaturesPage", () => {
     const copy = { ...dragon, key: "dev_adult-red-dragon", derivedFrom: dragon.key };
     const fetchMock = stubApi({
       "GET /api/creatures": { content: [dragon] },
-      "GET /api/sizes": SIZES,
-      "GET /api/creaturetypes": TYPES,
+      ...REFERENCE_ROUTES,
       [`POST /api/creatures/${dragon.key}/copy`]: copy,
       "PUT /api/creatures/dev_adult-red-dragon": (body) => body,
     });

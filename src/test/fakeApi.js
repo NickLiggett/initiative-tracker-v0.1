@@ -35,3 +35,21 @@ export const SIZES = {
 };
 
 export const TYPES = { content: [{ key: "dragon", name: "Dragon" }, { key: "beast", name: "Beast" }] };
+
+export const DAMAGE_TYPES = {
+  content: [
+    { key: "acid", name: "Acid" },
+    { key: "fire", name: "Fire" },
+    { key: "cold", name: "Cold" },
+  ],
+};
+
+export const CONDITIONS = { content: [{ key: "charmed", name: "Charmed" }, { key: "frightened", name: "Frightened" }] };
+
+/** The routes for the lists the creature editor offers. */
+export const REFERENCE_ROUTES = {
+  "GET /api/sizes": SIZES,
+  "GET /api/creaturetypes": TYPES,
+  "GET /api/damagetypes": DAMAGE_TYPES,
+  "GET /api/conditions": CONDITIONS,
+};

@@ -44,6 +44,36 @@ export const USAGE_TYPES = [
 /** What the usage number means for each usage type; the types not here have none. */
 export const USAGE_PARAM_DEFAULTS = { PER_DAY: "1", RECHARGE_ON_ROLL: "5" };
 
+/** The senses with a range, as the draft names them and the creature stores them. */
+export const SENSES = [
+  { key: "darkvision", field: "darkvisionRange", label: "Darkvision" },
+  { key: "blindsight", field: "blindsightRange", label: "Blindsight" },
+  { key: "tremorsense", field: "tremorsenseRange", label: "Tremorsense" },
+  { key: "truesight", field: "truesightRange", label: "Truesight" },
+];
+
+/** The damage and condition lists a creature has, and what its stat block calls them. */
+export const DEFENSES = [
+  { field: "damageVulnerabilities", label: "Damage vulnerabilities", of: "damageTypes" },
+  { field: "damageResistances", label: "Damage resistances", of: "damageTypes" },
+  { field: "damageImmunities", label: "Damage immunities", of: "damageTypes" },
+  { field: "conditionImmunities", label: "Condition immunities", of: "conditions" },
+];
+
+/** What a damage or condition list reads as by itself: "acid, cold" */
+export function listText(items) {
+  return items.map((item) => item.name.toLowerCase()).join(", ");
+}
+
+/**
+ * A defense with different items. Its text follows the items unless it has been written by hand (the source text
+ * often says more than the list, like "damage from nonmagical weapons").
+ */
+export function withDefenseItems(defense, items) {
+  const followsItems = defense.display === listText(defense.items);
+  return { items, display: followsItems ? listText(items) : defense.display };
+}
+
 export const ALIGNMENTS = [
   "lawful good",
   "neutral good",
@@ -165,6 +195,8 @@ export function blankDraft() {
     languages: "",
     saveLevels: {},
     skillLevels: {},
+    senses: Object.fromEntries(SENSES.map(({ key }) => [key, ""])),
+    defenses: Object.fromEntries(DEFENSES.map(({ field }) => [field, { items: [], display: "" }])),
     traits: [],
     actions: [],
   };
@@ -205,6 +237,19 @@ export function draftFromCreature(creature) {
     languages: creature.languages?.asString ?? "",
     saveLevels,
     skillLevels,
+    senses: Object.fromEntries(SENSES.map(({ key, field }) => [key, text(creature[field])])),
+    defenses: Object.fromEntries(
+      DEFENSES.map(({ field }) => {
+        const resistances = creature.resistancesAndImmunities ?? {};
+        return [
+          field,
+          {
+            items: (resistances[field] ?? []).map(({ key, name }) => ({ key, name })),
+            display: resistances[`${field}Display`] ?? "",
+          },
+        ];
+      }),
+    ),
     traits: (creature.traits ?? []).map(newTrait),
     actions: ACTION_TYPES.flatMap(({ type }) => actionsOfType(creature, type)).map((action) =>
       newAction(action.actionType, action),
@@ -287,6 +332,7 @@ export function creatureFromDraft(draft) {
 
   return {
     category: "Monsters",
+    normalSightRange: 10560, // a mile: what every creature in the backend has
     ...base,
     name: draft.name.trim(),
     size: draft.size,
@@ -311,6 +357,16 @@ export function creatureFromDraft(draft) {
     skillBonuses,
     skillBonusesAll,
     passivePerception: 10 + skillBonusesAll.perception + passiveOffset,
+    ...Object.fromEntries(SENSES.map(({ key, field }) => [field, toInteger(draft.senses[key])])),
+    resistancesAndImmunities: {
+      ...base?.resistancesAndImmunities,
+      ...Object.fromEntries(
+        DEFENSES.flatMap(({ field }) => [
+          [field, draft.defenses[field].items],
+          [`${field}Display`, draft.defenses[field].display.trim()],
+        ]),
+      ),
+    },
     traits: draft.traits.filter(hasName).map(({ name, desc }) => ({ name: name.trim(), desc })),
     actions: actionsFromDraft(draft.actions),
     languages: {

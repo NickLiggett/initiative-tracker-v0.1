@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Box, Button, Typography } from "@mui/material";
 import { createCreature, replaceCreature } from "../../api/creatures";
 import { listConditions, listCreatureTypes, listDamageTypes, listSizes } from "../../api/reference";
+import EditorShell from "../../components/resource/EditorShell";
 import CreatureForm from "./CreatureForm";
 import CreatureStatBlock from "./CreatureStatBlock";
 import { blankDraft, creatureFromDraft, draftFromCreature, draftProblems } from "./creatureDraft";
@@ -30,8 +30,6 @@ export default function CreatureEditor({ creature, onSaved, onCancel }) {
   }, []);
 
   const computed = useMemo(() => creatureFromDraft(draft), [draft]);
-  const preview = { ...computed, name: draft.name.trim() || "Untitled creature" };
-  const problems = draftProblems(draft);
 
   const save = async () => {
     setSaving(true);
@@ -46,44 +44,16 @@ export default function CreatureEditor({ creature, onSaved, onCancel }) {
   };
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h5" component="h2">
-            {creature?.key ? `Edit ${creature.name}` : "New creature"}
-          </Typography>
-          {problems.length > 0 && (
-            <Typography variant="body2" color="text.secondary" role="status">
-              {problems.join(" ")}
-            </Typography>
-          )}
-          {creature?.derivedFrom && (
-            <Typography variant="caption" color="text.secondary">
-              Based on {creature.derivedFrom}
-            </Typography>
-          )}
-        </Box>
-        <Button onClick={onCancel} disabled={saving}>
-          Cancel
-        </Button>
-        <Button variant="contained" onClick={save} disabled={saving || problems.length > 0}>
-          Save
-        </Button>
-      </Box>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) minmax(0, 1fr)" } }}>
-        <CreatureForm draft={draft} onChange={setDraft} computed={computed} references={references} />
-        <Box sx={{ position: { lg: "sticky" }, top: 16, alignSelf: "start" }} aria-label="Preview">
-          <Typography variant="overline" color="text.secondary">
-            Preview
-          </Typography>
-          <CreatureStatBlock creature={preview} />
-        </Box>
-      </Box>
-    </Box>
+    <EditorShell
+      title={creature?.key ? `Edit ${creature.name}` : "New creature"}
+      basedOn={creature?.derivedFrom}
+      problems={draftProblems(draft)}
+      error={error}
+      saving={saving}
+      onSave={save}
+      onCancel={onCancel}
+      form={<CreatureForm draft={draft} onChange={setDraft} computed={computed} references={references} />}
+      preview={<CreatureStatBlock creature={{ ...computed, name: draft.name.trim() || "Untitled creature" }} />}
+    />
   );
 }

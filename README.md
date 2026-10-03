@@ -54,15 +54,22 @@ src/
 ├── App.jsx             The shell: toolbar, navigation drawer, current page
 ├── api/                The only code that calls the backend
 │   ├── client.js       apiGet, apiSend: URLs, headers, errors (the backend's problem details)
-│   ├── creatures.js    searchCreatures, getCreature, createCreature, replaceCreature, copyCreature, deleteCreature
+│   ├── resource.js     createResourceApi: search, get, create, replace, copy and remove for any collection
+│   ├── creatures.js    The creatures collection
 │   ├── ownership.js    Which documents the signed-in user owns (so which creatures they can change)
 │   └── reference.js    The sizes, creature types, damage types and conditions the editor offers
-├── components/layout/  TopToolbar, MainDrawer, UserMenu
+├── components/
+│   ├── layout/         TopToolbar, MainDrawer, UserMenu
+│   ├── resource/       What every kind of content (creatures, items, ...) shares: ResourcePage (search, compare, new,
+│   │                   duplicate, edit, delete), ResourceSearch, ComparisonTable, EditorShell, ConfirmDeleteDialog
+│   └── Description.jsx Trait and action text (bold, italic, lists)
 ├── constants/          The page names
 ├── features/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
 │   │                   and combatants.js (the turn-order rules, as plain functions)
-│   └── creatures/      CreaturesPage, CreatureSearch, CreatureStatBlock (also used by the dialog), CreatureEditor, and plain-function helpers: creatureFormat.js (reading backend creature data), compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
+│   └── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its form, and plain-function
+│                   helpers: creatureFormat.js (reading backend creature data), compareCreatures.js, creatureDraft.js (editor
+│                   form state to backend JSON)
 ├── pages/              Placeholder for pages that don't exist yet
 ├── utils/              Text helpers
 └── test/               Test setup, and a real creature from the backend as a fixture

@@ -15,7 +15,7 @@ import {
   isLegendaryPreamble,
   proficiencyBonusFor,
 } from "./creatureFormat";
-import Description from "./Description";
+import Description from "../../components/Description";
 
 /** Everything the backend knows about a creature, laid out like a stat block. */
 export default function CreatureStatBlock({ creature }) {

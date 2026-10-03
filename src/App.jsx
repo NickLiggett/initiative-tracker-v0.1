@@ -4,6 +4,7 @@ import MainDrawer from "./components/layout/MainDrawer";
 import TrackerPage from "./features/tracker/TrackerPage";
 import CreaturesPage from "./features/creatures/CreaturesPage";
 import ItemsPage from "./features/items/ItemsPage";
+import SharingPage from "./features/sharing/SharingPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import { Pages } from "./constants/pages";
 
@@ -28,7 +29,8 @@ export default function App() {
       {currentPage === Pages.INITIATIVE_TRACKER && <TrackerPage />}
       {currentPage === Pages.CREATURES && <CreaturesPage />}
       {currentPage === Pages.ITEMS && <ItemsPage />}
-      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS].includes(currentPage) && (
+      {currentPage === Pages.SHARING && <SharingPage />}
+      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SHARING].includes(currentPage) && (
         <PlaceholderPage title={currentPage} />
       )}
     </div>

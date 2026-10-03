@@ -3,6 +3,7 @@ export const Pages = {
   INITIATIVE_TRACKER: "Initiative Tracker",
   CREATURES: "Creatures",
   ITEMS: "Items",
+  SHARING: "Sharing",
   PLAYERS: "Players",
   SETTINGS: "Settings",
 };

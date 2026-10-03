@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { stubApi } from "../test/fakeApi";
 import { apiSend } from "./client";
 import { deleteCreature } from "./creatures";
-import { listOwnedDocumentKeys } from "./ownership";
+import { listWritableDocumentKeys } from "./ownership";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -15,23 +15,23 @@ const documents = {
   ],
 };
 
-describe("listOwnedDocumentKeys", () => {
+describe("listWritableDocumentKeys", () => {
   it("is the documents the signed-in user owns", async () => {
     stubApi({ "GET /api/me": { id: 1, username: "dev" }, "GET /api/documents": documents });
 
-    await expect(listOwnedDocumentKeys()).resolves.toEqual(new Set(["u1-homebrew"]));
+    await expect(listWritableDocumentKeys()).resolves.toEqual(new Set(["u1-homebrew"]));
   });
 
   it("is nothing when the user has no id, even for documents with no owner", async () => {
     stubApi({ "GET /api/me": { username: "nobody" }, "GET /api/documents": documents });
 
-    await expect(listOwnedDocumentKeys()).resolves.toEqual(new Set());
+    await expect(listWritableDocumentKeys()).resolves.toEqual(new Set());
   });
 
   it("fails when the lists can't be loaded", async () => {
     stubApi({});
 
-    await expect(listOwnedDocumentKeys()).rejects.toThrow();
+    await expect(listWritableDocumentKeys()).rejects.toThrow();
   });
 });
 

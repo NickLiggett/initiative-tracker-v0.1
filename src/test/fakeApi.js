@@ -2,7 +2,8 @@ import { vi } from "vitest";
 
 /**
  * Stands in for the backend: `routes` maps "METHOD /path" (the path without its query) to the JSON to answer with,
- * or to a function of the request body. Anything else is a 404.
+ * or to a function of the request body; either can give a `Response` instead, for a status of its own. Anything else
+ * is a 404.
  */
 export function stubApi(routes) {
   const fetchMock = vi.fn(async (url, init = {}) => {
@@ -12,9 +13,11 @@ export function stubApi(routes) {
     }
     const answer = routes[route];
     const body = init.body ? JSON.parse(init.body) : undefined;
-    return new Response(JSON.stringify(typeof answer === "function" ? answer(body) : answer), {
-      status: route.startsWith("POST") ? 201 : 200,
-    });
+    const result = typeof answer === "function" ? answer(body) : answer;
+    if (result instanceof Response) {
+      return result; // a route can answer with any status
+    }
+    return new Response(JSON.stringify(result), { status: route.startsWith("POST") ? 201 : 200 });
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -54,16 +57,28 @@ export const REFERENCE_ROUTES = {
   "GET /api/conditions": CONDITIONS,
 };
 
-/** The routes that say whose documents are whose: the user is 1, and owns `u1-homebrew`. */
+/**
+ * The routes that say whose documents are whose: the user is `dev` (1) and owns `u1-homebrew`; `u2-homebrew` is
+ * another user's, shared with them as a viewer; `u3-campaign` is shared with them as an editor.
+ */
 export const OWNERSHIP_ROUTES = {
   "GET /api/me": { id: 1, username: "dev" },
   "GET /api/documents": {
     content: [
       { key: "u1-homebrew", ownerId: 1 },
       { key: "u2-homebrew", ownerId: 2 },
+      { key: "u3-campaign", ownerId: 3 },
       { key: "srd-2014", ownerId: null },
     ],
   },
+  "GET /api/documents/u2-homebrew/members": [
+    { username: "snarl", role: "OWNER" },
+    { username: "dev", role: "VIEWER" },
+  ],
+  "GET /api/documents/u3-campaign/members": [
+    { username: "gm", role: "OWNER" },
+    { username: "dev", role: "EDITOR" },
+  ],
 };
 
 export const ITEM_CATEGORIES = {

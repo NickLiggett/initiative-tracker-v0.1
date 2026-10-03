@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, Box, Button, Typography } from "@mui/material";
 import { Add, CompareArrows, ContentCopy, Delete, Edit } from "@mui/icons-material";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
-import useOwnedDocuments from "./useOwnedDocuments";
+import useWritableDocuments from "./useWritableDocuments";
 
 /**
  * A page for one kind of content (creatures, items, ...): search for one and read it, compare it with another,
@@ -39,9 +39,9 @@ export default function ResourcePage({
   const [busy, setBusy] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [error, setError] = useState(null);
-  const { owned, refresh: refreshOwned } = useOwnedDocuments();
+  const { writable, refresh: refreshWritable } = useWritableDocuments();
 
-  const canChange = Boolean(resource && owned.has(resource.document?.key));
+  const canChange = Boolean(resource && writable.has(resource.document?.key));
 
   const stopComparing = () => {
     setComparing(false);
@@ -53,7 +53,7 @@ export default function ResourcePage({
     setError(null);
     try {
       setEditing({ resource: await copy(resource) });
-      refreshOwned(); // the copy may be the first thing in their homebrew document
+      refreshWritable(); // the copy may be the first thing in their homebrew document
       stopComparing();
     } catch (e) {
       setError(`Couldn't duplicate ${resource.name}: ${e.message}`);
@@ -79,7 +79,7 @@ export default function ResourcePage({
   const saved = (savedResource) => {
     setResource(savedResource);
     setEditing(null);
-    refreshOwned();
+    refreshWritable();
   };
 
   return (
@@ -160,6 +160,7 @@ export default function ResourcePage({
       <ConfirmDeleteDialog
         open={confirmingDelete}
         name={resource?.name}
+        from={resource?.document?.key && resource.document.displayName ? resource.document.displayName : undefined}
         busy={busy}
         onCancel={() => setConfirmingDelete(false)}
         onConfirm={deleteResource}

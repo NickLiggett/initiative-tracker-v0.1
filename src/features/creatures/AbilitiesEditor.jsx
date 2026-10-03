@@ -99,6 +99,7 @@ function ActionFields({ action, onChange }) {
         <TextField
           select
           SelectProps={{ native: true }}
+          InputLabelProps={{ shrink: true }} // "No limit" is an empty value, which would leave the label over it
           label="Usage"
           value={action.usageType}
           onChange={(event) =>

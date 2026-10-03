@@ -131,6 +131,7 @@ function ReferenceSelect({ label, options, value, onChange }) {
   return (
     <TextField
       select
+      InputLabelProps={{ shrink: true }} // "None" is an empty value, which would leave the label over it
       label={label}
       value={value?.key ?? ""}
       onChange={(event) => {

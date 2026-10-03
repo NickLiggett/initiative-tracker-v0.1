@@ -157,6 +157,16 @@ describe("CreatureEditor", () => {
       expect(names()).toEqual(["Bite"]);
     });
 
+    it("keeps the labels of selects that start on an empty choice above their text", () => {
+      renderNew();
+      fireEvent.click(form().getByRole("button", { name: "Add action" }));
+
+      // "No limit" and "None" are empty values, which MUI would otherwise treat as nothing to put the label above
+      for (const label of ["Usage", "Size", "Type"]) {
+        expect(form().getAllByText(label, { selector: "label" })[0]).toHaveAttribute("data-shrink", "true"); // the first "Type" is the creature's
+      }
+    });
+
     it("won't save an entry without a name, and says why", () => {
       renderNew();
       fireEvent.click(form().getByRole("button", { name: "Add trait" }));

@@ -1,4 +1,4 @@
-import { apiGet } from "./client";
+import { apiGet, apiSend } from "./client";
 
 /**
  * Creatures whose name contains the text, sorted by name. The backend returns full stat blocks, so a result can be
@@ -13,4 +13,22 @@ export async function searchCreatures(name, { pageSize = 25, signal } = {}) {
 /** One creature by key, e.g. "srd_adult-red-dragon". */
 export function getCreature(key, { signal } = {}) {
   return apiGet(`/api/creatures/${encodeURIComponent(key)}`, undefined, { signal });
+}
+
+/** Saves a new creature in the signed-in user's homebrew document. Resolves to the saved creature. */
+export function createCreature(creature) {
+  return apiSend("POST", "/api/creatures", creature);
+}
+
+/** Replaces every field of one of the user's creatures. Resolves to the saved creature. */
+export function replaceCreature(key, creature) {
+  return apiSend("PUT", `/api/creatures/${encodeURIComponent(key)}`, creature);
+}
+
+/**
+ * Copies any creature into the user's homebrew document, remembering where it came from (`derivedFrom`).
+ * Resolves to the copy.
+ */
+export function copyCreature(key) {
+  return apiSend("POST", `/api/creatures/${encodeURIComponent(key)}/copy`, {});
 }

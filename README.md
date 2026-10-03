@@ -53,14 +53,15 @@ src/
 ├── main.jsx            Entry point
 ├── App.jsx             The shell: toolbar, navigation drawer, current page
 ├── api/                The only code that calls the backend
-│   ├── client.js       apiGet: URLs, headers, errors (the backend's problem details)
-│   └── creatures.js    searchCreatures, getCreature
+│   ├── client.js       apiGet, apiSend: URLs, headers, errors (the backend's problem details)
+│   ├── creatures.js    searchCreatures, getCreature, createCreature, replaceCreature, copyCreature
+│   └── reference.js    The sizes and creature types the editor offers
 ├── components/layout/  TopToolbar, MainDrawer, UserMenu
 ├── constants/          The page names
 ├── features/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
 │   │                   and combatants.js (the turn-order rules, as plain functions)
-│   └── creatures/      CreaturesPage, CreatureSearch, CreatureStatBlock (also used by the dialog), and creatureFormat.js (reading backend creature data)
+│   └── creatures/      CreaturesPage, CreatureSearch, CreatureStatBlock (also used by the dialog), CreatureEditor, and plain-function helpers: creatureFormat.js (reading backend creature data), compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
 ├── pages/              Placeholder for pages that don't exist yet
 ├── utils/              Text helpers
 └── test/               Test setup, and a real creature from the backend as a fixture
@@ -75,7 +76,8 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
 
 ## Future plans
 
-- **The other pages.** The drawer lists Creatures, Players and Settings. Creatures is a search page that shows a full stat block, or compares two creatures side by side; Players and Settings are placeholders so far.
+- **The other pages.** The drawer lists Creatures, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one); Players and Settings are placeholders so far.
+  Saving needs a signed-in user: in development that is `VITE_DEV_USER`. Creatures are saved to the user's homebrew document. The backend stores derived numbers (modifiers, saves, passive perception, ...) rather than working them out, so the editor calculates them.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
   save parties, encounters and homebrew creatures through its write endpoints instead of keeping them only in memory.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row

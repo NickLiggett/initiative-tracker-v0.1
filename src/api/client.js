@@ -36,12 +36,35 @@ export function buildUrl(path, params = {}) {
  * @param {{signal?: AbortSignal}} [options]
  * @throws {ApiError} for error responses
  */
-export async function apiGet(path, params, { signal } = {}) {
+export function apiGet(path, params, { signal } = {}) {
+  return request("GET", buildUrl(path, params), undefined, signal);
+}
+
+/**
+ * Sends JSON to the API (POST, PUT, PATCH) and returns the JSON it answers with.
+ * @param {"POST"|"PUT"|"PATCH"} method
+ * @param {string} path e.g. "/api/creatures"
+ * @param {object} [body]
+ * @throws {ApiError} for error responses
+ */
+export function apiSend(method, path, body, { signal } = {}) {
+  return request(method, buildUrl(path), body, signal);
+}
+
+async function request(method, url, body, signal) {
   const headers = { Accept: "application/json" };
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
   if (DEV_USER) {
     headers["X-User"] = DEV_USER;
   }
-  const response = await fetch(buildUrl(path, params), { headers, signal });
+  const response = await fetch(url, {
+    ...(method !== "GET" && { method }),
+    headers,
+    ...(body !== undefined && { body: JSON.stringify(body) }),
+    signal,
+  });
   if (!response.ok) {
     let detail;
     try {

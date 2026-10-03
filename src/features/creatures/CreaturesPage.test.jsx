@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import dragon from "../../test/fixtures/adult-red-dragon.json";
 import blackDragon from "../../test/fixtures/adult-black-dragon.json";
+import { SIZES, TYPES, bodiesSentTo, stubApi } from "../../test/fakeApi";
 import CreaturesPage from "./CreaturesPage";
 
 describe("CreaturesPage", () => {
@@ -45,6 +46,75 @@ describe("CreaturesPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop comparing" }));
     expect(screen.queryByRole("table", { name: "Comparison" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Adult Red Dragon" })).toBeInTheDocument();
+  });
+
+  it("opens an empty editor for a new creature, and goes back on cancel", async () => {
+    stubApi({ "GET /api/sizes": SIZES, "GET /api/creaturetypes": TYPES });
+    render(<CreaturesPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New creature" }));
+    expect(screen.getByRole("heading", { name: "New creature" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Creature" })).not.toBeInTheDocument();
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("combobox", { name: "Creature" })).toBeInTheDocument();
+  });
+
+  it("shows a new creature's stat block once it's saved", async () => {
+    stubApi({
+      "GET /api/sizes": SIZES,
+      "GET /api/creaturetypes": TYPES,
+      "POST /api/creatures": (body) => ({ ...body, key: "dev_gribble", document: { displayName: "Dev's homebrew" } }),
+    });
+    render(<CreaturesPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New creature" }));
+    fireEvent.change(await screen.findByLabelText(/^Name/), { target: { value: "Gribble" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await screen.findByRole("button", { name: "Duplicate" }); // back from the editor, which has its own preview
+    expect(screen.getByRole("heading", { name: "Gribble" })).toBeInTheDocument();
+    expect(screen.getByText("Dev's homebrew")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "New creature" })).not.toBeInTheDocument();
+  });
+
+  it("duplicates the chosen creature into an editor that remembers where it came from", async () => {
+    const copy = { ...dragon, key: "dev_adult-red-dragon", derivedFrom: dragon.key };
+    const fetchMock = stubApi({
+      "GET /api/creatures": { content: [dragon] },
+      "GET /api/sizes": SIZES,
+      "GET /api/creaturetypes": TYPES,
+      [`POST /api/creatures/${dragon.key}/copy`]: copy,
+      "PUT /api/creatures/dev_adult-red-dragon": (body) => body,
+    });
+    render(<CreaturesPage />);
+    expect(screen.getByRole("button", { name: "Duplicate" })).toBeDisabled();
+
+    await pick("Creature", "red", /Adult Red Dragon/);
+    fireEvent.click(screen.getByRole("button", { name: "Duplicate" }));
+
+    expect(await screen.findByRole("heading", { name: "Edit Adult Red Dragon" })).toBeInTheDocument();
+    expect(screen.getByText(`Based on ${dragon.key}`)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Name/)).toHaveValue("Adult Red Dragon");
+
+    fireEvent.change(screen.getByLabelText(/^Name/), { target: { value: "Elder Red Dragon" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await screen.findByRole("button", { name: "Duplicate" });
+    expect(screen.getByRole("heading", { name: "Elder Red Dragon" })).toBeInTheDocument();
+    expect(bodiesSentTo(fetchMock, "PUT /api/creatures/dev_adult-red-dragon")[0]).toMatchObject({ name: "Elder Red Dragon" });
+  });
+
+  it("says so when a creature can't be duplicated", async () => {
+    stubApi({ "GET /api/creatures": { content: [dragon] } }); // no route for the copy: a 404
+    render(<CreaturesPage />);
+
+    await pick("Creature", "red", /Adult Red Dragon/);
+    fireEvent.click(screen.getByRole("button", { name: "Duplicate" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't duplicate Adult Red Dragon");
     expect(screen.getByRole("heading", { name: "Adult Red Dragon" })).toBeInTheDocument();
   });
 });

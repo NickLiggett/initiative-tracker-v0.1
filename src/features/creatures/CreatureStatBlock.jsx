@@ -1,4 +1,4 @@
-import { Box, Chip, Divider, Link, Paper, Typography } from "@mui/material";
+import { Box, Chip, Divider, Paper, Typography } from "@mui/material";
 import { capitalizeFirstLetter, capitalizeWords } from "../../utils/text";
 import {
   ABILITY_ORDER,
@@ -8,6 +8,7 @@ import {
   formatChallengeRating,
   formatExperience,
   formatModifier,
+  formatSenses,
   formatSpeed,
   formatUsageLimits,
   immunityText,
@@ -16,36 +17,42 @@ import {
 } from "./creatureFormat";
 import Description from "./Description";
 
-const SENSES = [
-  ["darkvisionRange", "Darkvision"],
-  ["blindsightRange", "Blindsight"],
-  ["tremorsenseRange", "Tremorsense"],
-  ["truesightRange", "Truesight"],
-];
-
 /** Everything the backend knows about a creature, laid out like a stat block. */
 export default function CreatureStatBlock({ creature }) {
-  const traits = creature.traits ?? [];
-
   return (
     <Box>
       <Header creature={creature} />
       <KeyStats creature={creature} />
       <AbilityScores creature={creature} />
       <Properties creature={creature} />
-      <Box sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", md: traits.length ? "1fr 1fr" : "1fr" } }}>
-        {traits.length > 0 && (
-          <Section title="Traits">
-            {traits.map((trait, position) => (
-              <Entry key={`${trait.name}-${position}`} name={trait.name} desc={trait.desc} />
-            ))}
-          </Section>
-        )}
-        <Box>
-          {ACTION_TYPES.map(({ type, heading }) => (
-            <ActionSection key={type} creature={creature} type={type} heading={heading} />
+      <CreatureAbilities creature={creature} />
+    </Box>
+  );
+}
+
+/**
+ * A creature's traits and its actions of each type. With `sharedNames` (lower-cased), entries whose name is in it
+ * are tagged "shared"; `stacked` puts the traits above the actions instead of beside them.
+ */
+export function CreatureAbilities({ creature, sharedNames, stacked = false }) {
+  const traits = creature.traits ?? [];
+  const isShared = (name) => sharedNames?.has(name.toLowerCase()) ?? false;
+
+  return (
+    <Box
+      sx={{ display: "grid", gap: 3, gridTemplateColumns: { xs: "1fr", md: traits.length && !stacked ? "1fr 1fr" : "1fr" } }}
+    >
+      {traits.length > 0 && (
+        <Section title="Traits">
+          {traits.map((trait, position) => (
+            <Entry key={`${trait.name}-${position}`} name={trait.name} desc={trait.desc} shared={isShared(trait.name)} />
           ))}
-        </Box>
+        </Section>
+      )}
+      <Box>
+        {ACTION_TYPES.map(({ type, heading }) => (
+          <ActionSection key={type} creature={creature} type={type} heading={heading} isShared={isShared} />
+        ))}
       </Box>
     </Box>
   );
@@ -148,17 +155,11 @@ function AbilityScores({ creature }) {
 function Properties({ creature }) {
   const resistances = creature.resistancesAndImmunities ?? {};
   const skills = bonusList(creature.skillBonuses).map(([name, bonus]) => `${name} ${bonus}`).join(", ");
-  const senses = [
-    creature.passivePerception != null && `Passive Perception ${creature.passivePerception}`,
-    ...SENSES.filter(([field]) => creature[field]).map(([field, label]) => `${label} ${creature[field]} ft.`),
-  ]
-    .filter(Boolean)
-    .join(", ");
   const environments = (creature.environments ?? []).map((environment) => environment.name ?? environment).join(", ");
 
   const rows = [
     ["Skills", skills],
-    ["Senses", senses],
+    ["Senses", formatSenses(creature)],
     ["Languages", capitalizeFirstLetter(creature.languages?.asString) || "None"],
     ["Damage Vulnerabilities", immunityText(resistances.damageVulnerabilitiesDisplay, resistances.damageVulnerabilities)],
     ["Damage Resistances", immunityText(resistances.damageResistancesDisplay, resistances.damageResistances)],
@@ -178,7 +179,7 @@ function Properties({ creature }) {
   );
 }
 
-function ActionSection({ creature, type, heading }) {
+function ActionSection({ creature, type, heading, isShared }) {
   const actions = actionsOfType(creature, type);
   const preamble = actions.find(isLegendaryPreamble);
   const entries = actions.filter((action) => action !== preamble);
@@ -189,7 +190,13 @@ function ActionSection({ creature, type, heading }) {
     <Section title={heading}>
       {preamble && <Description text={preamble.desc ? `${preamble.name}. ${preamble.desc}` : preamble.name} />}
       {entries.map((action, position) => (
-        <Entry key={`${action.name}-${position}`} name={action.name} notes={actionNotes(action)} desc={action.desc} />
+        <Entry
+          key={`${action.name}-${position}`}
+          name={action.name}
+          notes={actionNotes(action)}
+          desc={action.desc}
+          shared={isShared?.(action.name)}
+        />
       ))}
     </Section>
   );
@@ -216,12 +223,13 @@ function Section({ title, children }) {
   );
 }
 
-function Entry({ name, notes, desc }) {
+function Entry({ name, notes, desc, shared = false }) {
   return (
     <Box sx={{ mb: 1.5 }}>
       <Typography sx={{ fontWeight: "bold", fontStyle: "italic" }}>
         {name}
         {notes && ` (${notes})`}
+        {shared && <Chip label="shared" size="small" variant="outlined" sx={{ ml: 1, fontStyle: "normal" }} />}
       </Typography>
       <Description text={desc} />
     </Box>

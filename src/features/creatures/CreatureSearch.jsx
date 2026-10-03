@@ -9,7 +9,7 @@ const SEARCH_DELAY_MS = 300;
  * Picks a creature by searching the backend as you type. The same name often exists in several sources
  * (e.g. the 2014 and 2024 rules), so each option shows its source too.
  */
-export default function CreatureSearch({ value, onChange, fullWidth = false }) {
+export default function CreatureSearch({ value, onChange, label = "Creature", fullWidth = false }) {
   const [input, setInput] = useState("");
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,7 +73,7 @@ export default function CreatureSearch({ value, onChange, fullWidth = false }) {
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Creature"
+          label={label}
           error={Boolean(error)}
           helperText={error}
           InputProps={{

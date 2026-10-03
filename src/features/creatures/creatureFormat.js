@@ -140,6 +140,23 @@ export function bonusList(bonuses) {
     .map(([key, value]) => [labelFromCamelCase(key), formatModifier(value)]);
 }
 
+const SENSES = [
+  ["darkvisionRange", "Darkvision"],
+  ["blindsightRange", "Blindsight"],
+  ["tremorsenseRange", "Tremorsense"],
+  ["truesightRange", "Truesight"],
+];
+
+/** "Passive Perception 20, Darkvision 120 ft., Blindsight 60 ft." */
+export function formatSenses(creature) {
+  return [
+    creature.passivePerception != null && `Passive Perception ${creature.passivePerception}`,
+    ...SENSES.filter(([field]) => creature[field]).map(([field, label]) => `${label} ${creature[field]} ft.`),
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
 /** "Fire, Cold" style list: the source text when it has one, else the names. */
 export function immunityText(display, list) {
   if (display && display.trim()) {

@@ -75,7 +75,7 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
 
 ## Future plans
 
-- **The other pages.** The drawer lists Creatures, Players and Settings. Creatures is a search page that shows a full stat block; Players and Settings are placeholders so far.
+- **The other pages.** The drawer lists Creatures, Players and Settings. Creatures is a search page that shows a full stat block, or compares two creatures side by side; Players and Settings are placeholders so far.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
   save parties, encounters and homebrew creatures through its write endpoints instead of keeping them only in memory.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row

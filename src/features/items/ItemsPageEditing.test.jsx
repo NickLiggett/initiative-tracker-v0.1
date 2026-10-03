@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import rope from "../../test/fixtures/item-rope.json";
 import bagOfHolding from "../../test/fixtures/magic-item-bag-of-holding.json";
 import { ITEM_REFERENCE_ROUTES, OWNERSHIP_ROUTES, bodiesSentTo, stubApi } from "../../test/fakeApi";
@@ -7,14 +7,17 @@ import ItemsPage from "./ItemsPage";
 
 afterEach(() => vi.unstubAllGlobals());
 
-const mine = { ...rope, key: "u1-homebrew_rope", name: "Gribble's Rope", document: { key: "u1-homebrew", displayName: "dev's homebrew" } };
+const homebrew = { key: "u1-homebrew", displayName: "dev's homebrew" };
+const mine = { ...rope, key: "u1-homebrew_rope", name: "Gribble's Rope", document: homebrew };
+const mineMagic = { ...bagOfHolding, key: "u1-homebrew_bag", name: "Gribble's Bag", document: homebrew };
+const theirs = { ...rope, key: "u2-homebrew_cord", name: "Snarl's Cord", document: { key: "u2-homebrew", displayName: "other's homebrew" } };
 
 function stubBackend(extra = {}) {
   return stubApi({
     ...ITEM_REFERENCE_ROUTES,
     ...OWNERSHIP_ROUTES,
-    "GET /api/items": { content: [rope, mine] },
-    "GET /api/magicitems": { content: [bagOfHolding] },
+    "GET /api/items": { content: [rope, mine, theirs] },
+    "GET /api/magicitems": { content: [bagOfHolding, mineMagic] },
     ...extra,
   });
 }
@@ -23,8 +26,16 @@ async function pick(text) {
   const input = screen.getByRole("combobox", { name: "Item" });
   fireEvent.focus(input);
   fireEvent.change(input, { target: { value: "x" + text } });
-  const results = await within(await screen.findByRole("listbox", {}, { timeout: 2000 })).findAllByRole("option");
-  fireEvent.click(results.find((option) => option.textContent.includes(text)));
+  // Wait for the option itself: a listbox from the last choice may still be closing, with only that choice in it.
+  const option = await waitFor(
+    () => {
+      const found = within(screen.getByRole("listbox")).getAllByRole("option").find((candidate) => candidate.textContent.includes(text));
+      expect(found).toBeDefined();
+      return found;
+    },
+    { timeout: 2500 },
+  );
+  fireEvent.click(option);
 }
 
 describe("making items", () => {
@@ -84,7 +95,7 @@ describe("duplicating items", () => {
     const copy = { ...bagOfHolding, key: "u1-homebrew_bag-of-holding", derivedFrom: bagOfHolding.key, document: mine.document };
     const fetchMock = stubBackend({ [`POST /api/magicitems/${bagOfHolding.key}/copy`]: copy });
     render(<ItemsPage />);
-    await pick("Wondrous Item · Uncommon");
+    await pick("Wondrous Item · Uncommon · 5e 2024 Rules");
     fireEvent.click(screen.getByRole("button", { name: "Duplicate" }));
 
     expect(await screen.findByRole("heading", { name: "Edit Bag of Holding" })).toBeInTheDocument();
@@ -105,15 +116,83 @@ describe("duplicating items", () => {
 });
 
 describe("changing your own items", () => {
-  it("offers Edit on an item in the user's own document, and not Delete yet", async () => {
-    stubBackend({ "PUT /api/items/u1-homebrew_rope": (body) => body });
+  it("offers Edit and Delete on items in a document the user owns, and not on anyone else's", async () => {
+    stubBackend();
+    render(<ItemsPage />);
+
+    await pick("Gribble's Rope");
+    expect(await screen.findByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
+
+    await pick("Snarl's Cord"); // another user's homebrew
+    await screen.findByRole("heading", { name: "Snarl's Cord" });
+    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+
+    await pick("Adventuring Gear · 5e 2024 Rules"); // default content
+    await screen.findByRole("heading", { name: "Rope" });
+    expect(screen.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  });
+
+  it("opens the editor to change an item", async () => {
+    const fetchMock = stubBackend({ "PUT /api/items/u1-homebrew_rope": (body) => body });
     render(<ItemsPage />);
     await pick("Gribble's Rope");
 
     fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
     expect(screen.getByRole("heading", { name: "Edit Gribble's Rope" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.change(screen.getByLabelText(/^Item name/), { target: { value: "Gribble's Better Rope" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+    await screen.findByRole("button", { name: "Duplicate" });
+    expect(screen.getByRole("heading", { name: "Gribble's Better Rope" })).toBeInTheDocument();
+    expect(bodiesSentTo(fetchMock, "PUT /api/items/u1-homebrew_rope")[0]).toMatchObject({ name: "Gribble's Better Rope" });
+  });
+
+  it("asks before deleting, and then deletes", async () => {
+    const fetchMock = stubBackend({ "DELETE /api/items/u1-homebrew_rope": null });
+    render(<ItemsPage />);
+    await pick("Gribble's Rope");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Delete Gribble's Rope?")).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(fetchMock).not.toHaveBeenCalledWith(expect.stringContaining("u1-homebrew_rope"), expect.objectContaining({ method: "DELETE" }));
+    expect(screen.getByRole("heading", { name: "Gribble's Rope" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Search for an item to see its details.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/items/u1-homebrew_rope", expect.objectContaining({ method: "DELETE" }));
+  });
+
+  it("deletes a magic item from the magic items", async () => {
+    const fetchMock = stubBackend({ "DELETE /api/magicitems/u1-homebrew_bag": null });
+    render(<ItemsPage />);
+    await pick("Gribble's Bag");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByText("Search for an item to see its details.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith("/api/magicitems/u1-homebrew_bag", expect.objectContaining({ method: "DELETE" }));
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/items/u1-homebrew_bag", expect.anything());
+  });
+
+  it("keeps the item and says why when it can't be deleted", async () => {
+    stubBackend(); // no route for the DELETE: a 404
+    render(<ItemsPage />);
+    await pick("Gribble's Rope");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't delete Gribble's Rope");
+    expect(screen.getByRole("heading", { name: "Gribble's Rope" })).toBeInTheDocument();
   });
 });

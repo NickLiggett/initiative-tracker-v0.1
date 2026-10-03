@@ -9,7 +9,7 @@ import ItemFilters, { NO_FILTERS } from "./ItemFilters";
 import ItemStatBlock from "./ItemStatBlock";
 import { isMagicItem } from "./itemFormat";
 
-/** Search for an item or magic item and read it, compare it with another, or make your own. */
+/** Search for an item or magic item and read it, compare it with another, or make, change and delete your own. */
 export default function ItemsPage() {
   const [filters, setFilters] = useState(NO_FILTERS);
   const [lists, setLists] = useState({ categories: [], rarities: [] });
@@ -46,6 +46,7 @@ export default function ItemsPage() {
       renderComparison={(items) => <ItemComparison items={items} />}
       renderEditor={({ resource, onSaved, onCancel }) => <ItemEditor item={resource} onSaved={onSaved} onCancel={onCancel} />}
       copy={(item) => apiFor(item).copy(item.key)}
+      remove={(item) => apiFor(item).remove(item.key)}
     />
   );
 }

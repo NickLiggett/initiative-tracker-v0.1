@@ -87,7 +87,7 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
 
 ## Future plans
 
-- **The other pages.** The drawer lists Creatures, Items, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one), and edits or deletes the ones in your own homebrew document; Items searches items and magic items together (filter by kind, category and rarity), shows weapon and armor details, compares two items, and makes new ones (**New item**, or **Duplicate**) in the same way as creatures, with descriptions
+- **The other pages.** The drawer lists Creatures, Items, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one), and edits or deletes the ones in your own homebrew document; Items searches items and magic items together (filter by kind, category and rarity), shows weapon and armor details, compares two items, and makes new ones (**New item**, or **Duplicate**), and edits or deletes the ones in your own homebrew document, in the same way as creatures, with descriptions
   that include tables; Players and Settings are placeholders so far.
   Saving needs a signed-in user: in development that is `VITE_DEV_USER`. Creatures are saved to the user's homebrew document. The backend stores derived numbers (modifiers, saves, passive perception, ...) rather than working them out, so the editor calculates them.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and

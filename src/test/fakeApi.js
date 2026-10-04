@@ -12,7 +12,10 @@ export function stubApi(routes) {
       return new Response(JSON.stringify({ detail: `No route for ${route}` }), { status: 404 });
     }
     const answer = routes[route];
-    const body = typeof init.body === "string" ? JSON.parse(init.body) : init.body; // a picture is not JSON
+    // A picture is not JSON, and a token request is a form: those reach the route as they are, the form as an object.
+    const isForm = init.headers?.["Content-Type"] === "application/x-www-form-urlencoded";
+    const body =
+      typeof init.body !== "string" ? init.body : isForm ? Object.fromEntries(new URLSearchParams(init.body)) : JSON.parse(init.body);
     const result = typeof answer === "function" ? answer(body) : answer;
     if (result instanceof Response) {
       return result; // a route can answer with any status

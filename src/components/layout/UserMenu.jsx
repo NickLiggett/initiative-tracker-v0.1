@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box, Divider, IconButton, Menu, MenuItem, Typography } from "@mui/material";
+import { useAuth } from "../../auth/AuthContext";
 import { useSettings } from "../../settings/SettingsContext";
 import UserAvatar from "./UserAvatar";
 
@@ -9,6 +10,7 @@ import UserAvatar from "./UserAvatar";
  */
 export default function UserMenu({ onOpenSettings }) {
   const { username } = useSettings();
+  const { status, accountUrl, signOut } = useAuth();
   const [anchorEl, setAnchorEl] = useState(null);
   const close = () => setAnchorEl(null);
   const go = (section) => () => {
@@ -37,6 +39,22 @@ export default function UserMenu({ onOpenSettings }) {
         <Divider />
         <MenuItem onClick={go("profile")}>Profile</MenuItem>
         <MenuItem onClick={go("appearance")}>Appearance</MenuItem>
+        {status === "signedIn" && <Divider />}
+        {status === "signedIn" && (
+          <MenuItem component="a" href={accountUrl} target="_blank" rel="noreferrer" onClick={close}>
+            Manage account
+          </MenuItem>
+        )}
+        {status === "signedIn" && (
+          <MenuItem
+            onClick={() => {
+              close();
+              signOut();
+            }}
+          >
+            Sign out
+          </MenuItem>
+        )}
       </Menu>
     </Box>
   );

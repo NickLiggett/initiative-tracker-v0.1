@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { CssBaseline, ThemeProvider, useMediaQuery } from "@mui/material";
 import { getCurrentUser } from "../api/documents";
+import { useAuth } from "../auth/AuthContext";
 import { deleteAvatar, getSettings, saveSettings, uploadAvatar } from "../api/profile";
 import {
   CHOSEN,
@@ -48,6 +49,7 @@ export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(() => loadCachedSettings(lastUser()));
   const [saveFailed, setSaveFailed] = useState(false);
   const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
+  const { status: authStatus } = useAuth();
 
   // The latest values, for the functions below to use without being remade (and the timer to see) on every change.
   const latest = useRef({ settings, username, signedIn });
@@ -75,6 +77,9 @@ export function SettingsProvider({ children }) {
   useEffect(() => () => void flush(), [flush]);
 
   useEffect(() => {
+    if (authStatus === "loading" || authStatus === "signedOut") {
+      return undefined; // nothing can be asked of the account until someone is signed in
+    }
     const controller = new AbortController();
     const { signal } = controller;
 
@@ -131,7 +136,7 @@ export function SettingsProvider({ children }) {
     })();
 
     return () => controller.abort();
-  }, []);
+  }, [authStatus]);
 
   /** Stores the settings in this browser; true if the browser would keep them. */
   const keep = (next) => {

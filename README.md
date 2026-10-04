@@ -56,7 +56,8 @@ There are two ways to run:
   ```
 
   The app then shows a login page first. Test accounts are `dm`, `player` and `stranger` (password = username), and
-  anyone can register. The emails for a password reset arrive in the mail catcher at <http://localhost:8025>.
+  anyone can register, but must verify their email address before signing in. The emails for verifying an address,
+  resetting a password and invitations to shared homebrew all arrive in the mail catcher at <http://localhost:8025>.
   `docker compose up -d app` puts the backend back in the `dev` profile.
 
 ## What it does
@@ -122,10 +123,18 @@ which ends the provider's session too.
 
 ### Sharing
 
-Share your homebrew with other people by username. Each document you own lists who it is shared with, with their
-pictures; add someone as a **viewer** (can see it) or an **editor** (can also change and delete what is in it),
-change their role, or stop sharing. It also lists the homebrew other people have shared with you, which you can leave.
-The person needs to have signed in once, because the backend only knows usernames it has seen.
+Share your homebrew with other people by username or email address. Each document you own lists who it is shared
+with, with their pictures; add someone as a **viewer** (can see it) or an **editor** (can also change and delete what
+is in it), change their role, or stop sharing. It also lists the homebrew other people have shared with you, which you
+can leave.
+
+One field takes either. A **username** needs the person to have signed in once, because the backend only knows
+usernames it has seen. An **email address** invites someone who hasn't: they are emailed, the invitation is listed
+under the document as waiting (and can be cancelled), and when they create an account or sign in with that address
+and have verified it, the document is theirs to see. If the address already belongs to someone, they are added at
+once. An invitation is for that one address, not a link to pass around, and expires after 30 days. It needs the
+backend with invitations and sign-in (`email_verified` in the token), so the `dev` profile can send invitations but
+never accept them.
 
 ### Settings
 
@@ -150,7 +159,7 @@ src/
 │   ├── resource.js     createResourceApi: search, get, create, replace, copy and remove for any collection
 │   ├── creatures.js    The creatures collection
 │   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
-│   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing)
+│   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
 │   ├── sharing.js      Everything the Sharing page shows, loaded together
 │   ├── ownership.js    Which documents the signed-in user can change (their own, and those they are an editor of)
 │   ├── profile.js      The signed-in user's own settings, avatar picture and tracker state, and where anyone's avatar is
@@ -174,7 +183,7 @@ src/
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
 │   ├── items/          ItemsPage, filters, stat block, comparison, editor and its form, and the same kind of helpers:
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
-│   ├── sharing/        SharingPage and its document cards, and sharing.js (the username and role rules)
+│   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
 │   └── settings/       SettingsPage, with the profile (avatar) and appearance (mode and colors) tabs
 ├── settings/           The user's look-and-feel settings: what they are and the copy kept in the browser (settings.js),
 │                       the theme they make (theme.js), the provider that applies them and keeps them on the account
@@ -211,8 +220,6 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
 
 ## Future plans
 
-- **Email invitations** to shared homebrew, for people who haven't signed in yet. Sign-in now exists; this needs an
-  email service and a way to hold an invitation until the person has an account.
 - **Make Keycloak's pages look like the app.** They are Keycloak's own theme, so signing in leaves the app's look
   behind for a moment.
 - **Fewer clicks to get back in.** A new tab asks you to press Sign in (which the provider answers at once while its

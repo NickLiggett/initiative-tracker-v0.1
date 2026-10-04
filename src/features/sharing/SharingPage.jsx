@@ -1,20 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Box, Button, Chip, CircularProgress, Paper, Typography } from "@mui/material";
-import { shareDocument, unshareDocument } from "../../api/documents";
+import { cancelInvitation, inviteByEmail, listInvitations, shareDocument, unshareDocument } from "../../api/documents";
 import { loadSharing } from "../../api/sharing";
 import UserAvatar from "../../components/layout/UserAvatar";
 import ConfirmDialog from "../../components/resource/ConfirmDialog";
 import DocumentCard from "./DocumentCard";
-import { ROLE_LABELS, sharingErrorMessage } from "./sharing";
+import { ROLE_LABELS, inviteNotice, sharingErrorMessage } from "./sharing";
 
 /**
- * Share your homebrew with other users by username, and see what has been shared with you. Everything saved in a
+ * Share your homebrew with other users by username or by inviting an email address, and see what has been shared with
+ * you. Everything saved in a
  * document is shared with it: viewers can see it and editors can change it too.
  */
 export default function SharingPage() {
   const [sharing, setSharing] = useState(null); // see loadSharing; null until loaded
   const [loadError, setLoadError] = useState(null);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null); // {severity, text} about an invitation just sent
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(null); // {documentKey, documentName, username, leaving}
 
@@ -35,18 +37,20 @@ export default function SharingPage() {
     return () => controller.abort();
   }, [load]);
 
-  const changeOwned = (documentKey, change) =>
+  const changeOwnedEntry = (documentKey, change) =>
     setSharing((current) => ({
       ...current,
-      owned: current.owned.map((entry) =>
-        entry.document.key === documentKey ? { ...entry, members: change(entry.members) } : entry,
-      ),
+      owned: current.owned.map((entry) => (entry.document.key === documentKey ? { ...entry, ...change(entry) } : entry)),
     }));
+
+  const changeOwned = (documentKey, change) =>
+    changeOwnedEntry(documentKey, (entry) => ({ members: change(entry.members) }));
 
   /** Runs a change to what's shared; on failure shows why and returns false. */
   const attempt = async (username, action) => {
     setBusy(true);
     setError(null);
+    setNotice(null);
     try {
       await action();
       return true;
@@ -58,13 +62,35 @@ export default function SharingPage() {
     }
   };
 
-  const share = (documentKey) => (username, role) =>
-    attempt(username, async () => {
-      const member = await shareDocument(documentKey, username, role);
+  const share = (documentKey) => (target, role) =>
+    attempt(target.value, async () => {
+      if (target.kind === "email") {
+        const result = await inviteByEmail(documentKey, target.value, role);
+        if (result.username) {
+          changeOwned(documentKey, (members) => [
+            ...members.filter((existing) => existing.username !== result.username),
+            { username: result.username, role: result.role },
+          ]);
+        } else {
+          const invitations = await listInvitations(documentKey);
+          changeOwnedEntry(documentKey, () => ({ invitations }));
+        }
+        setNotice(inviteNotice(result));
+        return;
+      }
+      const member = await shareDocument(documentKey, target.value, role);
       changeOwned(documentKey, (members) => [
         ...members.filter((existing) => existing.username !== member.username),
         member,
       ]);
+    });
+
+  const cancel = (documentKey) => (invitation) =>
+    attempt(invitation.email, async () => {
+      await cancelInvitation(documentKey, invitation.id);
+      changeOwnedEntry(documentKey, (entry) => ({
+        invitations: (entry.invitations ?? []).filter((existing) => existing.id !== invitation.id),
+      }));
     });
 
   const changeRole = (documentKey) => async (username, role) => {
@@ -99,8 +125,8 @@ export default function SharingPage() {
           Sharing
         </Typography>
         <Typography color="text.secondary">
-          Share your homebrew with other people by their username. They see your creatures and items when they search,
-          and if they can edit, they can change them too.
+          Share your homebrew with other people by their username, or invite an email address if they haven't signed in
+          yet. They see your creatures and items when they search, and if they can edit, they can change them too.
         </Typography>
       </Box>
 
@@ -108,6 +134,11 @@ export default function SharingPage() {
       {error && (
         <Alert severity="error" onClose={() => setError(null)}>
           {error}
+        </Alert>
+      )}
+      {notice && (
+        <Alert severity={notice.severity} onClose={() => setNotice(null)}>
+          {notice.text}
         </Alert>
       )}
       {!sharing && !loadError && <CircularProgress aria-label="Loading" />}
@@ -132,6 +163,7 @@ export default function SharingPage() {
                 busy={busy}
                 onShare={share(entry.document.key)}
                 onChangeRole={changeRole(entry.document.key)}
+                onCancelInvitation={cancel(entry.document.key)}
                 onRemove={(username) =>
                   setConfirming({ documentKey: entry.document.key, documentName: entry.document.displayName ?? entry.document.name, username })
                 }

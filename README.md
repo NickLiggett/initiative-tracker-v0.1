@@ -37,14 +37,45 @@ Copy `.env.example` to `.env.local` (gitignored) to change these:
 |---|---|---|
 | `VITE_API_PROXY_TARGET` | `http://localhost:8080` | Where the dev server sends `/api` requests |
 | `VITE_API_URL` | empty (same origin) | Call the backend at this URL instead of through `/api`. The backend then needs CORS for this app's origin |
-| `VITE_DEV_USER` | unset | Local development only: sent as the `X-User` header, which the backend's `dev` profile uses to pick the user. Anything that saves (homebrew, sharing, settings, the tracker) needs a user, so set this |
+| `VITE_DEV_USER` | unset | Local development only: sent as the `X-User` header, which the backend's `dev` profile uses to pick the user. Anything that saves (homebrew, sharing, settings, the tracker) needs a user, so set this unless you use real sign-in. Ignored when `VITE_OIDC_ISSUER` is set |
+| `VITE_OIDC_ISSUER` | unset | Turns on real sign-in: the address of the OpenID Connect realm, e.g. `http://localhost:8180/realms/open5e` |
+| `VITE_OIDC_CLIENT_ID` | unset | The client to sign in as, e.g. `initiative-tracker`. Needed together with the issuer |
+| `VITE_OIDC_REDIRECT_URI` | the app's own address | Where the provider sends people back to after signing in |
 
-There is no sign-in page yet. In development you are whoever `VITE_DEV_USER` says; different values give different
-people, which is how to try out sharing.
+### Signing in
+
+There are two ways to run:
+
+- **Development header (the default).** There is no login page; you are whoever `VITE_DEV_USER` says, and different
+  values give different people, which is how to try out sharing. The backend must run in its `dev` profile.
+- **Real sign-in.** Set `VITE_OIDC_ISSUER` and `VITE_OIDC_CLIENT_ID` (see `.env.example`) and run the backend with its
+  token sign-in, which also starts Keycloak and a mail catcher (in `open5e-backend`):
+
+  ```sh
+  docker compose -f compose.yaml -f compose.auth.yaml up -d --build
+  ```
+
+  The app then shows a login page first. Test accounts are `dm`, `player` and `stranger` (password = username), and
+  anyone can register. The emails for a password reset arrive in the mail catcher at <http://localhost:8025>.
+  `docker compose up -d app` puts the backend back in the `dev` profile.
 
 ## What it does
 
 The drawer (the menu at the top left) lists the pages.
+
+### Login
+
+With real sign-in on, nobody sees the app until they are signed in. The login page offers:
+
+- **Sign in**, which sends you to the provider's form and brings you back signed in.
+- **Create an account**, the provider's registration form; you come back signed in.
+- **Forgot your password?**, the provider's reset page, which emails a link to set a new one.
+
+The forms are the provider's (Keycloak's), so passwords never pass through this app. It signs in by the authorization
+code flow with PKCE and keeps the tokens for the browser tab: a reload stays signed in, they are renewed in the
+background a minute before they end, and if they can't be renewed you are sent back to the login page with a note.
+The account menu then has **Manage account** (the provider's page for changing your password or email) and **Sign out**,
+which ends the provider's session too.
 
 ### Initiative Tracker
 
@@ -130,8 +161,11 @@ src/
 │   │                   duplicate, edit, delete), ResourceSearch, ComparisonTable (and compareRows.js, its row builders),
 │   │                   EditorShell, FormSection, StatBlockParts, ConfirmDialog
 │   └── Description.jsx Trait, action and item text (bold, italic, lists, tables)
+├── auth/               Signing in: the provider (AuthContext), the gate that shows the login page, and plain-function helpers:
+│                       pkce.js, tokens.js (kept for the tab), oidc.js (addresses and token requests)
 ├── constants/          The page names
 ├── features/
+│   ├── login/          LoginPage
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer and combatant form,
 │   │                   combatants.js (the turn-order rules, as plain functions), and useSavedTracker with
 │   │                   trackerState.js (keeping it on the account and bringing it back)
@@ -177,10 +211,14 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
 
 ## Future plans
 
-- **Sign-in.** A login page that sends you through the backend's OpenID Connect provider (authorization code flow),
-  with "create a new user" and "forgot password" (Keycloak has both pages; they need setting up, and password reset
-  needs an email server). Until then, development uses `VITE_DEV_USER`.
-- **Email invitations** to shared homebrew, for people who haven't signed in yet. Needs sign-in and an email service.
+- **Email invitations** to shared homebrew, for people who haven't signed in yet. Sign-in now exists; this needs an
+  email service and a way to hold an invitation until the person has an account.
+- **Make Keycloak's pages look like the app.** They are Keycloak's own theme, so signing in leaves the app's look
+  behind for a moment.
+- **Fewer clicks to get back in.** A new tab asks you to press Sign in (which the provider answers at once while its
+  session lasts); a silent check could skip that.
+- **Production sign-in settings** in the backend's realm: email verification, a real mail server, a password policy,
+  and the app's real address instead of `http://localhost:*`.
 - **The Players page.** It is a placeholder.
 - **Separate documents** (say, one per campaign), so a DM can share one and keep another private. The backend allows
   it; the editors would need a "save into which document" choice.

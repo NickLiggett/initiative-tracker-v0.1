@@ -8,6 +8,17 @@ const BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
 // Local development only: the backend's dev profile takes the user from this header.
 const DEV_USER = import.meta.env.DEV ? import.meta.env.VITE_DEV_USER : undefined;
 
+// When the app has real sign-in (see auth/AuthContext), requests carry the user's token instead of the dev header.
+let tokenProvider = null;
+
+/**
+ * Sets where requests get the access token to send: a function that resolves to the token, or to null when nobody is
+ * signed in. Null (the default) means no sign-in is configured, and the dev header is used if there is one.
+ */
+export function setAuthTokenProvider(provider) {
+  tokenProvider = provider;
+}
+
 /** An error response from the API, with the problem-details message the backend sends. */
 export class ApiError extends Error {
   constructor(status, detail) {
@@ -58,7 +69,12 @@ async function request(method, url, body, signal) {
   if (body !== undefined) {
     headers["Content-Type"] = raw ? body.type : "application/json";
   }
-  if (DEV_USER) {
+  if (tokenProvider) {
+    const token = await tokenProvider();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  } else if (DEV_USER) {
     headers["X-User"] = DEV_USER;
   }
   const response = await fetch(url, {

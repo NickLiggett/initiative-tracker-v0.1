@@ -1,27 +1,28 @@
 import { useState } from "react";
 import { Box, Button, Chip, IconButton, Paper, TextField, Tooltip, Typography } from "@mui/material";
-import { Delete } from "@mui/icons-material";
+import { Delete, MailOutline } from "@mui/icons-material";
 import UserAvatar from "../../components/layout/UserAvatar";
-import { ROLE_LABELS, SHARE_ROLES, normalizeUsername, shareProblem } from "./sharing";
+import { ROLE_LABELS, SHARE_ROLES, parseShareTarget, shareTargetProblem } from "./sharing";
 
 /**
- * One of the user's own documents and who it is shared with, with a way to share it with someone else, change what
- * someone can do, and stop sharing.
+ * One of the user's own documents and who it is shared with, with a way to share it with someone else (by username,
+ * or by inviting an email address), change what someone can do, stop sharing, and cancel invitations.
  *
- * @param {{document: object, members: {username: string, role: string}[]}} entry
+ * @param {{document: object, members: {username: string, role: string}[], invitations?: {id: number, email: string, role: string}[]}} entry
  * @param {boolean} busy whether something is being saved, which turns the controls off
- * @param {(username: string, role: string) => Promise<boolean>} onShare resolves to whether it worked
+ * @param {(target: {kind: "username"|"email", value: string}, role: string) => Promise<boolean>} onShare resolves to whether it worked
  * @param {(username: string, role: string) => void} onChangeRole
  * @param {(username: string) => void} onRemove
+ * @param {(invitation: object) => void} onCancelInvitation
  */
-export default function DocumentCard({ entry, me, busy, onShare, onChangeRole, onRemove }) {
-  const { document, members } = entry;
-  const [username, setUsername] = useState("");
+export default function DocumentCard({ entry, me, busy, onShare, onChangeRole, onRemove, onCancelInvitation }) {
+  const { document, members, invitations = [] } = entry;
+  const [text, setText] = useState("");
   const [role, setRole] = useState("VIEWER");
   const [tried, setTried] = useState(false);
 
-  const name = normalizeUsername(username);
-  const problem = shareProblem(name, members);
+  const target = parseShareTarget(text);
+  const problem = shareTargetProblem(target, members);
   const showProblem = tried && problem;
 
   const share = async (event) => {
@@ -30,8 +31,8 @@ export default function DocumentCard({ entry, me, busy, onShare, onChangeRole, o
     if (problem) {
       return;
     }
-    if (await onShare(name, role)) {
-      setUsername("");
+    if (await onShare(target, role)) {
+      setText("");
       setTried(false);
     }
   };
@@ -97,15 +98,40 @@ export default function DocumentCard({ entry, me, busy, onShare, onChangeRole, o
         )}
       </Box>
 
+      {invitations.length > 0 && (
+        <Box component="ul" aria-label="Invited" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 1 }}>
+          {invitations.map((invitation) => (
+            <Box key={invitation.id} component="li" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <MailOutline color="action" sx={{ width: 28 }} />
+              <Typography sx={{ flex: 1, wordBreak: "break-all" }}>
+                {invitation.email}
+                <Typography component="span" color="text.secondary">
+                  {" "}
+                  (waiting for them to sign in)
+                </Typography>
+              </Typography>
+              <Chip size="small" label={ROLE_LABELS[invitation.role] ?? invitation.role} />
+              <Tooltip title="Cancel invitation">
+                <span>
+                  <IconButton aria-label={`Cancel invitation to ${invitation.email}`} disabled={busy} onClick={() => onCancelInvitation(invitation)}>
+                    <Delete />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
+          ))}
+        </Box>
+      )}
+
       <Box component="form" noValidate onSubmit={share} aria-label="Share" sx={{ display: "flex", gap: 1, alignItems: "flex-start", flexWrap: "wrap" }}>
         <TextField
           size="small"
-          label="Share with (username)"
-          value={username}
+          label="Share with (username or email)"
+          value={text}
           error={Boolean(showProblem)}
-          helperText={showProblem || "They need to have signed in to the app once."}
-          onChange={(event) => setUsername(event.target.value)}
-          sx={{ minWidth: 260 }}
+          helperText={showProblem || "A username, or an email address to invite someone who hasn't signed in yet."}
+          onChange={(event) => setText(event.target.value)}
+          sx={{ minWidth: 320 }}
         />
         <TextField
           select

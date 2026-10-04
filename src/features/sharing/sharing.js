@@ -15,6 +15,39 @@ export function normalizeUsername(text) {
   return text.trim().replace(/^@+/, "").toLowerCase();
 }
 
+const EMAIL = /^[^@\s,;<>()[\]"]+@[^@\s,;<>()[\]"]+\.[^@\s,;<>()[\]"]+$/;
+
+/**
+ * What someone typed in "Share with": an email address to invite (trimmed, in lower case), or else a username.
+ * @returns {{kind: "email"|"username", value: string}}
+ */
+export function parseShareTarget(text) {
+  const trimmed = text.trim();
+  return EMAIL.test(trimmed) ? { kind: "email", value: trimmed.toLowerCase() } : { kind: "username", value: normalizeUsername(text) };
+}
+
+/** Why the target can't be shared with, or null if it can; see {@link shareProblem}. An email address is up to the backend. */
+export function shareTargetProblem(target, members) {
+  if (target.kind === "email") {
+    return null;
+  }
+  return target.value ? shareProblem(target.value, members) : "Type a username or an email address.";
+}
+
+/** What inviting an address did, in words, and whether it is something to look at (a warning). */
+export function inviteNotice(result) {
+  if (result.username) {
+    return { severity: "success", text: `${result.email} already has an account, so ${result.username} can see it now.` };
+  }
+  if (result.emailSent) {
+    return { severity: "success", text: `Invited ${result.email}. They get access when they sign in with that address.` };
+  }
+  return {
+    severity: "warning",
+    text: `Invited ${result.email}, but the email couldn't be sent. They still get access when they sign in with that address.`,
+  };
+}
+
 /**
  * Why a username can't be shared with, or null if it can: it is empty, it is the owner, or the document is already
  * shared with them.

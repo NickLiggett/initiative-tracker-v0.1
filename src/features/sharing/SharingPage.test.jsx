@@ -36,7 +36,7 @@ async function renderPage(extra) {
 }
 
 const shareWith = (text) => {
-  fireEvent.change(mine().getByLabelText("Share with (username)"), { target: { value: text } });
+  fireEvent.change(mine().getByLabelText("Share with (username or email)"), { target: { value: text } });
   fireEvent.click(mine().getByRole("button", { name: "Share" }));
 };
 
@@ -113,7 +113,7 @@ describe("sharing", () => {
     await waitFor(() => expect(people().getByText("friend")).toBeInTheDocument());
     expect(people().getByLabelText("What friend can do")).toHaveValue("EDITOR");
     expect(bodiesSentTo(fetchMock, "PUT /api/documents/u1-homebrew/members/friend")).toEqual([{ role: "EDITOR" }]);
-    expect(mine().getByLabelText("Share with (username)")).toHaveValue(""); // ready for the next one
+    expect(mine().getByLabelText("Share with (username or email)")).toHaveValue(""); // ready for the next one
   });
 
   it("says what to do when there is no such user", async () => {
@@ -128,7 +128,7 @@ describe("sharing", () => {
       "There's no user called ghost. They need to have signed in to the app once before you can share with them.",
     );
     expect(people().queryByText("ghost")).not.toBeInTheDocument();
-    expect(mine().getByLabelText("Share with (username)")).toHaveValue("ghost"); // kept, to fix
+    expect(mine().getByLabelText("Share with (username or email)")).toHaveValue("ghost"); // kept, to fix
   });
 
   it("won't share with the owner, someone who already has access, or nobody, and doesn't ask the backend", async () => {
@@ -136,13 +136,100 @@ describe("sharing", () => {
     const callsBefore = fetchMock.mock.calls.length;
 
     shareWith("");
-    expect(mine().getByText("Type a username.")).toBeInTheDocument();
+    expect(mine().getByText("Type a username or an email address.")).toBeInTheDocument();
     shareWith("dev");
     expect(mine().getByText("That's you: you already own it.")).toBeInTheDocument();
     shareWith("Player");
     expect(mine().getByText(/^player can already see this/)).toBeInTheDocument();
 
     expect(fetchMock.mock.calls.length).toBe(callsBefore);
+  });
+});
+
+describe("inviting an email address", () => {
+  const pending = { id: 7, email: "old@example.com", role: "VIEWER", invitedBy: "dev" };
+
+  it("lists the pending invitations, which can be cancelled", async () => {
+    const fetchMock = await renderPage({
+      "GET /api/documents/u1-homebrew/invitations": [pending],
+      "DELETE /api/documents/u1-homebrew/invitations/7": null,
+    });
+    const invited = within(mine().getByRole("list", { name: "Invited" }));
+    expect(invited.getByText("old@example.com")).toBeInTheDocument();
+    expect(invited.getByText("Can view")).toBeInTheDocument();
+
+    fireEvent.click(invited.getByRole("button", { name: "Cancel invitation to old@example.com" }));
+
+    await waitFor(() => expect(mine().queryByRole("list", { name: "Invited" })).not.toBeInTheDocument());
+    expect(fetchMock.mock.calls.some(([url, init]) => url === "/api/documents/u1-homebrew/invitations/7" && init.method === "DELETE")).toBe(true);
+  });
+
+  it("invites an address, in lower case, with the role chosen, and shows it as pending", async () => {
+    let invitations = [];
+    const fetchMock = await renderPage({
+      "GET /api/documents/u1-homebrew/invitations": () => invitations,
+      "POST /api/documents/u1-homebrew/invitations": (body) => {
+        invitations = [{ id: 8, email: body.email, role: body.role, invitedBy: "dev" }];
+        return { email: body.email, role: body.role, username: null, emailSent: true };
+      },
+    });
+    fireEvent.change(mine().getByLabelText("They can"), { target: { value: "EDITOR" } });
+
+    shareWith("  New.Friend@Example.COM ");
+
+    expect(await screen.findByText("Invited new.friend@example.com. They get access when they sign in with that address.")).toBeInTheDocument();
+    expect(bodiesSentTo(fetchMock, "POST /api/documents/u1-homebrew/invitations")).toEqual([
+      { email: "new.friend@example.com", role: "EDITOR" },
+    ]);
+    const invited = within(mine().getByRole("list", { name: "Invited" }));
+    expect(invited.getByText("new.friend@example.com")).toBeInTheDocument();
+    expect(invited.getByText("Can edit")).toBeInTheDocument();
+    expect(mine().getByLabelText("Share with (username or email)")).toHaveValue("");
+    expect(bodiesSentTo(fetchMock, "PUT /api/documents/u1-homebrew/members/new.friend@example.com")).toEqual([]); // not as a username
+  });
+
+  it("says when the email couldn't be sent, but the invitation is kept", async () => {
+    await renderPage({
+      "GET /api/documents/u1-homebrew/invitations": [{ id: 9, email: "a@example.com", role: "VIEWER", invitedBy: "dev" }],
+      "POST /api/documents/u1-homebrew/invitations": () => ({ email: "a@example.com", role: "VIEWER", username: null, emailSent: false }),
+    });
+
+    shareWith("a@example.com");
+
+    expect(await screen.findByText(/Invited a@example.com, but the email couldn't be sent/)).toBeInTheDocument();
+    expect(within(mine().getByRole("list", { name: "Invited" })).getByText("a@example.com")).toBeInTheDocument();
+  });
+
+  it("adds the person straight away when the address already belongs to a user", async () => {
+    await renderPage({
+      "POST /api/documents/u1-homebrew/invitations": () => ({ email: "pat@example.com", role: "EDITOR", username: "pat", emailSent: false }),
+    });
+
+    shareWith("pat@example.com");
+
+    expect(await screen.findByText("pat@example.com already has an account, so pat can see it now.")).toBeInTheDocument();
+    expect(people().getByText("pat")).toBeInTheDocument();
+    expect(people().getByLabelText("What pat can do")).toHaveValue("EDITOR");
+    expect(mine().queryByRole("list", { name: "Invited" })).not.toBeInTheDocument();
+  });
+
+  it("shows why the backend refused", async () => {
+    await renderPage({
+      "POST /api/documents/u1-homebrew/invitations": () =>
+        new Response(JSON.stringify({ detail: "A document can have up to 50 pending invitations; cancel some first" }), { status: 400 }),
+    });
+
+    shareWith("late@example.com");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("A document can have up to 50 pending invitations");
+    expect(mine().getByLabelText("Share with (username or email)")).toHaveValue("late@example.com"); // kept, to fix
+  });
+
+  it("still shows the page when the backend can't list invitations", async () => {
+    await renderPage(); // no invitations route: a 404
+
+    expect(mine().queryByRole("list", { name: "Invited" })).not.toBeInTheDocument();
+    expect(people().getByText("player")).toBeInTheDocument();
   });
 });
 

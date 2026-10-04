@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OWNERSHIP_ROUTES, stubApi } from "../test/fakeApi";
-import { listMembers, shareDocument, unshareDocument } from "./documents";
+import { cancelInvitation, inviteByEmail, listInvitations, listMembers, shareDocument, unshareDocument } from "./documents";
 import { listWritableDocumentKeys } from "./ownership";
 import { loadSharing } from "./sharing";
 
@@ -37,6 +37,53 @@ describe("documents", () => {
     await shareDocument("u1-homebrew", "a/b?c", "VIEWER").catch(() => {});
 
     expect(fetchMock.mock.calls[0][0]).toBe("/api/documents/u1-homebrew/members/a%2Fb%3Fc");
+  });
+});
+
+describe("invitations", () => {
+  it("invites an address with a role, lists the pending ones, and cancels one", async () => {
+    const fetchMock = stubApi({
+      "POST /api/documents/u1-homebrew/invitations": (body) => ({ email: body.email, role: body.role, username: null, emailSent: true }),
+      "GET /api/documents/u1-homebrew/invitations": [{ id: 3, email: "a@b.com", role: "VIEWER" }],
+      "DELETE /api/documents/u1-homebrew/invitations/3": null,
+    });
+
+    await expect(inviteByEmail("u1-homebrew", "a@b.com", "VIEWER")).resolves.toEqual({
+      email: "a@b.com",
+      role: "VIEWER",
+      username: null,
+      emailSent: true,
+    });
+    await expect(listInvitations("u1-homebrew")).resolves.toEqual([{ id: 3, email: "a@b.com", role: "VIEWER" }]);
+    await cancelInvitation("u1-homebrew", 3);
+
+    expect(calls(fetchMock)).toEqual([
+      "POST /api/documents/u1-homebrew/invitations",
+      "GET /api/documents/u1-homebrew/invitations",
+      "DELETE /api/documents/u1-homebrew/invitations/3",
+    ]);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ email: "a@b.com", role: "VIEWER" });
+  });
+});
+
+describe("loadSharing invitations", () => {
+  it("includes each owned document's pending invitations, and none for a document that can't list them", async () => {
+    stubApi({
+      ...OWNERSHIP_ROUTES,
+      "GET /api/documents/u1-homebrew/invitations": [{ id: 1, email: "a@b.com", role: "EDITOR" }],
+    });
+
+    const { owned } = await loadSharing();
+
+    expect(owned[0].invitations).toEqual([{ id: 1, email: "a@b.com", role: "EDITOR" }]);
+  });
+
+  it("treats a backend without invitations as having none", async () => {
+    stubApi(OWNERSHIP_ROUTES);
+
+    const { owned } = await loadSharing();
+
+    expect(owned.every((entry) => entry.invitations.length === 0)).toBe(true);
   });
 });
 

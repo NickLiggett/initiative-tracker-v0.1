@@ -4,15 +4,21 @@
 /**
  * Where to send people, from the environment. Without an issuer and a client id there is no sign-in: the app is in
  * development mode and uses the backend's `X-User` header instead.
+ *
+ * The settings can also be given when the app is served rather than when it is built: a `config.js` next to the page
+ * sets `window.__APP_CONFIG__` to an object with the same names (`VITE_OIDC_ISSUER`, ...), and what it says, if it
+ * says anything, wins. That is how one built image serves any environment (see `docker/`).
  * @returns {?{issuer: string, clientId: string, redirectUri: string}}
  */
-export function readAuthConfig(env = import.meta.env, origin = window.location.origin) {
-  const issuer = (env.VITE_OIDC_ISSUER ?? "").trim().replace(/\/+$/, "");
-  const clientId = (env.VITE_OIDC_CLIENT_ID ?? "").trim();
+export function readAuthConfig(env = import.meta.env, origin = window.location.origin, served = window.__APP_CONFIG__) {
+  const given = Object.fromEntries(Object.entries(served ?? {}).filter(([, value]) => typeof value === "string" && value.trim()));
+  const settings = { ...env, ...given };
+  const issuer = (settings.VITE_OIDC_ISSUER ?? "").trim().replace(/\/+$/, "");
+  const clientId = (settings.VITE_OIDC_CLIENT_ID ?? "").trim();
   if (!issuer || !clientId) {
     return null;
   }
-  return { issuer, clientId, redirectUri: (env.VITE_OIDC_REDIRECT_URI ?? "").trim() || `${origin}/` };
+  return { issuer, clientId, redirectUri: (settings.VITE_OIDC_REDIRECT_URI ?? "").trim() || `${origin}/` };
 }
 
 /** The provider's addresses. Keycloak lays them out under the realm's address (the issuer). */

@@ -254,6 +254,24 @@ been run in a real browser against a real backend; those checks aren't part of t
 - Tests wait up to 20 seconds each (`testTimeout` in `vite.config.js`): the editor tests render a lot, and a runner
   with two CPUs is slower than a laptop.
 
+### Docker image
+
+`Dockerfile` builds the app and serves it with nginx. `.github/workflows/publish.yml` publishes it to
+`ghcr.io/nickliggett/initiative-tracker` (tags `latest` and `sha-<commit>`) whenever `main` changes. The deployment
+that runs it with the backend, a database and sign-in is in `open5e-backend` (`deploy/`).
+
+- **One image for every environment.** Nothing about the environment is built in. When the container starts it writes
+  `config.js` from `OIDC_ISSUER`, `OIDC_CLIENT_ID` and (optionally) `OIDC_REDIRECT_URI`, and the page loads that before
+  the app. Without an issuer and client id there is no sign-in. In development `public/config.js` is empty and the
+  `VITE_OIDC_*` variables do it as before; settings given at serve time win over those.
+- **It serves files only.** `/api` is not proxied by the image: whatever is in front of it sends `/api` to the backend,
+  as the dev server does with its proxy.
+
+```sh
+docker build -t initiative-tracker .
+docker run --rm -p 8080:80 -e OIDC_ISSUER=https://auth.example.com/realms/open5e -e OIDC_CLIENT_ID=initiative-tracker initiative-tracker
+```
+
 ## About the data
 
 The creature data is the backend's creature JSON (`/api/creatures`): camelCase fields such as `hitPoints`,

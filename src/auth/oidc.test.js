@@ -28,6 +28,37 @@ describe("readAuthConfig", () => {
   });
 });
 
+describe("readAuthConfig with settings given when the app is served", () => {
+  const built = { VITE_OIDC_ISSUER: "http://localhost:8180/realms/open5e", VITE_OIDC_CLIENT_ID: "initiative-tracker" };
+
+  it("takes them when the build had none", () => {
+    const served = { VITE_OIDC_ISSUER: "https://auth.example.com/realms/open5e", VITE_OIDC_CLIENT_ID: "tracker" };
+
+    expect(readAuthConfig({}, "https://app.example.com", served)).toEqual({
+      issuer: "https://auth.example.com/realms/open5e",
+      clientId: "tracker",
+      redirectUri: "https://app.example.com/",
+    });
+  });
+
+  it("prefers them to what the build had", () => {
+    const config = readAuthConfig(built, "https://app.example.com", { VITE_OIDC_ISSUER: "https://auth.example.com/realms/open5e" });
+
+    expect(config).toMatchObject({ issuer: "https://auth.example.com/realms/open5e", clientId: "initiative-tracker" });
+  });
+
+  it("ignores ones that are empty or not text, as a container with nothing set writes them", () => {
+    const config = readAuthConfig(built, "https://app.example.com", { VITE_OIDC_ISSUER: "", VITE_OIDC_CLIENT_ID: "  ", VITE_OIDC_REDIRECT_URI: null });
+
+    expect(config).toMatchObject({ issuer: built.VITE_OIDC_ISSUER, clientId: "initiative-tracker", redirectUri: "https://app.example.com/" });
+  });
+
+  it("is no sign-in when neither has any", () => {
+    expect(readAuthConfig({}, "https://app.example.com", {})).toBeNull();
+    expect(readAuthConfig({}, "https://app.example.com", undefined)).toBeNull();
+  });
+});
+
 describe("addresses", () => {
   const request = { challenge: "CHALLENGE", state: "STATE", nonce: "NONCE" };
 

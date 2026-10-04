@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { stubApi } from "../../test/fakeApi";
 import { SettingsProvider } from "../../settings/SettingsContext";
-import { DEFAULT_SETTINGS, rememberUser, saveSettings } from "../../settings/settings";
+import { DEFAULT_SETTINGS, cacheSettings, rememberUser } from "../../settings/settings";
 import UserMenu from "./UserMenu";
 
 afterEach(() => vi.unstubAllGlobals());
 
-function renderMenu(onOpenSettings = () => {}) {
-  stubApi({ "GET /api/me": { id: 1, username: "dev" } });
+function renderMenu(onOpenSettings = () => {}, avatarVersion = null) {
+  stubApi({ "GET /api/me": { id: 1, username: "dev" }, "GET /api/me/settings": { avatarVersion } });
   render(
     <SettingsProvider>
       <UserMenu onOpenSettings={onOpenSettings} />
@@ -18,12 +18,14 @@ function renderMenu(onOpenSettings = () => {}) {
 
 describe("UserMenu", () => {
   it("shows the user's picture at the top right", async () => {
-    const avatar = "data:image/webp;base64,AAAA";
-    saveSettings("dev", { ...DEFAULT_SETTINGS, avatar });
+    cacheSettings("dev", { ...DEFAULT_SETTINGS, avatarVersion: 1759 });
     rememberUser("dev");
-    renderMenu();
+    renderMenu(() => {}, 1759);
 
-    expect(within(screen.getByRole("button", { name: "Account menu" })).getByRole("img")).toHaveAttribute("src", avatar);
+    expect(within(screen.getByRole("button", { name: "Account menu" })).getByRole("img")).toHaveAttribute(
+      "src",
+      "/api/users/dev/avatar?v=1759",
+    );
   });
 
   it("shows their initial when they have no picture", async () => {

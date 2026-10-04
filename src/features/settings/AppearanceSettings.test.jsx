@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useTheme } from "@mui/material/styles";
 import { stubApi } from "../../test/fakeApi";
 import { SettingsProvider } from "../../settings/SettingsContext";
-import { DEFAULT_SETTINGS, loadSettings, rememberUser, saveSettings } from "../../settings/settings";
+import { DEFAULT_SETTINGS, cacheSettings, loadCachedSettings, rememberUser } from "../../settings/settings";
 import AppearanceSettings from "./AppearanceSettings";
 
 afterEach(() => {
@@ -17,18 +17,29 @@ function Probe() {
 }
 const probe = () => screen.getByTestId("probe").textContent;
 
-async function renderSettings(initial = {}) {
-  saveSettings("dev", { ...DEFAULT_SETTINGS, ...initial });
+/** Shows the settings, for a user whose account already has `initial` settings (so there is nothing to move to it). */
+async function renderSettings(initial = {}, extra = {}) {
+  cacheSettings("dev", { ...DEFAULT_SETTINGS, ...initial });
   rememberUser("dev");
-  stubApi({ "GET /api/me": { id: 1, username: "dev" } });
+  const fetchMock = stubApi({
+    "GET /api/me": { id: 1, username: "dev" },
+    "GET /api/me/settings": { ...initial, avatarVersion: null },
+    "PUT /api/me/settings": (body) => ({ ...body, avatarVersion: null }),
+    ...extra,
+  });
   render(
     <SettingsProvider>
       <Probe />
       <AppearanceSettings />
     </SettingsProvider>,
   );
-  await waitFor(() => expect(fetch).toHaveBeenCalled());
+  await waitFor(() => expect(sent(fetchMock, "GET /api/me/settings")).toHaveLength(1));
+  await act(async () => {});
+  return fetchMock;
 }
+
+const sent = (fetchMock, route) =>
+  fetchMock.mock.calls.filter(([url, init = {}]) => `${init.method ?? "GET"} ${url.split("?")[0]}` === route);
 
 const mainColor = () => screen.getByLabelText("Main color");
 const type = (field, text) => fireEvent.change(field, { target: { value: text } });
@@ -42,7 +53,7 @@ describe("mode", () => {
 
     expect(probe()).toBe("dark|#1976d2|#ab47bc");
     expect(screen.getByRole("button", { name: "Dark" })).toHaveAttribute("aria-pressed", "true");
-    expect(loadSettings("dev").mode).toBe("dark");
+    expect(loadCachedSettings("dev").mode).toBe("dark");
   });
 
   it("can follow the device", async () => {
@@ -59,7 +70,7 @@ describe("mode", () => {
     fireEvent.click(screen.getByRole("button", { name: "Match my device" }));
 
     expect(probe()).toBe("dark|#1976d2|#ab47bc");
-    expect(loadSettings("dev").mode).toBe("system");
+    expect(loadCachedSettings("dev").mode).toBe("system");
   });
 });
 
@@ -73,7 +84,7 @@ describe("color themes", () => {
     expect(probe()).toBe("light|#2e7d32|#8d6e63");
     expect(screen.getByRole("button", { name: "Forest" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Default" })).toHaveAttribute("aria-pressed", "false");
-    expect(loadSettings("dev")).toMatchObject({ primary: "#2e7d32", secondary: "#8d6e63" });
+    expect(loadCachedSettings("dev")).toMatchObject({ primary: "#2e7d32", secondary: "#8d6e63" });
   });
 
   it("shows no theme as in use once a color is your own", async () => {
@@ -94,7 +105,7 @@ describe("your own colors", () => {
 
     type(mainColor(), "#2E7D32");
     expect(probe()).toBe("light|#2e7d32|#ab47bc");
-    expect(loadSettings("dev").primary).toBe("#2e7d32");
+    expect(loadCachedSettings("dev").primary).toBe("#2e7d32");
   });
 
   it("doesn't take a short code halfway through typing a long one, but does once typing stops", async () => {
@@ -164,7 +175,35 @@ describe("resetting", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset to the defaults" }));
 
     expect(probe()).toBe("light|#1976d2|#ab47bc");
-    expect(loadSettings("dev")).toMatchObject({ mode: "light", primary: "#1976d2", secondary: "#ab47bc" });
+    expect(loadCachedSettings("dev")).toMatchObject({ mode: "light", primary: "#1976d2", secondary: "#ab47bc" });
     expect(mainColor()).toHaveValue("#1976d2");
+  });
+});
+
+describe("saving to the account", () => {
+  it("sends the colors and mode a moment after they change, once", async () => {
+    const fetchMock = await renderSettings();
+
+    fireEvent.click(screen.getByRole("button", { name: "Forest" }));
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    expect(sent(fetchMock, "PUT /api/me/settings")).toHaveLength(0);
+
+    await waitFor(() => expect(sent(fetchMock, "PUT /api/me/settings")).toHaveLength(1), { timeout: 3000 });
+    expect(JSON.parse(sent(fetchMock, "PUT /api/me/settings")[0][1].body)).toEqual({
+      mode: "dark",
+      primary: "#2e7d32",
+      secondary: "#8d6e63",
+    });
+  });
+
+  it("says it's saved to the account, until it can't be", async () => {
+    await renderSettings({}, { "PUT /api/me/settings": () => new Response("{}", { status: 500 }) });
+    expect(screen.getByText("Your colors are saved to your account, so they follow you to other browsers.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+
+    expect(await screen.findByText(/Couldn't save your changes to your account/, {}, { timeout: 3000 })).toBeInTheDocument();
+    expect(probe()).toBe("dark|#1976d2|#ab47bc"); // they still apply
+    expect(loadCachedSettings("dev").mode).toBe("dark");
   });
 });

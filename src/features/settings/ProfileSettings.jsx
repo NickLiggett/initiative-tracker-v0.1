@@ -4,9 +4,9 @@ import UserAvatar from "../../components/layout/UserAvatar";
 import { ACCEPTED_TYPES, checkAvatarFile, fileToAvatar } from "../../settings/avatar";
 import { useSettings } from "../../settings/SettingsContext";
 
-/** Who the user is, and the picture shown for them at the right of the toolbar. */
+/** Who the user is, and the picture shown for them at the right of the toolbar and wherever people are listed. */
 export default function ProfileSettings() {
-  const { settings, username, update } = useSettings();
+  const { settings, username, setAvatar, removeAvatar } = useSettings();
   const [error, setError] = useState(null);
   const [saved, setSaved] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -22,24 +22,36 @@ export default function ProfileSettings() {
     }
     setBusy(true);
     setError(null);
+    let picture;
     try {
-      const avatar = await fileToAvatar(file);
-      if (update({ avatar })) {
-        setSaved("Your picture is changed.");
-      } else {
-        setError("Your browser wouldn't keep the picture: its storage is full or turned off. Try a smaller picture.");
-      }
+      picture = await fileToAvatar(file);
     } catch {
       setError("Couldn't read that picture. Try another one.");
+      setBusy(false);
+      return;
+    }
+    try {
+      await setAvatar(picture);
+      setSaved("Your picture is changed.");
+    } catch (e) {
+      setError(`Couldn't save your picture: ${e.message}`);
     } finally {
       setBusy(false);
     }
   };
 
-  const remove = () => {
+  const remove = async () => {
+    setBusy(true);
     setError(null);
-    update({ avatar: null });
-    setSaved("Your picture is removed.");
+    setSaved(null);
+    try {
+      await removeAvatar();
+      setSaved("Your picture is removed.");
+    } catch (e) {
+      setError(`Couldn't remove your picture: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -51,14 +63,15 @@ export default function ProfileSettings() {
             {username ?? "Not signed in"}
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 1 }}>
-            Your picture is shown at the top right of every page. It is cropped to a square from the middle.
+            Your picture is shown at the top right of every page, and to the people you share with. It is cropped to a
+            square from the middle.
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button component="label" variant="contained" disabled={busy}>
               Upload picture
               <input hidden type="file" accept={ACCEPTED_TYPES.join(",")} onChange={choose} />
             </Button>
-            <Button onClick={remove} disabled={busy || !settings.avatar}>
+            <Button onClick={remove} disabled={busy || settings.avatarVersion === null}>
               Remove picture
             </Button>
           </Box>
@@ -71,7 +84,7 @@ export default function ProfileSettings() {
         </Alert>
       )}
       <Alert severity="info" role="note">
-        Your picture is saved in this browser, for your account.
+        Your picture is saved to your account, so it follows you to other browsers.
       </Alert>
     </Box>
   );

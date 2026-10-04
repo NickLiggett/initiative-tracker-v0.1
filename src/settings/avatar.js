@@ -22,10 +22,9 @@ export function squareCrop(width, height) {
 }
 
 /**
- * The picture cropped to a square from its middle and shrunk to `size` pixels, as a data URL that can be kept and
- * shown straight away.
+ * The picture cropped to a square from its middle and shrunk to `size` pixels, ready to upload.
  * @param {File} file
- * @returns {Promise<string>}
+ * @returns {Promise<Blob>} a WebP picture, or a PNG in a browser that can't make WebP
  */
 export async function fileToAvatar(file, size = AVATAR_SIZE) {
   const bitmap = await createImageBitmap(file);
@@ -35,8 +34,11 @@ export async function fileToAvatar(file, size = AVATAR_SIZE) {
     canvas.width = size;
     canvas.height = size;
     canvas.getContext("2d").drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
-    // WebP keeps transparency in a small file; a browser that can't make one makes a PNG instead.
-    return canvas.toDataURL("image/webp", 0.9);
+    const picture = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.9));
+    if (!picture) {
+      throw new Error("The picture couldn't be made");
+    }
+    return picture;
   } finally {
     bitmap.close?.();
   }

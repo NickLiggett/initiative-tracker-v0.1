@@ -42,10 +42,10 @@ export function apiGet(path, params, { signal } = {}) {
 
 /**
  * Sends JSON to the API (POST, PUT, PATCH, DELETE) and returns the JSON it answers with, or null if it answers with
- * nothing (as it does to a DELETE).
+ * nothing (as it does to a DELETE). A `Blob` body (a picture, say) is sent as it is, with its own type, not as JSON.
  * @param {"POST"|"PUT"|"PATCH"|"DELETE"} method
  * @param {string} path e.g. "/api/creatures"
- * @param {object} [body]
+ * @param {object|Blob} [body]
  * @throws {ApiError} for error responses
  */
 export function apiSend(method, path, body, { signal } = {}) {
@@ -54,8 +54,9 @@ export function apiSend(method, path, body, { signal } = {}) {
 
 async function request(method, url, body, signal) {
   const headers = { Accept: "application/json" };
+  const raw = typeof Blob !== "undefined" && body instanceof Blob;
   if (body !== undefined) {
-    headers["Content-Type"] = "application/json";
+    headers["Content-Type"] = raw ? body.type : "application/json";
   }
   if (DEV_USER) {
     headers["X-User"] = DEV_USER;
@@ -63,7 +64,7 @@ async function request(method, url, body, signal) {
   const response = await fetch(url, {
     ...(method !== "GET" && { method }),
     headers,
-    ...(body !== undefined && { body: JSON.stringify(body) }),
+    ...(body !== undefined && { body: raw ? body : JSON.stringify(body) }),
     signal,
   });
   if (!response.ok) {

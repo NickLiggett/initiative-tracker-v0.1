@@ -60,6 +60,7 @@ src/
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing)
 │   ├── sharing.js      Everything the Sharing page shows, loaded together
 │   ├── ownership.js    Which documents the signed-in user can change (their own, and those they are an editor of)
+│   ├── profile.js      The signed-in user's own settings, avatar picture and tracker state, and where anyone's avatar is
 │   └── reference.js    The sizes, creature types, damage types and conditions the editor offers
 ├── components/
 │   ├── layout/         TopToolbar, MainDrawer, UserMenu, UserAvatar
@@ -77,8 +78,9 @@ src/
 │   └── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its form, and plain-function
 │                   helpers: creatureFormat.js (reading backend creature data), compareCreatures.js, creatureDraft.js (editor
 │                   form state to backend JSON)
-├── settings/           The user's look-and-feel settings: where they are kept (settings.js), the theme they make (theme.js), the
-│                       provider that applies them (SettingsContext.jsx), and colors.js and avatar.js (hex colors, contrast, avatar pictures)
+├── settings/           The user's look-and-feel settings: what they are and the copy kept in the browser (settings.js), the theme they
+│                       make (theme.js), the provider that applies them and keeps them on the account (SettingsContext.jsx), and
+│                       colors.js and avatar.js (hex colors, contrast, shrinking an avatar picture)
 ├── pages/              Placeholder for pages that don't exist yet
 ├── utils/              Text helpers
 └── test/               Test setup, and a real creature from the backend as a fixture
@@ -98,8 +100,10 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
   change and delete what is in it; change their role; stop sharing) and the homebrew other people have shared with you, which you can leave. The
   person needs to have signed in once for the backend to know their username. Settings has a Profile tab, to upload a picture for the avatar at the top right
   (cropped to a square from the middle and shrunk to 256 pixels), and an Appearance tab: light, dark or match your device, a set of color themes or
-  your own two colors (with a warning for a color that is hard to see). The same two come from the account menu at the top right. They are saved in
-  this browser, for your username, until the backend can keep them. Players is a placeholder so far.
+  your own two colors (with a warning for a color that is hard to see). The same two come from the account menu at the top right. They are saved to your
+  account (they need the backend's `/api/me/settings` and `/api/me/avatar`, which are in its `feature/user-data` branch so far), so they follow you to
+  other browsers; a copy in the browser shows the right colors before the backend has answered, and people you share with see your picture next to your
+  name. Players is a placeholder so far.
   Saving needs a signed-in user: in development that is `VITE_DEV_USER`. Creatures are saved to the user's homebrew document. The backend stores derived numbers (modifiers, saves, passive perception, ...) rather than working them out, so the editor calculates them.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
   save parties, encounters and homebrew creatures through its write endpoints instead of keeping them only in memory.

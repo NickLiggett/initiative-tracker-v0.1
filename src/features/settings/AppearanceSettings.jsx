@@ -7,7 +7,7 @@ import ColorField from "./ColorField";
 
 /** Light or dark, and the site's two main colors: from a set of themes, or any color. Changes apply as they're made. */
 export default function AppearanceSettings() {
-  const { settings, update, resetLook } = useSettings();
+  const { settings, saveFailed, update, resetLook } = useSettings();
   const theme = useTheme();
   const background = normalizeHex(theme.palette.background.paper) ?? "#ffffff";
   const activePreset = COLOR_PRESETS.find(
@@ -83,9 +83,15 @@ export default function AppearanceSettings() {
         <Box sx={{ flex: 1 }} />
         <Button onClick={resetLook}>Reset to the defaults</Button>
       </Box>
-      <Alert severity="info" role="note">
-        Your colors are saved in this browser, for your account.
-      </Alert>
+      {saveFailed ? (
+        <Alert severity="warning" role="status">
+          Couldn't save your changes to your account. They're kept in this browser for now, and are sent again with the next change.
+        </Alert>
+      ) : (
+        <Alert severity="info" role="note">
+          Your colors are saved to your account, so they follow you to other browsers.
+        </Alert>
+      )}
     </Box>
   );
 }

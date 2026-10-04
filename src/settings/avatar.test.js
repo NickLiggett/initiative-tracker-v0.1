@@ -47,18 +47,21 @@ describe("squareCrop", () => {
 });
 
 describe("fileToAvatar", () => {
-  it("draws the middle of the picture, shrunk, and gives it back as a data URL", async () => {
+  it("draws the middle of the picture, shrunk, and gives it back as a picture to upload", async () => {
     const bitmap = { width: 600, height: 300, close: vi.fn() };
     vi.stubGlobal("createImageBitmap", vi.fn().mockResolvedValue(bitmap));
     const drawImage = vi.fn();
-    const canvas = { getContext: () => ({ drawImage }), toDataURL: vi.fn().mockReturnValue("data:image/webp;base64,AAAA") };
+    const made = new Blob(["pixels"], { type: "image/webp" });
+    const toBlob = vi.fn((done) => done(made));
+    const canvas = { getContext: () => ({ drawImage }), toBlob };
     vi.spyOn(document, "createElement").mockReturnValue(canvas);
 
-    await expect(fileToAvatar(file("image/png"))).resolves.toBe("data:image/webp;base64,AAAA");
+    await expect(fileToAvatar(file("image/png"))).resolves.toBe(made);
 
     expect(canvas.width).toBe(AVATAR_SIZE);
     expect(canvas.height).toBe(AVATAR_SIZE);
     expect(drawImage).toHaveBeenCalledWith(bitmap, 150, 0, 300, 300, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
+    expect(toBlob).toHaveBeenCalledWith(expect.any(Function), "image/webp", 0.9);
     expect(bitmap.close).toHaveBeenCalled();
   });
 
@@ -69,6 +72,15 @@ describe("fileToAvatar", () => {
 
     await expect(fileToAvatar(file("image/png"))).rejects.toThrow();
 
+    expect(bitmap.close).toHaveBeenCalled();
+  });
+
+  it("fails when the browser can't make a picture", async () => {
+    const bitmap = { width: 10, height: 10, close: vi.fn() };
+    vi.stubGlobal("createImageBitmap", vi.fn().mockResolvedValue(bitmap));
+    vi.spyOn(document, "createElement").mockReturnValue({ getContext: () => ({ drawImage: vi.fn() }), toBlob: (done) => done(null) });
+
+    await expect(fileToAvatar(file("image/png"))).rejects.toThrow("couldn't be made");
     expect(bitmap.close).toHaveBeenCalled();
   });
 });

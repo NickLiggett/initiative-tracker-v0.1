@@ -12,7 +12,7 @@ export function stubApi(routes) {
       return new Response(JSON.stringify({ detail: `No route for ${route}` }), { status: 404 });
     }
     const answer = routes[route];
-    const body = init.body ? JSON.parse(init.body) : undefined;
+    const body = typeof init.body === "string" ? JSON.parse(init.body) : init.body; // a picture is not JSON
     const result = typeof answer === "function" ? answer(body) : answer;
     if (result instanceof Response) {
       return result; // a route can answer with any status

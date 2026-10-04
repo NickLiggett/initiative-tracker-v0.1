@@ -1,0 +1,47 @@
+name: CI
+
+# Runs the tests and the production build on every pull request and every push to main.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A new push to a pull request replaces the run still going for the old one; main is always run in full.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # npm install on a machine with a private mirror configured writes that mirror's address into package-lock.json,
+      # where this runner can't reach it. Fail early, and say what to do, rather than with a download error.
+      - name: The lockfile uses the public npm registry
+        run: |
+          if grep -q 'jfrog.io' package-lock.json; then
+            echo "::error file=package-lock.json::package-lock.json points at a private registry. Run: sed -i 's#https://[^\"]*/api/npm/npm/#https://registry.npmjs.org/#g' package-lock.json"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

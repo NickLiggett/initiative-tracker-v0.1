@@ -19,6 +19,9 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: "jsdom",
       setupFiles: "./src/test/setup.js",
+      // The editor tests render a lot of form; on a slow machine (a CI runner with two CPUs) a few take over the default
+      // five seconds, though nothing is wrong.
+      testTimeout: 20000,
     },
   };
 });

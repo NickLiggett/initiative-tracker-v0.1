@@ -86,6 +86,12 @@ which ends the provider's session too.
 - **Sort** orders the grid by initiative, highest first. The arrows above the grid move to the next or previous
   turn; the next combatant's reaction is cleared.
 - **Edit cells** by double-clicking them. HP takes `+5` to heal and `-7` to deal damage, as well as a new value.
+- **Players.** The **Players** button under the grid picks from your players, the ones you play and your party's. Tick
+  the ones in the fight, type what each rolled for initiative (the box shows their bonus) or press **Roll** for a d20
+  plus the bonus (**Roll for all ticked** does everyone), and **Add to initiative**. They go in as PC rows with their
+  armor class and hit points filled in, and a player already in the order can't be added twice. A player's row has the
+  same document icon as a creature's, which opens their card as it is now (their level or notes may have changed). The
+  tracker remembers which player a row is, not a copy of them.
 - **Creatures** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
   uses. The document icon opens the creature's stat block.
 - **Your tracker is kept on your account.** A moment after any change (adding, editing, sorting, stepping the turn,
@@ -159,7 +165,7 @@ party.
   **Leave** any time. Your players stay yours either way.
 - **Your party's players.** The characters of everyone who has joined, read-only, with who made and who plays them.
 
-Still to come: adding players to initiative from the tracker.
+Players go into the initiative order from the tracker (see below).
 
 ### Settings
 
@@ -204,7 +210,8 @@ src/
 │   ├── login/          LoginPage
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer and combatant form,
 │   │                   combatants.js (the turn-order rules, as plain functions), and useSavedTracker with
-│   │                   trackerState.js (keeping it on the account and bringing it back)
+│   │                   trackerState.js (keeping it on the account and bringing it back), and PlayerPicker,
+│   │                   PlayerSheetDialog and playerCombatants.js (adding players, and the dice)
 │   ├── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its
 │   │                   form, and plain-function helpers: creatureFormat.js (reading backend creature data),
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)

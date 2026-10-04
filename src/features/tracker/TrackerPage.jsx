@@ -3,6 +3,9 @@ import { DataGrid } from "@mui/x-data-grid";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
+import PlayerPicker from "./PlayerPicker";
+import PlayerSheetDialog from "./PlayerSheetDialog";
+import { playerIdsIn } from "./playerCombatants";
 import { buildColumns } from "./trackerColumns";
 import useSavedTracker from "./useSavedTracker";
 import {
@@ -18,6 +21,8 @@ import {
 export default function TrackerPage() {
   const { combatants, setCombatants, nextId, status, notice, retry } = useSavedTracker();
   const [shownCreature, setShownCreature] = useState(null);
+  const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose player is shown
+  const [picking, setPicking] = useState(false);
   const gridRef = useRef(null);
 
   const columns = buildColumns({
@@ -25,11 +30,17 @@ export default function TrackerPage() {
     onReactionChange: (id, reaction) => setCombatants((current) => updateCombatant(current, id, { reaction })),
     onDelete: (id) => setCombatants((current) => removeCombatant(current, id)),
     onShowCreature: setShownCreature,
+    onShowPlayer: setShownPlayer,
   });
 
   const addCombatant = (combatant) => {
     const id = nextId.current++;
     setCombatants((current) => [...current, { ...combatant, id }]);
+  };
+
+  const addPlayers = (added) => {
+    setCombatants((current) => [...current, ...added.map((combatant) => ({ ...combatant, id: nextId.current++ }))]);
+    setPicking(false);
   };
 
   /** Applies an edited cell. HP accepts "+5" (heal) and "-7" (damage) as well as a new value. */
@@ -79,6 +90,7 @@ export default function TrackerPage() {
           },
           footer: {
             onAdd: addCombatant,
+            onAddPlayers: () => setPicking(true),
             onClear: () => setCombatants([]),
             onSort: () => setCombatants(sortByInitiative),
           },
@@ -89,6 +101,10 @@ export default function TrackerPage() {
         disableColumnMenu
         sx={{ border: "1px solid" }}
       />
+      <PlayerPicker open={picking} inFight={playerIdsIn(combatants)} onAdd={addPlayers} onClose={() => setPicking(false)} />
+      {shownPlayer && (
+        <PlayerSheetDialog playerId={shownPlayer.playerId} name={shownPlayer.name} onClose={() => setShownPlayer(null)} />
+      )}
       {shownCreature && (
         <CreatureInfoDialog open onClose={() => setShownCreature(null)} creature={shownCreature} />
       )}

@@ -10,6 +10,11 @@ export function listPlayers({ signal } = {}) {
   return apiGet("/api/players", undefined, { signal });
 }
 
+/** One player character the user made, plays or can see through their party. */
+export function getPlayer(id, { signal } = {}) {
+  return apiGet(`/api/players/${encodeURIComponent(id)}`, undefined, { signal });
+}
+
 /** Makes a player character the user owns. `request` is as `listPlayers` gives, without the answer-only fields. */
 export function createPlayer(request) {
   return apiSend("POST", "/api/players", request);

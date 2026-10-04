@@ -136,6 +136,22 @@ once. An invitation is for that one address, not a link to pass around, and expi
 backend with invitations and sign-in (`email_verified` in the token), so the `dev` profile can send invitations but
 never accept them.
 
+### Players
+
+Your player characters, kept on your account. Each card shows the character's name, level, class and species, the rules
+they use (**2014** or **2024**), armor class, hit points, initiative bonus, notes, and who made or plays them.
+
+- **New player** opens the editor with a live preview. Choose the rules first: the class and species lists then offer
+  that rule set's (the 2024 Fighter and the 2014 Fighter are different entries). Anything not in the list can be typed.
+- **Played by** names a friend with an account. They see the character on their own Players page (marked "You play this
+  one") and can keep its level, armor class, hit points, initiative bonus and notes up to date; the name, rules, class,
+  species and player stay with whoever made it. The friend needs to have signed in once.
+- **Duplicate** starts a new player like an existing one, named "(copy)" and played by nobody. **Delete** is only for
+  the player's maker.
+
+Still to come: a party (friends who agree to show you their characters) and adding players to initiative from the
+tracker.
+
 ### Settings
 
 Open it from the account menu (your picture at the top right) or the drawer.
@@ -159,11 +175,12 @@ src/
 │   ├── resource.js     createResourceApi: search, get, create, replace, copy and remove for any collection
 │   ├── creatures.js    The creatures collection
 │   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
+│   ├── players.js      Player characters: list, create, replace, delete
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
 │   ├── sharing.js      Everything the Sharing page shows, loaded together
 │   ├── ownership.js    Which documents the signed-in user can change (their own, and those they are an editor of)
 │   ├── profile.js      The signed-in user's own settings, avatar picture and tracker state, and where anyone's avatar is
-│   └── reference.js    The sizes, types, damage types, conditions, item categories, rarities and weapon properties the editors offer
+│   └── reference.js    The sizes, types, damage types, conditions, item categories, rarities, weapon properties, classes and species the editors offer
 ├── components/
 │   ├── layout/         TopToolbar, MainDrawer, UserMenu, UserAvatar
 │   ├── resource/       What every kind of content (creatures, items, ...) shares: ResourcePage (search, compare, new,
@@ -183,12 +200,14 @@ src/
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
 │   ├── items/          ItemsPage, filters, stat block, comparison, editor and its form, and the same kind of helpers:
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
+│   ├── players/        PlayersPage, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
+│   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
 │   └── settings/       SettingsPage, with the profile (avatar) and appearance (mode and colors) tabs
 ├── settings/           The user's look-and-feel settings: what they are and the copy kept in the browser (settings.js),
 │                       the theme they make (theme.js), the provider that applies them and keeps them on the account
 │                       (SettingsContext.jsx), and colors.js and avatar.js (hex colors, contrast, shrinking a picture)
-├── pages/              Placeholder for pages that don't exist yet (Players)
+├── pages/              Placeholder for pages that don't exist yet (none at the moment)
 ├── utils/              Text helpers
 └── test/               Test setup, a fake backend (fakeApi.js) and real creatures and items from the backend as fixtures
 ```
@@ -226,7 +245,8 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
   session lasts); a silent check could skip that.
 - **Production sign-in settings** in the backend's realm: email verification, a real mail server, a password policy,
   and the app's real address instead of `http://localhost:*`.
-- **The Players page.** It is a placeholder.
+- **Parties and the tracker for players.** A DM asks friends to join a party, sees their characters (read-only) and
+  drops players into initiative from the tracker. The backend has parties; the app doesn't use them yet.
 - **Separate documents** (say, one per campaign), so a DM can share one and keep another private. The backend allows
   it; the editors would need a "save into which document" choice.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row

@@ -149,8 +149,17 @@ they use (**2014** or **2024**), armor class, hit points, initiative bonus, note
 - **Duplicate** starts a new player like an existing one, named "(copy)" and played by nobody. **Delete** is only for
   the player's maker.
 
-Still to come: a party (friends who agree to show you their characters) and adding players to initiative from the
-tracker.
+The page has two tabs, **Players** and **Party**. The Party tab has a badge when someone has asked you to join their
+party.
+
+- **Your party.** Ask friends by username (they need to have signed in once). They are listed as "Waiting for them to
+  accept" until they do, and you can withdraw the request or, later, remove them.
+- **Asked to join a party.** When a DM asks you, you can **Accept** or **Decline**. Joining lets them see your players
+  and the ones you play, to add to initiative; they can't change them. **Parties you're in** lists them, and you can
+  **Leave** any time. Your players stay yours either way.
+- **Your party's players.** The characters of everyone who has joined, read-only, with who made and who plays them.
+
+Still to come: adding players to initiative from the tracker.
 
 ### Settings
 
@@ -176,6 +185,7 @@ src/
 │   ├── creatures.js    The creatures collection
 │   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
 │   ├── players.js      Player characters: list, create, replace, delete
+│   ├── party.js        The party: members, requests to join, and the party's players
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
 │   ├── sharing.js      Everything the Sharing page shows, loaded together
 │   ├── ownership.js    Which documents the signed-in user can change (their own, and those they are an editor of)
@@ -200,7 +210,7 @@ src/
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
 │   ├── items/          ItemsPage, filters, stat block, comparison, editor and its form, and the same kind of helpers:
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
-│   ├── players/        PlayersPage, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
+│   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
 │   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
 │   └── settings/       SettingsPage, with the profile (avatar) and appearance (mode and colors) tabs
@@ -245,8 +255,8 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
   session lasts); a silent check could skip that.
 - **Production sign-in settings** in the backend's realm: email verification, a real mail server, a password policy,
   and the app's real address instead of `http://localhost:*`.
-- **Parties and the tracker for players.** A DM asks friends to join a party, sees their characters (read-only) and
-  drops players into initiative from the tracker. The backend has parties; the app doesn't use them yet.
+- **Players in the tracker.** Pick players, yours and your party's, and drop them into initiative with their armor
+  class and hit points filled in.
 - **Separate documents** (say, one per campaign), so a DM can share one and keep another private. The backend allows
   it; the editors would need a "save into which document" choice.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row

@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Tab, Tabs, Typography } from "@mui/material";
 import { Add } from "@mui/icons-material";
+import { listPartyInvitations } from "../../api/party";
 import { deletePlayer, listPlayers } from "../../api/players";
 import ConfirmDeleteDialog from "../../components/resource/ConfirmDeleteDialog";
+import PartyPanel, { RequestsBadge } from "./PartyPanel";
 import PlayerCard from "./PlayerCard";
 import PlayerEditor from "./PlayerEditor";
 import { duplicateDraft } from "./playerDraft";
 
 /**
  * The user's player characters: the ones they made and the ones they play. Make a new one, copy one, change it or
- * delete it. They can be dropped into the initiative tracker from there.
+ * delete it. The Party tab is for friends who show you their players, and for the parties you've been asked to join.
  */
 export default function PlayersPage() {
   const [players, setPlayers] = useState(null); // null until loaded
@@ -18,6 +20,8 @@ export default function PlayersPage() {
   const [editing, setEditing] = useState(null); // { player, start }: player null for a new one; start is a copy's draft
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState("players");
+  const [requests, setRequests] = useState([]); // the parties the user has been asked to join or is in
 
   const load = useCallback((signal) => {
     setLoadError(null);
@@ -36,6 +40,17 @@ export default function PlayersPage() {
     load(controller.signal);
     return () => controller.abort();
   }, [load]);
+
+  useEffect(() => {
+    // Only for the badge on the Party tab; the tab itself says if the party can't be loaded.
+    const controller = new AbortController();
+    listPartyInvitations({ signal: controller.signal })
+      .then(setRequests)
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  const waiting = requests.filter((request) => request.status === "PENDING").length;
 
   const saved = (player) => {
     setPlayers((current) => {
@@ -81,24 +96,31 @@ export default function PlayersPage() {
                 initiative whenever it's in the fight. Name a friend who plays one and they'll see it too.
               </Typography>
             </Box>
-            <Button variant="contained" startIcon={<Add />} disabled={!players} onClick={() => setEditing({ player: null })}>
-              New player
-            </Button>
+            {tab === "players" && (
+              <Button variant="contained" startIcon={<Add />} disabled={!players} onClick={() => setEditing({ player: null })}>
+                New player
+              </Button>
+            )}
           </Box>
+          <Tabs value={tab} onChange={(event, value) => setTab(value)} aria-label="Players or party">
+            <Tab value="players" label="Players" />
+            <Tab value="party" label={<RequestsBadge count={waiting}>Party</RequestsBadge>} aria-label={waiting ? `Party, ${waiting} waiting` : "Party"} />
+          </Tabs>
+          {tab === "party" && <PartyPanel onInvitationsChange={setRequests} />}
 
-          {loadError && <Alert severity="error">{loadError}</Alert>}
-          {error && (
+          {tab === "players" && loadError && <Alert severity="error">{loadError}</Alert>}
+          {tab === "players" && error && (
             <Alert severity="error" onClose={() => setError(null)}>
               {error}
             </Alert>
           )}
-          {!players && !loadError && <CircularProgress aria-label="Loading" />}
-          {players?.length === 0 && (
+          {tab === "players" && !players && !loadError && <CircularProgress aria-label="Loading" />}
+          {tab === "players" && players?.length === 0 && (
             <Typography color="text.secondary" sx={{ mt: 2, textAlign: "center" }}>
               You don't have any players yet. Make one with New player.
             </Typography>
           )}
-          {players?.length > 0 && (
+          {tab === "players" && players?.length > 0 && (
             <Box component="ul" aria-label="Your players" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
               {players.map((player) => (
                 <Box component="li" key={player.id} sx={{ display: "grid" }}>

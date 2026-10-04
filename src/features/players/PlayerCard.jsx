@@ -70,11 +70,19 @@ export default function PlayerCard({ player, busy, onEdit, onDuplicate, onDelete
             Not played by anyone with an account
           </Typography>
         )}
-        {!owned && (
+        {player.role === "PLAYER" && (
           <>
             <UserAvatar username={player.owner} size={24} />
             <Typography variant="caption" color="text.secondary">
               Made by {player.owner}. You play this one.
+            </Typography>
+          </>
+        )}
+        {player.role === "PARTY" && (
+          <>
+            <UserAvatar username={player.playedBy ?? player.owner} size={24} />
+            <Typography variant="caption" color="text.secondary">
+              {player.playedBy ? `Played by ${player.playedBy}, made by ${player.owner}` : `Made by ${player.owner}`}
             </Typography>
           </>
         )}

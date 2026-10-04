@@ -243,6 +243,17 @@ the fixtures in `src/test/fixtures/` are real records from the backend. The edit
 against the whole of the real data (every creature and item saves back unchanged), and the storage features have
 been run in a real browser against a real backend; those checks aren't part of the suite because they need one.
 
+### Continuous integration
+
+`.github/workflows/ci.yml` runs `npm ci`, the tests and `npm run build` on every pull request and every push to `main`.
+
+- **The lockfile must point at the public npm registry.** If your npm is set to a private mirror (as a work machine's
+  may be), installing a new package writes the mirror's address into `package-lock.json`, which GitHub's runners can't
+  reach. CI fails early with the command that fixes it:
+  `sed -i 's#https://[^"]*/api/npm/npm/#https://registry.npmjs.org/#g' package-lock.json` (the hashes don't change).
+- Tests wait up to 20 seconds each (`testTimeout` in `vite.config.js`): the editor tests render a lot, and a runner
+  with two CPUs is slower than a laptop.
+
 ## About the data
 
 The creature data is the backend's creature JSON (`/api/creatures`): camelCase fields such as `hitPoints`,

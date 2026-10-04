@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Box, Button, Chip, CircularProgress, Paper, Typography } from "@mui/material";
 import { shareDocument, unshareDocument } from "../../api/documents";
 import { loadSharing } from "../../api/sharing";
+import UserAvatar from "../../components/layout/UserAvatar";
 import ConfirmDialog from "../../components/resource/ConfirmDialog";
 import DocumentCard from "./DocumentCard";
 import { ROLE_LABELS, sharingErrorMessage } from "./sharing";
@@ -153,6 +154,7 @@ export default function SharingPage() {
                 aria-label={document.displayName ?? document.name}
                 sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}
               >
+                {owner && <UserAvatar username={owner} size={40} />}
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" component="h4">
                     {document.displayName ?? document.name}

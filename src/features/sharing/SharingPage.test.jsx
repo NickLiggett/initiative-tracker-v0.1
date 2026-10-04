@@ -56,6 +56,17 @@ describe("what's shown", () => {
     expect(shared.getByText("Can edit")).toBeInTheDocument();
   });
 
+  it("shows the pictures of the people, from their accounts", async () => {
+    await renderPage();
+
+    // another person's picture is asked for by username, and their letter is what shows if they have none
+    expect(people().getByRole("img", { name: "player's picture" })).toHaveAttribute("src", "/api/users/player/avatar");
+    expect(within(screen.getByRole("region", { name: "Shared with you" })).getByRole("img", { name: "gm's picture" })).toHaveAttribute(
+      "src",
+      "/api/users/gm/avatar",
+    );
+  });
+
   it("says when nothing is shared either way", async () => {
     stubApi({
       ...OWNERSHIP_ROUTES,

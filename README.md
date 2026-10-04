@@ -45,6 +45,11 @@ Copy `.env.example` to `.env.local` (gitignored) to change these:
 - **Edit cells** by double-clicking them. HP takes `+5` to heal and `-7` to deal damage, as well as a new value.
 - **Creatures** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
   uses. The document icon opens the creature's stat block.
+- **Your tracker is kept on your account.** A moment after any change (adding, editing, sorting, stepping the turn,
+  clearing) it is saved to the backend (`/api/me/tracker`), and it is there when you open the tracker again, in any
+  browser. The toolbar says whether it is saved. A creature is saved as its key and its stat block is looked up again on
+  load; one that can't be found is mentioned, and the combatant is kept. If the saved tracker can't be loaded, nothing is
+  saved over it. (The legendary action checkboxes are not part of what is saved yet.)
 
 ## Project structure
 
@@ -70,7 +75,8 @@ src/
 ├── constants/          The page names
 ├── features/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
-│   │                   and combatants.js (the turn-order rules, as plain functions)
+│   │                   combatants.js (the turn-order rules, as plain functions), and useSavedTracker with trackerState.js
+│   │                   (keeping it on the account and bringing it back)
 │   ├── settings/       SettingsPage, with the profile (avatar) and appearance (mode and colors) tabs
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username and role rules)
 │   ├── items/          ItemsPage, ItemFilters, ItemStatBlock, ItemComparison, ItemEditor and its form, itemFormat.js (reading backend item data), compareItems.js and

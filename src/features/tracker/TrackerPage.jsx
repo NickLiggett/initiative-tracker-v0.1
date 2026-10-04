@@ -4,6 +4,7 @@ import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
 import { buildColumns } from "./trackerColumns";
+import useSavedTracker from "./useSavedTracker";
 import {
   applyHpInput,
   nextTurn,
@@ -15,9 +16,8 @@ import {
 
 /** The initiative tracker: the turn order as an editable grid, with a form to add combatants. */
 export default function TrackerPage() {
-  const [combatants, setCombatants] = useState([]);
+  const { combatants, setCombatants, nextId, status, notice, retry } = useSavedTracker();
   const [shownCreature, setShownCreature] = useState(null);
-  const nextId = useRef(1);
   const gridRef = useRef(null);
 
   const columns = buildColumns({
@@ -67,11 +67,15 @@ export default function TrackerPage() {
         rows={combatants}
         columns={columns}
         columnHeaderHeight={50}
+        loading={status === "loading"}
         slots={{ toolbar: GridToolbar, footer: GridFooter }}
         slotProps={{
           toolbar: {
             onPrevious: () => setCombatants(previousTurn),
             onNext: () => setCombatants(nextTurn),
+            saveStatus: status,
+            notice,
+            onRetry: retry,
           },
           footer: {
             onAdd: addCombatant,

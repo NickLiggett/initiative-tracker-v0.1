@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Button, Chip, IconButton, Paper, TextField, Tooltip, Typography } from "@mui/material";
 import { Delete } from "@mui/icons-material";
+import UserAvatar from "../../components/layout/UserAvatar";
 import { ROLE_LABELS, SHARE_ROLES, normalizeUsername, shareProblem } from "./sharing";
 
 /**
@@ -49,6 +50,7 @@ export default function DocumentCard({ entry, me, busy, onShare, onChangeRole, o
       <Box component="ul" aria-label="People" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 1 }}>
         {members.map((member) => (
           <Box key={member.username} component="li" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <UserAvatar username={member.username} size={28} />
             <Typography sx={{ flex: 1 }}>
               {member.username}
               {member.username === me.username && (

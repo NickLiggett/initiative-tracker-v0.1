@@ -41,3 +41,18 @@ export async function listWeaponProperties({ signal } = {}) {
   const page = await apiGet("/api/weaponproperties", { pageSize: 100, sort: "name" }, { signal });
   return page.content;
 }
+
+/**
+ * The base classes (Fighter, Wizard, ...) of every rule set, by name; subclasses are left out. Each says which game
+ * system it belongs to in `document.gamesystem.key`. @returns {Promise<object[]>}
+ */
+export async function listClasses({ signal } = {}) {
+  const page = await apiGet("/api/classes", { subclass: false, pageSize: 500, sort: "name" }, { signal });
+  return page.content;
+}
+
+/** The species (Dwarf, Hill Dwarf, ...) of every rule set, by name. @returns {Promise<object[]>} */
+export async function listSpecies({ signal } = {}) {
+  const page = await apiGet("/api/species", { pageSize: 500, sort: "name" }, { signal });
+  return page.content;
+}

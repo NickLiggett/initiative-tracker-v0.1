@@ -5,6 +5,7 @@ import TrackerPage from "./features/tracker/TrackerPage";
 import CreaturesPage from "./features/creatures/CreaturesPage";
 import ItemsPage from "./features/items/ItemsPage";
 import SettingsPage from "./features/settings/SettingsPage";
+import PlayersPage from "./features/players/PlayersPage";
 import SharingPage from "./features/sharing/SharingPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import { Pages } from "./constants/pages";
@@ -36,8 +37,9 @@ export default function App() {
       {currentPage === Pages.CREATURES && <CreaturesPage />}
       {currentPage === Pages.ITEMS && <ItemsPage />}
       {currentPage === Pages.SHARING && <SharingPage />}
+      {currentPage === Pages.PLAYERS && <PlayersPage />}
       {currentPage === Pages.SETTINGS && <SettingsPage tab={settingsTab} onTabChange={setSettingsTab} />}
-      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SHARING, Pages.SETTINGS].includes(currentPage) && (
+      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SHARING, Pages.PLAYERS, Pages.SETTINGS].includes(currentPage) && (
         <PlaceholderPage title={currentPage} />
       )}
     </div>

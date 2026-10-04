@@ -4,8 +4,8 @@ import CombatantForm, { EMPTY_COMBATANT } from "./CombatantForm";
 
 const NO_ERRORS = { name: false, initiative: false, type: false };
 
-/** The grid's footer: the form for adding combatants, and Submit / Clear / Sort. */
-export default function GridFooter({ onAdd, onClear, onSort }) {
+/** The grid's footer: the form for adding combatants, and Submit / Players (pick players to add) / Clear / Sort. */
+export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
   const [form, setForm] = useState(EMPTY_COMBATANT);
   const [errors, setErrors] = useState(NO_ERRORS);
   const nameInputRef = useRef();
@@ -50,6 +50,7 @@ export default function GridFooter({ onAdd, onClear, onSort }) {
       <div style={{ alignSelf: "center" }}>
         <ButtonGroup orientation={narrow ? "horizontal" : "vertical"} aria-label="combatant actions">
           <Button onClick={handleSubmit}>Submit</Button>
+          <Button onClick={onAddPlayers}>Players</Button>
           <Button onClick={onClear}>Clear</Button>
           <Button onClick={onSort}>Sort</Button>
         </ButtonGroup>

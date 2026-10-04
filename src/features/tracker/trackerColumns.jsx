@@ -4,9 +4,9 @@ import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatur
 
 /**
  * The initiative grid's columns.
- * @param {{combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function}} handlers
+ * @param {{combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function, onShowPlayer: Function}} handlers
  */
-export function buildColumns({ combatants, onReactionChange, onDelete, onShowCreature }) {
+export function buildColumns({ combatants, onReactionChange, onDelete, onShowCreature, onShowPlayer }) {
   const anyLegendary = combatants.some((combatant) => legendaryActionsPerRound(combatant.creature) > 0);
 
   return [
@@ -41,6 +41,11 @@ export function buildColumns({ combatants, onReactionChange, onDelete, onShowCre
       renderCell: (params) => (
         <div style={actionCellStyles}>
           <ClearIcon sx={{ width: 18, height: 18, m: 1 }} onClick={() => onDelete(params.row.id)} />
+          {params.row.playerId != null && (
+            <Tooltip title={`${params.row.name} Information`}>
+              <ArticleIcon sx={{ width: 30, height: 30, m: 1 }} onClick={() => onShowPlayer(params.row)} />
+            </Tooltip>
+          )}
           {params.row.creature && (
             <Tooltip title={`${params.row.creature.name} Information`}>
               <ArticleIcon sx={{ width: 30, height: 30, m: 1 }} onClick={() => onShowCreature(params.row.creature)} />

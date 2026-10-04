@@ -86,6 +86,12 @@ which ends the provider's session too.
 - **Sort** orders the grid by initiative, highest first. The arrows above the grid move to the next or previous
   turn; the next combatant's reaction is cleared.
 - **Edit cells** by double-clicking them. HP takes `+5` to heal and `-7` to deal damage, as well as a new value.
+- **Players.** The **Players** button under the grid picks from your players, the ones you play and your party's. Tick
+  the ones in the fight, type what each rolled for initiative (the box shows their bonus) or press **Roll** for a d20
+  plus the bonus (**Roll for all ticked** does everyone), and **Add to initiative**. They go in as PC rows with their
+  armor class and hit points filled in, and a player already in the order can't be added twice. A player's row has the
+  same document icon as a creature's, which opens their card as it is now (their level or notes may have changed). The
+  tracker remembers which player a row is, not a copy of them.
 - **Creatures** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
   uses. The document icon opens the creature's stat block.
 - **Your tracker is kept on your account.** A moment after any change (adding, editing, sorting, stepping the turn,
@@ -136,6 +142,31 @@ once. An invitation is for that one address, not a link to pass around, and expi
 backend with invitations and sign-in (`email_verified` in the token), so the `dev` profile can send invitations but
 never accept them.
 
+### Players
+
+Your player characters, kept on your account. Each card shows the character's name, level, class and species, the rules
+they use (**2014** or **2024**), armor class, hit points, initiative bonus, notes, and who made or plays them.
+
+- **New player** opens the editor with a live preview. Choose the rules first: the class and species lists then offer
+  that rule set's (the 2024 Fighter and the 2014 Fighter are different entries). Anything not in the list can be typed.
+- **Played by** names a friend with an account. They see the character on their own Players page (marked "You play this
+  one") and can keep its level, armor class, hit points, initiative bonus and notes up to date; the name, rules, class,
+  species and player stay with whoever made it. The friend needs to have signed in once.
+- **Duplicate** starts a new player like an existing one, named "(copy)" and played by nobody. **Delete** is only for
+  the player's maker.
+
+The page has two tabs, **Players** and **Party**. The Party tab has a badge when someone has asked you to join their
+party.
+
+- **Your party.** Ask friends by username (they need to have signed in once). They are listed as "Waiting for them to
+  accept" until they do, and you can withdraw the request or, later, remove them.
+- **Asked to join a party.** When a DM asks you, you can **Accept** or **Decline**. Joining lets them see your players
+  and the ones you play, to add to initiative; they can't change them. **Parties you're in** lists them, and you can
+  **Leave** any time. Your players stay yours either way.
+- **Your party's players.** The characters of everyone who has joined, read-only, with who made and who plays them.
+
+Players go into the initiative order from the tracker (see below).
+
 ### Settings
 
 Open it from the account menu (your picture at the top right) or the drawer.
@@ -159,11 +190,13 @@ src/
 │   ├── resource.js     createResourceApi: search, get, create, replace, copy and remove for any collection
 │   ├── creatures.js    The creatures collection
 │   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
+│   ├── players.js      Player characters: list, create, replace, delete
+│   ├── party.js        The party: members, requests to join, and the party's players
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
 │   ├── sharing.js      Everything the Sharing page shows, loaded together
 │   ├── ownership.js    Which documents the signed-in user can change (their own, and those they are an editor of)
 │   ├── profile.js      The signed-in user's own settings, avatar picture and tracker state, and where anyone's avatar is
-│   └── reference.js    The sizes, types, damage types, conditions, item categories, rarities and weapon properties the editors offer
+│   └── reference.js    The sizes, types, damage types, conditions, item categories, rarities, weapon properties, classes and species the editors offer
 ├── components/
 │   ├── layout/         TopToolbar, MainDrawer, UserMenu, UserAvatar
 │   ├── resource/       What every kind of content (creatures, items, ...) shares: ResourcePage (search, compare, new,
@@ -177,18 +210,21 @@ src/
 │   ├── login/          LoginPage
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer and combatant form,
 │   │                   combatants.js (the turn-order rules, as plain functions), and useSavedTracker with
-│   │                   trackerState.js (keeping it on the account and bringing it back)
+│   │                   trackerState.js (keeping it on the account and bringing it back), and PlayerPicker,
+│   │                   PlayerSheetDialog and playerCombatants.js (adding players, and the dice)
 │   ├── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its
 │   │                   form, and plain-function helpers: creatureFormat.js (reading backend creature data),
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
 │   ├── items/          ItemsPage, filters, stat block, comparison, editor and its form, and the same kind of helpers:
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
+│   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
+│   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
 │   └── settings/       SettingsPage, with the profile (avatar) and appearance (mode and colors) tabs
 ├── settings/           The user's look-and-feel settings: what they are and the copy kept in the browser (settings.js),
 │                       the theme they make (theme.js), the provider that applies them and keeps them on the account
 │                       (SettingsContext.jsx), and colors.js and avatar.js (hex colors, contrast, shrinking a picture)
-├── pages/              Placeholder for pages that don't exist yet (Players)
+├── pages/              Placeholder for pages that don't exist yet (none at the moment)
 ├── utils/              Text helpers
 └── test/               Test setup, a fake backend (fakeApi.js) and real creatures and items from the backend as fixtures
 ```
@@ -226,7 +262,8 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
   session lasts); a silent check could skip that.
 - **Production sign-in settings** in the backend's realm: email verification, a real mail server, a password policy,
   and the app's real address instead of `http://localhost:*`.
-- **The Players page.** It is a placeholder.
+- **Players in the tracker.** Pick players, yours and your party's, and drop them into initiative with their armor
+  class and hit points filled in.
 - **Separate documents** (say, one per campaign), so a DM can share one and keep another private. The backend allows
   it; the editors would need a "save into which document" choice.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row

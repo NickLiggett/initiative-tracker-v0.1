@@ -1,41 +1,43 @@
-import * as React from "react";
-import ButtonBase from '@mui/material/ButtonBase';
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Avatar from "@mui/material/Avatar";
+import { useState } from "react";
+import { Box, Divider, IconButton, Menu, MenuItem, Typography } from "@mui/material";
+import { useSettings } from "../../settings/SettingsContext";
+import UserAvatar from "./UserAvatar";
 
-export default function UserMenu() {
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const open = Boolean(anchorEl);
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
+/**
+ * The picture at the right of the toolbar, which opens a menu for the account.
+ * @param {(section: "profile"|"appearance") => void} onOpenSettings goes to that part of the Settings page
+ */
+export default function UserMenu({ onOpenSettings }) {
+  const { username } = useSettings();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const close = () => setAnchorEl(null);
+  const go = (section) => () => {
+    close();
+    onOpenSettings(section);
   };
 
   return (
-    <div>
-      <ButtonBase
-        component="label"
-        role={undefined}
-        tabIndex={-1} // prevent label from tab focus
-        aria-label="Avatar image"
-        sx={{
-          borderRadius: "40px",
-          "&:has(:focus-visible)": {
-            outline: "2px solid",
-            outlineOffset: "2px",
-          },
-        }}
+    <Box>
+      <IconButton
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={Boolean(anchorEl)}
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+        sx={{ p: 0.5 }}
       >
-        <Avatar onClick={handleClick} />
-        <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-          <MenuItem onClick={handleClose}>Profile</MenuItem>
-          <MenuItem onClick={handleClose}>My account</MenuItem>
-          <MenuItem onClick={handleClose}>Logout</MenuItem>
-        </Menu>
-      </ButtonBase>
-    </div>
+        <UserAvatar />
+      </IconButton>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={close}>
+        <Box sx={{ px: 2, py: 1 }}>
+          <Typography variant="caption" color="text.secondary" component="div">
+            Signed in as
+          </Typography>
+          <Typography sx={{ fontWeight: "bold" }}>{username ?? "no one"}</Typography>
+        </Box>
+        <Divider />
+        <MenuItem onClick={go("profile")}>Profile</MenuItem>
+        <MenuItem onClick={go("appearance")}>Appearance</MenuItem>
+      </Menu>
+    </Box>
   );
 }

@@ -6,7 +6,7 @@ import IconButton from '@mui/material/IconButton';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import UserMenu from "./UserMenu";
 
-export default function TopToolbar({drawerOpen, toggleDrawer, currentPage}) {
+export default function TopToolbar({drawerOpen, toggleDrawer, currentPage, onOpenSettings}) {
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" color="primary" enableColorOnDark>
@@ -24,7 +24,7 @@ export default function TopToolbar({drawerOpen, toggleDrawer, currentPage}) {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {currentPage}
           </Typography>
-          <UserMenu/>
+          <UserMenu onOpenSettings={onOpenSettings} />
         </Toolbar>
       </AppBar>
     </Box>

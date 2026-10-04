@@ -62,7 +62,7 @@ src/
 │   ├── ownership.js    Which documents the signed-in user can change (their own, and those they are an editor of)
 │   └── reference.js    The sizes, creature types, damage types and conditions the editor offers
 ├── components/
-│   ├── layout/         TopToolbar, MainDrawer, UserMenu
+│   ├── layout/         TopToolbar, MainDrawer, UserMenu, UserAvatar
 │   ├── resource/       What every kind of content (creatures, items, ...) shares: ResourcePage (search, compare, new,
 │   │                   duplicate, edit, delete), ResourceSearch, ComparisonTable (and compareRows.js, its row builders), EditorShell, FormSection, ConfirmDeleteDialog
 │   └── Description.jsx Trait, action and item text (bold, italic, lists, tables)
@@ -70,12 +70,15 @@ src/
 ├── features/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer, the combatant form,
 │   │                   and combatants.js (the turn-order rules, as plain functions)
+│   ├── settings/       SettingsPage, with the profile (avatar) and appearance (mode and colors) tabs
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username and role rules)
 │   ├── items/          ItemsPage, ItemFilters, ItemStatBlock, ItemComparison, ItemEditor and its form, itemFormat.js (reading backend item data), compareItems.js and
 │                   itemDraft.js (editor form state to backend JSON)
 │   └── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its form, and plain-function
 │                   helpers: creatureFormat.js (reading backend creature data), compareCreatures.js, creatureDraft.js (editor
 │                   form state to backend JSON)
+├── settings/           The user's look-and-feel settings: where they are kept (settings.js), the theme they make (theme.js), the
+│                       provider that applies them (SettingsContext.jsx), and colors.js and avatar.js (hex colors, contrast, avatar pictures)
 ├── pages/              Placeholder for pages that don't exist yet
 ├── utils/              Text helpers
 └── test/               Test setup, and a real creature from the backend as a fixture
@@ -93,7 +96,10 @@ The creature data is the backend's creature JSON (`/api/creatures`): camelCase f
 - **The other pages.** The drawer lists Creatures, Items, Sharing, Players and Settings. Creatures is a search page that shows a full stat block, compares two creatures side by side, and makes new ones (**New creature**, or **Duplicate** to start from an existing one), and edits or deletes the ones in your own homebrew document; Items searches items and magic items together (filter by kind, category and rarity), shows weapon and armor details, compares two items, and makes new ones (**New item**, or **Duplicate**), and edits or deletes the ones in your own homebrew document, in the same way as creatures, with descriptions
   that include tables; Sharing lists your homebrew with who it is shared with (add someone by username as a viewer, who can see it, or an editor, who can also
   change and delete what is in it; change their role; stop sharing) and the homebrew other people have shared with you, which you can leave. The
-  person needs to have signed in once for the backend to know their username. Players and Settings are placeholders so far.
+  person needs to have signed in once for the backend to know their username. Settings has a Profile tab, to upload a picture for the avatar at the top right
+  (cropped to a square from the middle and shrunk to 256 pixels), and an Appearance tab: light, dark or match your device, a set of color themes or
+  your own two colors (with a warning for a color that is hard to see). The same two come from the account menu at the top right. They are saved in
+  this browser, for your username, until the backend can keep them. Players is a placeholder so far.
   Saving needs a signed-in user: in development that is `VITE_DEV_USER`. Creatures are saved to the user's homebrew document. The backend stores derived numbers (modifiers, saves, passive perception, ...) rather than working them out, so the editor calculates them.
 - **Sign-in and saved data.** Sign in through the backend's OpenID Connect provider (authorization code flow), and
   save parties, encounters and homebrew creatures through its write endpoints instead of keeping them only in memory.

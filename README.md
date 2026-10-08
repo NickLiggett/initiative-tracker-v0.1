@@ -127,6 +127,18 @@ which ends the provider's session too.
   cp, a rarity and attunement for magic items, and weapon and armor blocks (damage, class, properties picked from the
   backend's list with their own details; armor class, Dexterity limit, Strength, stealth).
 
+### Species
+
+- **Search** for a species or subspecies by name; results say which are subspecies and which source they come from (the
+  2014 and 2024 rules, other books, this project's own additions such as the Aasimar, or someone's homebrew). A species
+  shows its source, description and traits, and lists its subspecies; a subspecies says which species it belongs to.
+  Open5e writes each trait's text with the trait's name in front of it; the name is shown once, on its own line.
+- **New species**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form beside a live
+  preview: a name, a description, whether it is a subspecies (and of which species, searched for) and a list of traits
+  (name and description each, which can be moved up and down or removed). A species goes in your own homebrew, so the
+  **Players** page offers it for the rules it is under.
+- There is no Compare: a species is a list of traits, which is easy enough to read side by side.
+
 ### Sharing
 
 Share your homebrew with other people by username or email address. Each document you own lists who it is shared
@@ -190,6 +202,7 @@ src/
 │   ├── resource.js     createResourceApi: search, get, create, replace, copy and remove for any collection
 │   ├── creatures.js    The creatures collection
 │   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
+│   ├── species.js      The species collection (search, get, create, replace, copy, remove)
 │   ├── players.js      Player characters: list, create, replace, delete
 │   ├── party.js        The party: members, requests to join, and the party's players
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
@@ -217,6 +230,8 @@ src/
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
 │   ├── items/          ItemsPage, filters, stat block, comparison, editor and its form, and the same kind of helpers:
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
+│   ├── species/        SpeciesPage, its stat block and editor, speciesFormat.js (showing a trait) and speciesDraft.js
+│   │                   (the form's draft, its checks, and the request)
 │   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
 │   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
@@ -284,6 +299,13 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
 "14 + Dex modifier (max 2)") instead of working them out, so the editors calculate them.
 
 ## Future plans
+
+- **More pages for the content tables.** The backend serves 33; creatures, items and species have pages. By how much they
+  would be worth and how hard they are: spells (1,955; the most useful at the table, with a larger editor: level, school,
+  casting time, range, components, duration, classes), backgrounds (58) and feats (91), which are small and could share
+  one editor, classes (151, with features by level; view and search first), and read-only reference pages for rules (283),
+  conditions (21) and services (30). The small lookup tables (sizes, damage types, alignments, ...) already feed the
+  dropdowns and don't need pages.
 
 - **Make Keycloak's pages look like the app.** They are Keycloak's own theme, so signing in leaves the app's look
   behind for a moment.

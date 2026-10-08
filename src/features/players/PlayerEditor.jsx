@@ -83,7 +83,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
 
   return (
     <EditorShell
-      title={player ? `Edit ${player.name}` : "New player"}
+      title={player ? `Edit ${player.name}` : "New Player Creation"}
       problems={problems}
       error={error}
       saving={saving}
@@ -91,7 +91,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
       onCancel={onCancel}
       form={
         <Box sx={{ display: "grid", gap: 2, alignContent: "start" }}>
-          <FormSection title="Who they are">
+          <FormSection title="The Character">
             {limited && (
               <Typography variant="body2" color="text.secondary">
                 {player.owner} made this player. You can keep its numbers and notes up to date; the rest is theirs to change.
@@ -131,7 +131,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
             <TextField size="small" label="Notes" value={draft.notes} multiline minRows={3} inputProps={{ maxLength: 5000 }} onChange={text("notes")} />
           </FormSection>
 
-          <FormSection title="Who plays them">
+          <FormSection title="The Player">
             <TextField
               size="small"
               label="Played by (username)"

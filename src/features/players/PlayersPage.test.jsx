@@ -294,7 +294,7 @@ describe("duplicating a player", () => {
 
     fireEvent.click(card("Thorin").getByRole("button", { name: "Duplicate" }));
 
-    expect(screen.getByRole("heading", { name: "New player" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "New Player Creation" })).toBeInTheDocument();
     expect(field("Name")).toHaveValue("Thorin (copy)");
     expect(field("Played by (username)")).toHaveValue("");
     expect(field("Level")).toHaveValue("5");

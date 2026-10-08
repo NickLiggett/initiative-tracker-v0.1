@@ -147,7 +147,8 @@ which ends the provider's session too.
 ### Species
 
 - **Search** for a species or subspecies by name; results say which are subspecies and which source they come from (the
-  2014 and 2024 rules, other books, this project's own additions such as the Aasimar, or someone's homebrew). A species
+  2014 and 2024 rules, other books, or someone's homebrew; content that isn't ours to publish, such as a book's rules,
+  is loaded privately on the server and shown only to the people its owner shared it with). A species
   shows its source, description and traits, and lists its subspecies; a subspecies says which species it belongs to.
   Open5e writes each trait's text with the trait's name in front of it; the name is shown once, on its own line.
 - **New species**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form beside a live

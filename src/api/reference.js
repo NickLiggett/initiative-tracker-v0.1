@@ -56,3 +56,9 @@ export async function listSpecies({ signal } = {}) {
   const page = await apiGet("/api/species", { pageSize: 500, sort: "name" }, { signal });
   return page.content;
 }
+
+/** The schools of magic (Abjuration, Conjuration, ...), by name. @returns {Promise<object[]>} */
+export async function listSpellSchools({ signal } = {}) {
+  const page = await apiGet("/api/spellschools", { pageSize: 50, sort: "name" }, { signal });
+  return page.content;
+}

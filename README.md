@@ -127,6 +127,36 @@ which ends the provider's session too.
   cp, a rarity and attunement for magic items, and weapon and armor blocks (damage, class, properties picked from the
   backend's list with their own details; armor class, Dexterity limit, Strength, stealth).
 
+### Spells
+
+- **Search** by name, narrowed by **level** (cantrip to 9th), **school**, **class**, **damage type**, and whether it needs
+  **concentration** or is a **ritual**. Results say what each spell is and where it is from, since many spells exist in
+  the 2014 and the 2024 rules. A class that exists under both is one choice, and finds the spells of either.
+- A spell shows like a spell card: its level and school, the classes whose lists it is on, casting time (with what a
+  reaction is taken in response to), range, components (with the materials), duration (with concentration), target, area,
+  saving throw, attack roll and damage, then its description, what happens at higher levels, and a table of how it scales
+  with the spell slot where the source gives one.
+- **Compare** two spells: a table of their level, school, classes, casting time, range, components and duration, then
+  target, area, save and damage, with how much bigger each number is (damage is compared by its average), then their
+  descriptions side by side, or once when they are the same.
+- **New spell**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form beside a live
+  preview, in four parts: the spell (name, level, school, classes, ritual, concentration), casting (casting time, range,
+  components and materials, duration), effect (target, saving throw, attack roll, damage dice and types, area) and the
+  text. How a spell scales with its slot isn't editable yet, but is kept when you change a spell that has it.
+
+### Species
+
+- **Search** for a species or subspecies by name; results say which are subspecies and which source they come from (the
+  2014 and 2024 rules, other books, or someone's homebrew; content that isn't ours to publish, such as a book's rules,
+  is loaded privately on the server and shown only to the people its owner shared it with). A species
+  shows its source, description and traits, and lists its subspecies; a subspecies says which species it belongs to.
+  Open5e writes each trait's text with the trait's name in front of it; the name is shown once, on its own line.
+- **New species**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form beside a live
+  preview: a name, a description, whether it is a subspecies (and of which species, searched for) and a list of traits
+  (name and description each, which can be moved up and down or removed). A species goes in your own homebrew, so the
+  **Players** page offers it for the rules it is under.
+- There is no Compare: a species is a list of traits, which is easy enough to read side by side.
+
 ### Sharing
 
 Share your homebrew with other people by username or email address. Each document you own lists who it is shared
@@ -190,6 +220,8 @@ src/
 │   ├── resource.js     createResourceApi: search, get, create, replace, copy and remove for any collection
 │   ├── creatures.js    The creatures collection
 │   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
+│   ├── spells.js       The spells collection, and searchSpells (with its filters)
+│   ├── species.js      The species collection (search, get, create, replace, copy, remove)
 │   ├── players.js      Player characters: list, create, replace, delete
 │   ├── party.js        The party: members, requests to join, and the party's players
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
@@ -217,6 +249,10 @@ src/
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
 │   ├── items/          ItemsPage, filters, stat block, comparison, editor and its form, and the same kind of helpers:
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
+│   ├── spells/         SpellsPage, filters, stat block, comparison and editor; spellFormat.js (the words for a
+│   │                   spell's coded fields), compareSpells.js and spellDraft.js (the form's draft, its checks, and the request)
+│   ├── species/        SpeciesPage, its stat block and editor, speciesFormat.js (showing a trait) and speciesDraft.js
+│   │                   (the form's draft, its checks, and the request)
 │   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
 │   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
@@ -284,6 +320,11 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
 "14 + Dex modifier (max 2)") instead of working them out, so the editors calculate them.
 
 ## Future plans
+
+- **More pages for the content tables.** The backend serves 33; creatures, items and species have pages. By how much they
+  would be worth and how hard they are: backgrounds (58) and feats (91), which are small and could share one editor, classes (151, with features by level; view and search first), and read-only reference pages for rules (283),
+  conditions (21) and services (30). The small lookup tables (sizes, damage types, alignments, ...) already feed the
+  dropdowns and don't need pages.
 
 - **Make Keycloak's pages look like the app.** They are Keycloak's own theme, so signing in leaves the app's look
   behind for a moment.

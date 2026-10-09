@@ -5,6 +5,8 @@ export const Pages = {
   ITEMS: "Items",
   SPELLS: "Spells",
   SPECIES: "Species",
+  BACKGROUNDS: "Backgrounds",
+  FEATS: "Feats",
   SHARING: "Sharing",
   PLAYERS: "Players",
   SETTINGS: "Settings",

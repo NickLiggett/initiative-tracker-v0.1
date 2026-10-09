@@ -157,6 +157,24 @@ which ends the provider's session too.
   **Players** page offers it for the rules it is under.
 - There is no Compare: a species is a list of traits, which is easy enough to read side by side.
 
+### Backgrounds
+
+- **Search** for a background by name. A background shows its source, description and its benefits in the order the
+  source gives them (ability score increases, skill and tool proficiencies, languages, equipment, a feature, suggested
+  characteristics, ...), each with what kind of benefit it is. Tables and headings in the source's text show as such.
+- **New background**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form
+  beside a live preview: a name, a description and a list of benefits (a name, a kind chosen from a list, and a
+  description each, which can be moved up and down or removed). There is no Compare.
+
+### Feats
+
+- **Search** for a feat by name, narrowed by its **type** (General, Origin, Fighting Style or Epic Boon; the data spells
+  some in capitals and some not, and either is found) and by whether it **has a prerequisite**. A feat shows its type,
+  prerequisite, source, description and benefits.
+- **New feat**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form beside a live
+  preview: a name, a type, a prerequisite (writing one is what makes it a feat with a prerequisite), a description and
+  a list of benefits (a description each). There is no Compare.
+
 ### Sharing
 
 Share your homebrew with other people by username or email address. Each document you own lists who it is shared
@@ -222,6 +240,8 @@ src/
 │   ├── items.js        Items and magic items, searchItems across both, and apiFor (the collection an item is in)
 │   ├── spells.js       The spells collection, and searchSpells (with its filters)
 │   ├── species.js      The species collection (search, get, create, replace, copy, remove)
+│   ├── backgrounds.js  The backgrounds collection
+│   ├── feats.js        The feats collection, and searchFeats (a type found however it is capitalized)
 │   ├── players.js      Player characters: list, create, replace, delete
 │   ├── party.js        The party: members, requests to join, and the party's players
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
@@ -233,8 +253,9 @@ src/
 │   ├── layout/         TopToolbar, MainDrawer, UserMenu, UserAvatar
 │   ├── resource/       What every kind of content (creatures, items, ...) shares: ResourcePage (search, compare, new,
 │   │                   duplicate, edit, delete), ResourceSearch, ComparisonTable (and compareRows.js, its row builders),
-│   │                   EditorShell, FormSection, StatBlockParts, ConfirmDialog
-│   └── Description.jsx Trait, action and item text (bold, italic, lists, tables)
+│   │                   EditorShell, FormSection, ItemsEditor (a list in a form that can be added to, reordered and
+│   │                   trimmed), StatBlockParts, ConfirmDialog
+│   └── Description.jsx Trait, action and item text (bold, italic, headings, lists, tables)
 ├── auth/               Signing in: the provider (AuthContext), the gate that shows the login page, and plain-function helpers:
 │                       pkce.js, tokens.js (kept for the tab), oidc.js (addresses and token requests)
 ├── constants/          The page names
@@ -253,6 +274,9 @@ src/
 │   │                   spell's coded fields), compareSpells.js and spellDraft.js (the form's draft, its checks, and the request)
 │   ├── species/        SpeciesPage, its stat block and editor, speciesFormat.js (showing a trait) and speciesDraft.js
 │   │                   (the form's draft, its checks, and the request)
+│   ├── backgrounds/    BackgroundsPage, its stat block and editor, backgroundFormat.js (the kinds of benefit) and
+│   │                   backgroundDraft.js (the form's draft, its checks, and the request)
+│   ├── feats/          FeatsPage, filters, stat block and editor, featFormat.js and featDraft.js
 │   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
 │   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
@@ -321,9 +345,9 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
 
 ## Future plans
 
-- **More pages for the content tables.** The backend serves 33; creatures, items and species have pages. By how much they
-  would be worth and how hard they are: backgrounds (58) and feats (91), which are small and could share one editor, classes (151, with features by level; view and search first), and read-only reference pages for rules (283),
-  conditions (21) and services (30). The small lookup tables (sizes, damage types, alignments, ...) already feed the
+- **More pages for the content tables.** The backend serves 33; creatures, items, spells, species, backgrounds and feats
+  have pages. By how much they would be worth and how hard they are: classes (151, with features by level; view and
+  search first), and read-only reference pages for rules (283), conditions (21) and services (30). The small lookup tables (sizes, damage types, alignments, ...) already feed the
   dropdowns and don't need pages.
 
 - **Make Keycloak's pages look like the app.** They are Keycloak's own theme, so signing in leaves the app's look

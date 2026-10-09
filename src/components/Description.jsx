@@ -2,8 +2,8 @@ import { Fragment } from "react";
 import { Box, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 
 /**
- * A trait, action or item description. The source text uses a little markdown (**bold**, *italic*, "- " lists and
- * "| tables |"), which is all this understands.
+ * A trait, action or item description. The source text uses a little markdown (**bold**, *italic*, "# headings", "- "
+ * lists and "| tables |"), which is all this understands.
  */
 export default function Description({ text }) {
   const blocks = toBlocks(text ?? "");
@@ -23,6 +23,13 @@ export default function Description({ text }) {
         }
         if (block.table) {
           return <DescriptionTable key={index} table={block.table} />;
+        }
+        if (block.heading) {
+          return (
+            <Typography key={index} component="h3" sx={{ fontWeight: "bold", mt: 1.5, mb: 0.5 }}>
+              {inline(block.heading)}
+            </Typography>
+          );
         }
         return (
           <Typography key={index} sx={{ mb: 0.5 }}>
@@ -64,7 +71,8 @@ function DescriptionTable({ table }) {
 }
 
 /**
- * Lines into paragraphs, bullet lists and tables: [{text}, {list: [...]}, {table: {head, rows}}]. A table is a run of
+ * Lines into paragraphs, headings, bullet lists and tables: [{text}, {heading}, {list: [...]}, {table: {head, rows}}].
+ * A heading is a line starting with "#" (any number of them). A table is a run of
  * lines starting with "|"; a row of dashes under the first line makes that line the head. The final "|" can be
  * left off, and short rows are filled out to the widest.
  */
@@ -82,8 +90,11 @@ export function toBlocks(text) {
     }
     tableRows = null;
     const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+    const heading = line.match(/^\s*#{1,6}\s+(.*\S)\s*$/);
     const last = blocks[blocks.length - 1];
-    if (bullet) {
+    if (heading) {
+      blocks.push({ heading: heading[1] });
+    } else if (bullet) {
       if (last?.list) {
         last.list.push(bullet[1]);
       } else {

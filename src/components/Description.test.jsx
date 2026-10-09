@@ -11,6 +11,23 @@ describe("Description", () => {
     ]);
   });
 
+  it("makes a line starting with # a heading, whatever the number of #", () => {
+    expect(toBlocks("Roll 1d10.\n#### Acolyte Connections\n| a |\n### Memento\n#hashtag")).toEqual([
+      { text: "Roll 1d10." },
+      { heading: "Acolyte Connections" },
+      { table: { head: null, rows: [["a"]] } },
+      { heading: "Memento" },
+      { text: "#hashtag" },
+    ]);
+  });
+
+  it("shows a heading as one, without the #s", () => {
+    render(<Description text={"#### Acolyte Connections\nRoll 1d10."} />);
+
+    expect(screen.getByRole("heading", { name: "Acolyte Connections" })).toBeInTheDocument();
+    expect(screen.queryByText(/####/)).not.toBeInTheDocument();
+  });
+
   it("renders bold, italic and list items", () => {
     render(<Description text={"The dragon casts:\n- **3/Day Each:** Fog Cloud, *Legend Lore*"} />);
 

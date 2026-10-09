@@ -7,6 +7,8 @@ import ItemsPage from "./features/items/ItemsPage";
 import SettingsPage from "./features/settings/SettingsPage";
 import PlayersPage from "./features/players/PlayersPage";
 import SharingPage from "./features/sharing/SharingPage";
+import BackgroundsPage from "./features/backgrounds/BackgroundsPage";
+import FeatsPage from "./features/feats/FeatsPage";
 import SpeciesPage from "./features/species/SpeciesPage";
 import SpellsPage from "./features/spells/SpellsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
@@ -40,10 +42,12 @@ export default function App() {
       {currentPage === Pages.ITEMS && <ItemsPage />}
       {currentPage === Pages.SPELLS && <SpellsPage />}
       {currentPage === Pages.SPECIES && <SpeciesPage />}
+      {currentPage === Pages.BACKGROUNDS && <BackgroundsPage />}
+      {currentPage === Pages.FEATS && <FeatsPage />}
       {currentPage === Pages.SHARING && <SharingPage />}
       {currentPage === Pages.PLAYERS && <PlayersPage />}
       {currentPage === Pages.SETTINGS && <SettingsPage tab={settingsTab} onTabChange={setSettingsTab} />}
-      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SPELLS, Pages.SPECIES, Pages.SHARING, Pages.PLAYERS, Pages.SETTINGS].includes(currentPage) && (
+      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SPELLS, Pages.SPECIES, Pages.BACKGROUNDS, Pages.FEATS, Pages.SHARING, Pages.PLAYERS, Pages.SETTINGS].includes(currentPage) && (
         <PlaceholderPage title={currentPage} />
       )}
     </div>

@@ -5,8 +5,6 @@ import { featTypeLabel } from "./featFormat";
 
 /** A feat laid out like a stat block: what kind it is, its prerequisite, its source, its description and benefits. */
 export default function FeatStatBlock({ feat }) {
-  const benefits = feat.benefits ?? [];
-
   return (
     <Box>
       <Box sx={{ mb: 2 }}>
@@ -33,19 +31,26 @@ export default function FeatStatBlock({ feat }) {
       )}
 
       <Section title="Benefits">
-        {benefits.length === 0 ? (
-          <Typography color="text.secondary">No benefits.</Typography>
-        ) : (
-          <Box component="ul" sx={{ m: 0, pl: 3 }}>
-            {benefits.map((benefit, index) => (
-              <Box component="li" key={index} sx={{ mb: 1 }}>
-                {benefit.name && <Typography sx={{ fontWeight: "bold", fontStyle: "italic" }}>{benefit.name}</Typography>}
-                <Description text={benefit.desc} />
-              </Box>
-            ))}
-          </Box>
-        )}
+        <FeatBenefits feat={feat} />
       </Section>
+    </Box>
+  );
+}
+
+/** What a feat gives, as a list. */
+export function FeatBenefits({ feat }) {
+  const benefits = feat.benefits ?? [];
+  if (benefits.length === 0) {
+    return <Typography color="text.secondary">No benefits.</Typography>;
+  }
+  return (
+    <Box component="ul" sx={{ m: 0, pl: 3 }}>
+      {benefits.map((benefit, index) => (
+        <Box component="li" key={index} sx={{ mb: 1 }}>
+          {benefit.name && <Typography sx={{ fontWeight: "bold", fontStyle: "italic" }}>{benefit.name}</Typography>}
+          <Description text={benefit.desc} />
+        </Box>
+      ))}
     </Box>
   );
 }

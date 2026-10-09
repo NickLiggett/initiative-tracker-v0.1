@@ -30,8 +30,8 @@ function stubBackend(extra = {}) {
   return stubApi({ ...OWNERSHIP_ROUTES, "GET /api/backgrounds": { content: [acolyte, hermit] }, ...extra });
 }
 
-async function pick(text) {
-  const input = screen.getByRole("combobox", { name: "Background" });
+async function pick(text, label = "Background") {
+  const input = screen.getByRole("combobox", { name: label });
   fireEvent.focus(input);
   fireEvent.change(input, { target: { value: text } });
   const option = await waitFor(
@@ -63,11 +63,26 @@ describe("reading a background", () => {
     expect(screen.queryByText("Skill proficiencies")).not.toBeInTheDocument(); // the name already says it
   });
 
-  it("has no Compare", () => {
+});
+
+describe("comparing backgrounds", () => {
+  it("lines up what each gives by kind, and shows features and descriptions in full side by side", async () => {
     stubBackend();
     render(<BackgroundsPage />);
+    await pick("Acolyte");
+    await screen.findByRole("heading", { name: "Acolyte" });
 
-    expect(screen.queryByRole("button", { name: "Compare" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    await pick("Hermit", "Compare with");
+
+    const table = within(await screen.findByRole("table"));
+    expect(table.getByText("Skill proficiencies")).toBeInTheDocument();
+    expect(table.getByText("Insight, Religion")).toBeInTheDocument();
+    expect(table.getByText("Languages")).toBeInTheDocument();
+    expect(table.getByText("One of your choice.")).toBeInTheDocument();
+    expect(table.getByText("Shelter of the Faithful")).toBeInTheDocument(); // a feature, by name
+    expect(screen.getByText("You can get free healing at temples of your faith.")).toBeInTheDocument(); // and in full below
+    expect(screen.getByText("You spent your life in service to a temple.")).toBeInTheDocument();
   });
 });
 

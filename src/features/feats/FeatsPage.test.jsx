@@ -62,8 +62,8 @@ function stubBackend(extra = {}) {
 
 const field = () => screen.getByRole("combobox", { name: "Feat" });
 
-async function pick(text) {
-  const input = field();
+async function pick(text, label = "Feat") {
+  const input = screen.getByRole("combobox", { name: label });
   fireEvent.focus(input);
   fireEvent.change(input, { target: { value: text } });
   const option = await waitFor(
@@ -142,6 +142,39 @@ describe("narrowing the search", () => {
 
     const options = within(await screen.findByRole("listbox", {}, { timeout: 2500 })).getAllByRole("option");
     expect(options.map((option) => option.textContent.split("General")[0])).toEqual(["Grappler"]);
+  });
+});
+
+describe("comparing feats", () => {
+  it("lines two feats up by type and prerequisite, then shows what each gives side by side", async () => {
+    stubBackend();
+    render(<FeatsPage />);
+    await pick("Alert");
+    await screen.findByRole("heading", { name: "Alert" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    await pick("Grappler", "Compare with");
+
+    const table = within(await screen.findByRole("table"));
+    expect(table.getByText("Origin feat")).toBeInTheDocument();
+    expect(table.getByText("General feat")).toBeInTheDocument();
+    expect(table.getByText("None")).toBeInTheDocument();
+    expect(table.getByText("Strength or Dexterity 13 or higher")).toBeInTheDocument();
+    expect(screen.getByText("You add your proficiency bonus to initiative rolls.")).toBeInTheDocument();
+    expect(screen.getByText("You have advantage on attacks against a creature you are grappling.")).toBeInTheDocument();
+  });
+
+  it("says so, and shows the text once, when two feats give the same", async () => {
+    stubBackend();
+    render(<FeatsPage />);
+    await pick("Alert");
+    await screen.findByRole("heading", { name: "Alert" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Compare" }));
+    await pick("Alert", "Compare with");
+
+    expect(await screen.findByText("Both feats give the same.")).toBeInTheDocument();
+    expect(screen.getAllByText("You can swap initiative with an ally.")).toHaveLength(1);
   });
 });
 

@@ -164,7 +164,10 @@ which ends the provider's session too.
   characteristics, ...), each with what kind of benefit it is. Tables and headings in the source's text show as such.
 - **New background**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form
   beside a live preview: a name, a description and a list of benefits (a name, a kind chosen from a list, and a
-  description each, which can be moved up and down or removed). There is no Compare.
+  description each, which can be moved up and down or removed).
+- **Compare** two backgrounds: a table of what each gives in the short kinds of benefit (ability scores, skill and tool
+  proficiencies, languages, equipment, feat, and features by name), then each one's description, features and longer
+  text in full, side by side.
 
 ### Feats
 
@@ -173,7 +176,9 @@ which ends the provider's session too.
   prerequisite, source, description and benefits.
 - **New feat**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form beside a live
   preview: a name, a type, a prerequisite (writing one is what makes it a feat with a prerequisite), a description and
-  a list of benefits (a description each). There is no Compare.
+  a list of benefits (a description each).
+- **Compare** two feats: a table of their type and prerequisite, then what each gives side by side (once, with a note,
+  when both give the same, as the 2014 and 2024 versions of a feat sometimes do).
 
 ### Sharing
 

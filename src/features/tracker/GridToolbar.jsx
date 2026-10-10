@@ -1,5 +1,5 @@
 import { KeyboardArrowDown as KeyboardArrowDownIcon, KeyboardArrowUp as KeyboardArrowUpIcon } from "@mui/icons-material";
-import { Button, Typography } from "@mui/material";
+import { Button, Tooltip, Typography } from "@mui/material";
 
 const SAVE_TEXT = {
   loading: "Loading your tracker…",
@@ -37,9 +37,11 @@ export default function GridToolbar({ onPrevious, onNext, saveStatus, notice, on
           </Typography>
         )}
       </div>
-      <Button onClick={onNext} aria-label="Next turn">
-        <KeyboardArrowUpIcon />
-      </Button>
+      <Tooltip title="Next turn (Space)">
+        <Button onClick={onNext} aria-label="Next turn">
+          <KeyboardArrowUpIcon />
+        </Button>
+      </Tooltip>
     </div>
   );
 }

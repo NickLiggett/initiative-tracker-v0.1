@@ -1,17 +1,22 @@
 import { useRef, useState } from "react";
 import { Box, Button, ButtonGroup, useMediaQuery } from "@mui/material";
 import CombatantForm, { EMPTY_COMBATANT } from "./CombatantForm";
+import { applyChange } from "./creaturePrefill";
 
 const NO_ERRORS = { name: false, initiative: false, type: false };
 
-/** The grid's footer: the form for adding combatants, and Submit / Players (pick players to add) / Clear / Sort. */
+/**
+ * The grid's footer: the form for adding combatants (Enter in a field submits it), and Submit / Players (pick players to
+ * add) / Clear / Sort. Choosing a creature fills in the name, initiative, AC and HP the user hasn't typed.
+ */
 export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
   const [form, setForm] = useState(EMPTY_COMBATANT);
   const [errors, setErrors] = useState(NO_ERRORS);
   const nameInputRef = useRef();
   const narrow = useMediaQuery("(max-width: 730px)");
 
-  const handleSubmit = () => {
+  const handleSubmit = (event) => {
+    event.preventDefault();
     const missing = { name: form.name === "", initiative: form.initiative === "", type: !form.type };
     if (missing.name || missing.initiative || missing.type) {
       setErrors(missing);
@@ -33,6 +38,9 @@ export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
 
   return (
     <Box
+      component="form"
+      noValidate
+      onSubmit={handleSubmit}
       style={{
         borderTop: "1px solid",
         padding: "1%",
@@ -44,12 +52,12 @@ export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
       <CombatantForm
         form={form}
         errors={errors}
-        onChange={(changes) => setForm((current) => ({ ...current, ...changes }))}
+        onChange={(changes) => setForm((current) => applyChange(current, changes))}
         nameInputRef={nameInputRef}
       />
       <div style={{ alignSelf: "center" }}>
         <ButtonGroup orientation={narrow ? "horizontal" : "vertical"} aria-label="combatant actions">
-          <Button onClick={handleSubmit}>Submit</Button>
+          <Button type="submit">Submit</Button>
           <Button onClick={onAddPlayers}>Players</Button>
           <Button onClick={onClear}>Clear</Button>
           <Button onClick={onSort}>Sort</Button>

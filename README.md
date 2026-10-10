@@ -82,7 +82,10 @@ which ends the provider's session too.
 
 - **Add combatants** with the form under the grid: name, initiative, and optionally AC and HP. For a creature, choose
   the type **Creature** and search for it; results show their source, since many creatures exist in several (e.g. the
-  2014 and 2024 rules).
+  2014 and 2024 rules). Choosing a creature fills in the name, initiative (a d20 plus its bonus), AC and HP you haven't
+  typed; what you typed stays, and you can change any of it before adding. **Enter** in any field adds the combatant.
+- **Space** moves to the next turn, the same as the arrow above the grid. It is left alone while you are typing, on a
+  focused button, or with a dialog open.
 - **Sort** orders the grid by initiative, highest first. The arrows above the grid move to the next or previous
   turn; the next combatant's reaction is cleared.
 - **Edit cells** by double-clicking them. HP takes `+5` to heal and `-7` to deal damage, as well as a new value.
@@ -420,7 +423,6 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
   it; the editors would need a "save into which document" choice.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row
   re-renders and aren't saved with the tracker; the same goes for the Mob checkbox, which doesn't do anything yet.
-- **Filling in creature stats.** Prefill AC and HP from the chosen creature.
 - **Dark mode text.** Text-style buttons in a dark main color (Forest, Royal) are dim on the dark page; lighten them there.
 - **Showing what changed** between two descriptions, word by word, when comparing (the 2014 and 2024 versions).
 - **A markdown library** for descriptions in place of the small renderer in `Description.jsx` (blocked while the npm

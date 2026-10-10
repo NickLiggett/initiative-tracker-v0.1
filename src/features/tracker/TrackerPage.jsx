@@ -8,6 +8,7 @@ import PlayerSheetDialog from "./PlayerSheetDialog";
 import { playerIdsIn } from "./playerCombatants";
 import { buildColumns } from "./trackerColumns";
 import useSavedTracker from "./useSavedTracker";
+import useNextTurnShortcut from "./useNextTurnShortcut";
 import {
   applyHpInput,
   nextTurn,
@@ -24,6 +25,7 @@ export default function TrackerPage() {
   const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose player is shown
   const [picking, setPicking] = useState(false);
   const gridRef = useRef(null);
+  useNextTurnShortcut(() => setCombatants(nextTurn));
 
   const columns = buildColumns({
     combatants,

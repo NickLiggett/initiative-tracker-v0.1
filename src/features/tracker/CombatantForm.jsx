@@ -8,7 +8,7 @@ const MAX_NAME_LENGTH = 25;
 const MAX_DIGITS = { initiative: 2, armorClass: 2, hitPoints: 4 };
 
 /** The empty form. */
-export const EMPTY_COMBATANT = { name: "", initiative: "", armorClass: "", hitPoints: "", type: "", creature: null };
+export const EMPTY_COMBATANT = { name: "", initiative: "", armorClass: "", hitPoints: "", type: "", creature: null, filled: [] };
 
 /**
  * The fields for adding a combatant. Creatures are picked from the backend's creatures.

@@ -1,6 +1,7 @@
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { Add, Delete, Info, Remove } from "@mui/icons-material";
-import { formatChallengeRating } from "../creatures/creatureFormat";
+import { strongestAttack } from "../creatures/attackParse";
+import { formatChallengeRating, formatModifier } from "../creatures/creatureFormat";
 import { creatureXp } from "./encounterRules";
 
 const MAX_COUNT = 99;
@@ -22,6 +23,7 @@ export default function MonsterList({ monsters, onCount, onRemove, onShow }) {
     <Box component="ul" aria-label="Monsters" sx={{ listStyle: "none", m: 0, p: 0 }}>
       {monsters.map(({ creature, count }) => {
         const xp = creatureXp(creature);
+        const best = strongestAttack(creature);
         return (
           <Box component="li" key={creature.key} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -30,6 +32,11 @@ export default function MonsterList({ monsters, onCount, onRemove, onShow }) {
                 CR {formatChallengeRating(creature.challengeRating)} · {xp.toLocaleString()} XP each
                 {count > 1 ? ` · ${(xp * count).toLocaleString()} XP in all` : ""}
               </Typography>
+              {best && (
+                <Typography variant="caption" color="text.secondary" component="div">
+                  Hits hardest with {best.name}: {formatModifier(best.toHit)} to hit, about {best.average} damage
+                </Typography>
+              )}
             </Box>
             <IconButton aria-label={`Fewer ${creature.name}`} disabled={count <= 1} onClick={() => onCount(creature.key, count - 1)}>
               <Remove />

@@ -11,7 +11,20 @@ afterEach(() => {
 
 const srd = { key: "srd-2014", displayName: "5e 2014 Rules", name: "SRD" };
 
-const goblin = { key: "srd_goblin", name: "Goblin", challengeRating: 0.25, experiencePoints: 50, armorClass: 15, hitPoints: 7, initiativeBonus: 2, document: srd };
+const goblin = {
+  key: "srd_goblin",
+  name: "Goblin",
+  challengeRating: 0.25,
+  experiencePoints: 50,
+  armorClass: 15,
+  hitPoints: 7,
+  initiativeBonus: 2,
+  document: srd,
+  actions: [
+    { name: "Scimitar", actionType: "ACTION", desc: "Melee Weapon Attack: +4 to hit, reach 5 ft., one target. Hit: 5 (1d6 + 2) slashing damage." },
+    { name: "Shortbow", actionType: "ACTION", desc: "Ranged Weapon Attack: +4 to hit, range 80/320 ft., one target. Hit: 5 (1d6 + 2) piercing damage." },
+  ],
+};
 const ogre = { key: "srd_ogre", name: "Ogre", challengeRating: 2, experiencePoints: 450, armorClass: 11, hitPoints: 59, initiativeBonus: -1, document: srd };
 
 const ana = { id: 1, name: "Ana", ruleset: "5e-2024", className: "Fighter", speciesName: "Dwarf", level: 3, armorClass: 18, hitPoints: 30, initiativeBonus: 1, role: "OWNER" };
@@ -156,6 +169,25 @@ describe("how hard it is", () => {
 });
 
 describe("the creatures", () => {
+  it("says which attack hits hardest, for creatures whose actions say what they do", async () => {
+    stubBackend();
+    render(<EncountersPage onOpenTracker={() => {}} />);
+
+    await addCreature("Goblin");
+
+    expect(await screen.findByText("Hits hardest with Scimitar: +4 to hit, about 5 damage")).toBeInTheDocument();
+  });
+
+  it("says nothing of it for a creature with no attacks", async () => {
+    stubBackend();
+    render(<EncountersPage onOpenTracker={() => {}} />);
+
+    await addCreature("Ogre");
+
+    await screen.findByLabelText("Number of Ogre");
+    expect(screen.queryByText(/Hits hardest/)).not.toBeInTheDocument();
+  });
+
   it("adds each kind once, with its challenge rating and XP, and counts another of the same", async () => {
     stubBackend();
     render(<EncountersPage onOpenTracker={() => {}} />);

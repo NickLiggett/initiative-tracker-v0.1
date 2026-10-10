@@ -26,6 +26,16 @@ export function saveTracker(state) {
   return apiSend("PUT", "/api/me/tracker", state);
 }
 
+/** The encounters the user saved on the Encounters page: an object, empty if they've never saved one. */
+export function getEncounters({ signal } = {}) {
+  return apiGet("/api/me/encounters", undefined, { signal });
+}
+
+/** Keeps the user's saved encounters (any JSON object up to 256 KB). */
+export function saveEncounters(state) {
+  return apiSend("PUT", "/api/me/encounters", state);
+}
+
 /**
  * Makes the picture the user's avatar. It is sent as it is, so its type must be PNG, JPEG, WebP or GIF.
  * @param {Blob} picture

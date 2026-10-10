@@ -240,8 +240,11 @@ Build an encounter, see how hard it is for your party, and send it to the initia
   monsters, and for a small or large party, against each character's Easy, Medium, Hard and Deadly thresholds). It starts on
   the rules your players use. The numbers are the ones printed in the Dungeon Master's Guides, typed into
   `encounterRules.js`: check them against your books, as Open5e's data doesn't have them.
-- Each creature in the list says which of its attacks hits hardest on a hit (its bonus and average damage). That is one
-  attack, not a round: a Multiattack says in words how many it makes, which isn't read.
+- **Saved encounters** keep an encounter under a name, to load again at the table: its creatures and how many, the players
+  ticked, the characters added by level and the rules. They are kept on your account (`/api/me/encounters`), so they
+  follow you to other browsers. Saving under a name that is already used replaces that encounter. Loading looks the
+  creatures up again, so they are as they are now, and says if one can't be found. Saving and deleting change what the
+  account has at that moment, so doing it in two tabs doesn't lose either.
 - **Add to initiative tracker** rolls initiative for the monsters and puts them in the tracker, after anyone already there
   and highest first, then opens it. A kind of monster rolls once and all of it goes at that number, with the monsters
   numbered (Goblin 1, Goblin 2); tick *Roll for each monster separately* to roll for each. The ticked players go in too,
@@ -313,7 +316,8 @@ src/
 │   ├── feats/          FeatsPage, filters, stat block and editor, featFormat.js and featDraft.js
 │   ├── encounters/     EncountersPage (party, creatures, difficulty), encounterRules.js (the 2014 and 2024 difficulty
 │   │                   rules and their tables), encounterCombatants.js (monsters and players as combatants, with their
-│   │                   initiative) and trackerHandoff.js (adding them to the saved tracker)
+│   │                   initiative), trackerHandoff.js (adding them to the saved tracker), and savedEncounters.js with
+│   │                   useSavedEncounters.js and SavedEncountersPanel (keeping encounters under a name)
 │   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
 │   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)

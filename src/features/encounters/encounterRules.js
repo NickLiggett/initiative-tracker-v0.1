@@ -1,8 +1,10 @@
 // How hard an encounter is, as plain functions: the 2014 rules (adjusted XP against each character's thresholds) and the
 // 2024 rules (an XP budget).
 //
-// The tables are the numbers printed in the Dungeon Master's Guides, typed in here: Open5e's data doesn't have them. If
-// you have the books, check them against them; they are the only place these numbers are kept.
+// The tables are the numbers printed in the Dungeon Master's Guides, typed in here: Open5e's data doesn't have them.
+// Every row was compared with a published copy: the 2014 thresholds and multipliers with D&D Beyond's 2014 Basic Rules
+// ("Building Combat Encounters"), and the 2024 budgets with Roll20's compendium of the 2024 DMG ("Plan Encounters").
+// They are the only place these numbers are kept.
 
 /** The rule sets an encounter can be measured by, as a player's `ruleset` names them. */
 export const ENCOUNTER_RULESETS = [

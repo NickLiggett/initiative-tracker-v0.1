@@ -17,7 +17,7 @@ function Stat({ label, value }) {
 }
 
 /**
- * One player character: who they are, their numbers, and who made them or plays them. Without the handlers it is a
+ * One character: who they are, their numbers, and who made them or plays them. Without the handlers it is a
  * preview, with no buttons.
  *
  * @param {object} player as the backend gives it

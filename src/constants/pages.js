@@ -9,7 +9,7 @@ export const Pages = {
   BACKGROUNDS: "Backgrounds",
   FEATS: "Feats",
   SHARING: "Sharing",
-  PLAYERS: "Players",
+  PLAYERS: "Characters",
   ENCOUNTERS: "Encounters",
   SETTINGS: "Settings",
 };

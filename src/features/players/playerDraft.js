@@ -1,4 +1,4 @@
-// A player character while it's being edited, and back to what the backend takes. Numbers are kept as the text typed,
+// A character while it's being edited, and back to what the backend takes. Numbers are kept as the text typed,
 // so a field can be empty or half typed.
 
 import { DEFAULT_RULESET } from "./players";
@@ -20,7 +20,7 @@ export const EMPTY_DRAFT = {
 
 const USERNAME = /^@?[a-z0-9][a-z0-9-]{0,31}$/i;
 
-/** The draft for a player the backend gave. */
+/** The draft for a character the backend gave. */
 export function toDraft(player) {
   return {
     name: player.name,
@@ -38,7 +38,7 @@ export function toDraft(player) {
   };
 }
 
-/** A new player starting from this one: the same, with a new name, for nobody in particular yet. */
+/** A new character starting from this one: the same, with a new name, for nobody in particular yet. */
 export function duplicateDraft(player) {
   return { ...toDraft(player), name: `${player.name} (copy)`, playedBy: "" };
 }
@@ -60,7 +60,7 @@ function problemWithNumber(label, text, min, max, optional = false) {
 /** What stops this draft from being saved: sentences, none when it can be. */
 export function draftProblems(draft) {
   return [
-    draft.name.trim() ? null : "Give the player a name.",
+    draft.name.trim() ? null : "Give the character a name.",
     problemWithNumber("Level", draft.level, 1, 20),
     problemWithNumber("Armor class", draft.armorClass, 0, 40, true),
     problemWithNumber("Hit points", draft.hitPoints, 0, 9999, true),
@@ -91,14 +91,14 @@ export function toRequest(draft) {
   };
 }
 
-/** The player a draft describes, shaped like the backend's, for showing a preview. */
+/** The character a draft describes, shaped like the backend's, for showing a preview. */
 export function previewOf(draft, existing) {
   const valid = (text, fallback) => (Number.isNaN(whole(text)) ? fallback : whole(text));
   const request = toRequest({ ...draft, level: String(valid(draft.level, 1)), initiativeBonus: String(valid(draft.initiativeBonus, 0)) });
   return {
     ...request,
     id: existing?.id ?? 0,
-    name: request.name || "Unnamed player",
+    name: request.name || "Unnamed character",
     owner: existing?.owner ?? null,
     role: existing?.role ?? "OWNER",
     armorClass: Number.isNaN(request.armorClass) ? null : request.armorClass,

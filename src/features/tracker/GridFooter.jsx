@@ -6,7 +6,7 @@ import { applyChange } from "./creaturePrefill";
 const NO_ERRORS = { name: false, initiative: false, type: false };
 
 /**
- * The grid's footer: the form for adding combatants (Enter in a field submits it), and Submit / Players (pick players to
+ * The grid's footer: the form for adding combatants (Enter in a field submits it), and Submit / Characters (pick characters to
  * add) / Clear / Sort. Choosing a creature fills in the name, initiative, AC and HP the user hasn't typed.
  */
 export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
@@ -58,7 +58,7 @@ export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
       <div style={{ alignSelf: "center" }}>
         <ButtonGroup orientation={narrow ? "horizontal" : "vertical"} aria-label="combatant actions">
           <Button type="submit">Submit</Button>
-          <Button onClick={onAddPlayers}>Players</Button>
+          <Button onClick={onAddPlayers}>Characters</Button>
           <Button onClick={onClear}>Clear</Button>
           <Button onClick={onSort}>Sort</Button>
         </ButtonGroup>

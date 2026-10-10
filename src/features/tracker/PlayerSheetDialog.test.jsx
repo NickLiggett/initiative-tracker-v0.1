@@ -44,7 +44,7 @@ describe("PlayerSheetDialog", () => {
     stubApi({ "GET /api/players/1": () => new Response("{}", { status: 500 }) });
     render(<PlayerSheetDialog playerId={1} name="Thorin" onClose={vi.fn()} />);
 
-    expect(await screen.findByText("Couldn't load this player.")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't load this character.")).toBeInTheDocument();
   });
 });
 

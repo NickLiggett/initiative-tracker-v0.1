@@ -89,12 +89,12 @@ which ends the provider's session too.
 - **Sort** orders the grid by initiative, highest first. The arrows above the grid move to the next or previous
   turn; the next combatant's reaction is cleared.
 - **Edit cells** by double-clicking them. HP takes `+5` to heal and `-7` to deal damage, as well as a new value.
-- **Players.** The **Players** button under the grid picks from your players, the ones you play and your party's. Tick
+- **Characters.** The **Characters** button under the grid picks from your characters, the ones you play and your party's. Tick
   the ones in the fight, type what each rolled for initiative (the box shows their bonus) or press **Roll** for a d20
   plus the bonus (**Roll for all ticked** does everyone), and **Add to initiative**. They go in as PC rows with their
-  armor class and hit points filled in, and a player already in the order can't be added twice. A player's row has the
+  armor class and hit points filled in, and a character already in the order can't be added twice. A character's row has the
   same document icon as a creature's, which opens their card as it is now (their level or notes may have changed). The
-  tracker remembers which player a row is, not a copy of them.
+  tracker remembers which character a row is, not a copy of them.
 - **Creatures** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
   uses. The document icon opens the creature's stat block.
 - **Your tracker is kept on your account.** A moment after any change (adding, editing, sorting, stepping the turn,
@@ -181,7 +181,7 @@ which ends the provider's session too.
 - **New species**, **Duplicate**, **Edit** and **Delete** work as for creatures and items. The editor has a form beside a live
   preview: a name, a description, whether it is a subspecies (and of which species, searched for) and a list of traits
   (name and description each, which can be moved up and down or removed). A species goes in your own homebrew, so the
-  **Players** page offers it for the rules it is under.
+  **Characters** page offers it for the rules it is under.
 - There is no Compare: a species is a list of traits, which is easy enough to read side by side.
 
 ### Backgrounds
@@ -222,53 +222,58 @@ once. An invitation is for that one address, not a link to pass around, and expi
 backend with invitations and sign-in (`email_verified` in the token), so the `dev` profile can send invitations but
 never accept them.
 
-### Players
+### Characters
 
-Your player characters, kept on your account. Each card shows the character's name, level, class and species, the rules
+A **player** is a person with an account in the app. A **character** is the sheet they play: a record made by one user
+and optionally played by another. The **GM** (called DM in the app) runs a party and the tracker, and a **party** is the
+GM's group of players. In the code and the API a character is still called a "player" (`/api/players`, `PlayersPage`),
+so read "player" there as "character".
+
+Your characters, kept on your account. Each card shows the character's name, level, class and species, the rules
 they use (**2014** or **2024**), armor class, hit points, initiative bonus, notes, and who made or plays them.
 
-- **New player** opens the editor with a live preview. Choose the rules first: the class and species lists then offer
+- **New character** opens the editor with a live preview. Choose the rules first: the class and species lists then offer
   that rule set's (the 2024 Fighter and the 2014 Fighter are different entries). Anything not in the list can be typed.
-- **Played by** names a friend with an account. They see the character on their own Players page (marked "You play this
+- **Played by** names a friend with an account. They see the character on their own Characters page (marked "You play this
   one") and can keep its level, armor class, hit points, initiative bonus and notes up to date; the name, rules, class,
-  species and player stay with whoever made it. The friend needs to have signed in once.
-- **Duplicate** starts a new player like an existing one, named "(copy)" and played by nobody. **Delete** is only for
-  the player's maker.
+  species and who plays it stay with whoever made it. The friend needs to have signed in once.
+- **Duplicate** starts a new character like an existing one, named "(copy)" and played by nobody. **Delete** is only for
+  the character's maker.
 
-The page has two tabs, **Players** and **Party**. The Party tab has a badge when someone has asked you to join their
+The page has two tabs, **Characters** and **Party**. The Party tab has a badge when someone has asked you to join their
 party.
 
 - **Your party.** Ask friends by username (they need to have signed in once). They are listed as "Waiting for them to
   accept" until they do, and you can withdraw the request or, later, remove them.
-- **Asked to join a party.** When a DM asks you, you can **Accept** or **Decline**. Joining lets them see your players
+- **Asked to join a party.** When a DM asks you, you can **Accept** or **Decline**. Joining lets them see your characters
   and the ones you play, to add to initiative; they can't change them. **Parties you're in** lists them, and you can
-  **Leave** any time. Your players stay yours either way.
-- **Your party's players.** The characters of everyone who has joined, read-only, with who made and who plays them.
+  **Leave** any time. Your characters stay yours either way.
+- **Your party's characters.** The characters of everyone who has joined, read-only, with who made and who plays them.
 
-Players go into the initiative order from the tracker (see below).
+Characters go into the initiative order from the tracker (see below).
 
 ### Encounters
 
 Build an encounter, see how hard it is for your party, and send it to the initiative tracker.
 
-- **The party** is your players and your party's, all included to begin with; untick anyone who isn't there. Characters
-  who have no player sheet can be added by level alone.
+- **The party** is your characters and your party's, all included to begin with; untick anyone who isn't there. Characters
+  who have no sheet can be added by level alone.
 - **The creatures** are searched for by name and added; adding one again counts another. Each shows its challenge rating
   and XP, with buttons for how many, its stat block, and to remove it.
 - **Difficulty** is measured by the **2024** rules (the monsters' XP added up against the party's XP budget for a Low,
   Moderate or High encounter; above High is "Over budget") or the **2014** rules (the XP multiplied for the number of
   monsters, and for a small or large party, against each character's Easy, Medium, Hard and Deadly thresholds). It starts on
-  the rules your players use. The numbers are the ones printed in the Dungeon Master's Guides, typed into
+  the rules your characters use. The numbers are the ones printed in the Dungeon Master's Guides, typed into
   `encounterRules.js`: check them against your books, as Open5e's data doesn't have them.
-- **Saved encounters** keep an encounter under a name, to load again at the table: its creatures and how many, the players
+- **Saved encounters** keep an encounter under a name, to load again at the table: its creatures and how many, the characters
   ticked, the characters added by level and the rules. They are kept on your account (`/api/me/encounters`), so they
   follow you to other browsers. Saving under a name that is already used replaces that encounter. Loading looks the
   creatures up again, so they are as they are now, and says if one can't be found. Saving and deleting change what the
   account has at that moment, so doing it in two tabs doesn't lose either.
 - **Add to initiative tracker** rolls initiative for the monsters and puts them in the tracker, after anyone already there
   and highest first, then opens it. A kind of monster rolls once and all of it goes at that number, with the monsters
-  numbered (Goblin 1, Goblin 2); tick *Roll for each monster separately* to roll for each. The ticked players go in too,
-  each with their own roll, unless you untick *Include the ticked players*. Each combatant gets the creature's armor
+  numbered (Goblin 1, Goblin 2); tick *Roll for each monster separately* to roll for each. The ticked characters go in too,
+  each with their own roll, unless you untick *Include the ticked characters*. Each combatant gets the creature's armor
   class and hit points and its stat block.
 
 ### Settings
@@ -298,8 +303,8 @@ src/
 │   ├── species.js      The species collection (search, get, create, replace, copy, remove)
 │   ├── backgrounds.js  The backgrounds collection
 │   ├── feats.js        The feats collection, and searchFeats (a type found however it is capitalized)
-│   ├── players.js      Player characters: list, create, replace, delete
-│   ├── party.js        The party: members, requests to join, and the party's players
+│   ├── players.js      Characters (called players here): list, create, replace, delete
+│   ├── party.js        The party: members, requests to join, and the party's characters
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)
 │   ├── sharing.js      Everything the Sharing page shows, loaded together
 │   ├── ownership.js    Which documents the signed-in user can change (their own, and those they are an editor of)
@@ -320,7 +325,7 @@ src/
 │   ├── tracker/        The initiative tracker: TrackerPage, its columns, toolbar, footer and combatant form,
 │   │                   combatants.js (the turn-order rules, as plain functions), and useSavedTracker with
 │   │                   trackerState.js (keeping it on the account and bringing it back), and PlayerPicker,
-│   │                   PlayerSheetDialog and playerCombatants.js (adding players, and the dice)
+│   │                   PlayerSheetDialog and playerCombatants.js (adding characters, and the dice)
 │   ├── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its
 │   │                   form, and plain-function helpers: creatureFormat.js (reading backend creature data),
 │   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON), attackParse.js (an
@@ -337,7 +342,7 @@ src/
 │   │                   backgroundDraft.js (the form's draft, its checks, and the request)
 │   ├── feats/          FeatsPage, filters, stat block and editor, featFormat.js and featDraft.js
 │   ├── encounters/     EncountersPage (party, creatures, difficulty), encounterRules.js (the 2014 and 2024 difficulty
-│   │                   rules and their tables), encounterCombatants.js (monsters and players as combatants, with their
+│   │                   rules and their tables), encounterCombatants.js (monsters and characters as combatants, with their
 │   │                   initiative), trackerHandoff.js (adding them to the saved tracker), and savedEncounters.js with
 │   │                   useSavedEncounters.js and SavedEncountersPanel (keeping encounters under a name)
 │   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)

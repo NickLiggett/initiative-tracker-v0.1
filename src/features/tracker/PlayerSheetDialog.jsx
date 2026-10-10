@@ -4,7 +4,7 @@ import { getPlayer } from "../../api/players";
 import PlayerCard from "../players/PlayerCard";
 
 /**
- * A player in the initiative order, as their card: asked for when opened, so it shows the player as they are now (their
+ * A character in the initiative order, as their card: asked for when opened, so it shows the character as they are now (their
  * level and notes may have changed since they were added), or says why it can't.
  * @param {number} playerId
  */
@@ -18,7 +18,7 @@ export default function PlayerSheetDialog({ playerId, name, onClose }) {
       .then(setPlayer)
       .catch((e) => {
         if (e.name !== "AbortError") {
-          setError(e.status === 404 ? `${name} isn't there any more, or isn't shared with you now.` : "Couldn't load this player.");
+          setError(e.status === 404 ? `${name} isn't there any more, or isn't shared with you now.` : "Couldn't load this character.");
         }
       });
     return () => controller.abort();

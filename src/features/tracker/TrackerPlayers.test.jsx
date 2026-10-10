@@ -39,11 +39,11 @@ describe("PlayerPicker", () => {
   it("lists your players and your party's, with their numbers", async () => {
     await renderPicker();
 
-    const mine = within(screen.getByRole("region", { name: "Your players" }));
+    const mine = within(screen.getByRole("region", { name: "Your characters" }));
     expect(mine.getByText("Thorin")).toBeInTheDocument();
     expect(mine.getByText("Level 5 Fighter · Dwarf · AC 18 · HP 52")).toBeInTheDocument();
     expect(mine.getByText("Pip")).toBeInTheDocument(); // one you play counts as yours
-    const party = within(screen.getByRole("region", { name: "Your party's players" }));
+    const party = within(screen.getByRole("region", { name: "Your party's characters" }));
     expect(party.getByText("Mira")).toBeInTheDocument();
     expect(party.getByText("Level 3 Wizard · from anna")).toBeInTheDocument();
   });
@@ -89,10 +89,10 @@ describe("PlayerPicker", () => {
     const { onAdd } = await renderPicker();
 
     fireEvent.click(screen.getByRole("button", { name: "Add to initiative" }));
-    expect(screen.getByText("Tick the players to add.")).toBeInTheDocument();
+    expect(screen.getByText("Tick the characters to add.")).toBeInTheDocument();
     tick("Thorin");
     fireEvent.click(screen.getByRole("button", { name: "Add to initiative" }));
-    expect(screen.getByText("Give every ticked player an initiative, or roll for them.")).toBeInTheDocument();
+    expect(screen.getByText("Give every ticked character an initiative, or roll for them.")).toBeInTheDocument();
     typeInitiative("Thorin", "abc");
     fireEvent.click(screen.getByRole("button", { name: "Add to initiative" }));
 
@@ -123,18 +123,18 @@ describe("PlayerPicker", () => {
     await renderPicker({}, { "GET /api/players": [thorin] }); // no party route: a 404
 
     expect(screen.getByText("Thorin")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Your party's players" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Your party's characters" })).not.toBeInTheDocument();
   });
 
   it("says when there are no players, and when it can't load", async () => {
     stubApi({ "GET /api/players": [], "GET /api/party/players": [] });
     const { unmount } = render(<PlayerPicker open inFight={new Set()} onAdd={vi.fn()} onClose={vi.fn()} />);
-    expect(await screen.findByText(/You don't have any players yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/You don't have any characters yet/)).toBeInTheDocument();
     unmount();
 
     stubApi({ "GET /api/players": () => new Response("{}", { status: 500 }) });
     render(<PlayerPicker open inFight={new Set()} onAdd={vi.fn()} onClose={vi.fn()} />);
-    expect(await screen.findByText("Couldn't load your players. Is the backend running?")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't load your characters. Is the backend running?")).toBeInTheDocument();
   });
 
   it("closes on Cancel", async () => {
@@ -159,7 +159,7 @@ describe("players in the tracker", () => {
     render(<TrackerPage />);
     await screen.findByText("Goblin");
 
-    fireEvent.click(screen.getByRole("button", { name: "Players" }));
+    fireEvent.click(screen.getByRole("button", { name: "Characters" }));
     await screen.findByRole("checkbox", { name: "Add Thorin" });
     tick("Thorin");
     typeInitiative("Thorin", "16");
@@ -181,7 +181,7 @@ describe("players in the tracker", () => {
     render(<TrackerPage />);
     await screen.findByText("Thorin");
 
-    fireEvent.click(screen.getByRole("button", { name: "Players" }));
+    fireEvent.click(screen.getByRole("button", { name: "Characters" }));
 
     await screen.findByText("Already in the fight");
     expect(screen.getByRole("checkbox", { name: "Add Thorin" })).toBeDisabled();

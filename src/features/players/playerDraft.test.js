@@ -52,7 +52,7 @@ describe("draftProblems", () => {
   });
 
   it("wants a name", () => {
-    expect(draftProblems({ ...ok, name: "   " })).toEqual(["Give the player a name."]);
+    expect(draftProblems({ ...ok, name: "   " })).toEqual(["Give the character a name."]);
   });
 
   it("keeps the numbers in range, letting armor class and hit points be empty", () => {
@@ -105,7 +105,7 @@ describe("previewOf", () => {
   it("shows what has been typed so far, even when it can't be saved yet", () => {
     const preview = previewOf({ ...EMPTY_DRAFT, name: "", level: "", armorClass: "x", initiativeBonus: "" }, null);
 
-    expect(preview).toMatchObject({ name: "Unnamed player", level: 1, armorClass: null, initiativeBonus: 0, role: "OWNER" });
+    expect(preview).toMatchObject({ name: "Unnamed character", level: 1, armorClass: null, initiativeBonus: 0, role: "OWNER" });
   });
 
   it("keeps who made it and the user's part when changing one", () => {

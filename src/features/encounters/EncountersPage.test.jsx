@@ -78,14 +78,14 @@ describe("the party", () => {
     stubBackend({ mine: [], party: [] });
     render(<EncountersPage onOpenTracker={() => {}} />);
 
-    expect(await screen.findByText(/You have no players yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/You have no characters yet/)).toBeInTheDocument();
   });
 
   it("still works, without players, when they can't be loaded", async () => {
     stubBackend({ extra: { "GET /api/players": () => new Response("{}", { status: 500 }) } });
     render(<EncountersPage onOpenTracker={() => {}} />);
 
-    expect(await screen.findByText(/Couldn't load your players/)).toBeInTheDocument();
+    expect(await screen.findByText(/Couldn't load your characters/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add a character" })).toBeInTheDocument();
   });
 });
@@ -152,7 +152,7 @@ describe("how hard it is", () => {
   it("counts characters added by level", async () => {
     stubBackend({ mine: [], party: [] });
     render(<EncountersPage onOpenTracker={() => {}} />);
-    await screen.findByText(/You have no players yet/);
+    await screen.findByText(/You have no characters yet/);
 
     fireEvent.change(screen.getByLabelText("Level of the character to add"), { target: { value: "5" } });
     fireEvent.click(screen.getByRole("button", { name: "Add a character" }));
@@ -271,7 +271,7 @@ describe("adding to the initiative tracker", () => {
     await screen.findByRole("checkbox", { name: "Include Ana" });
     await addCreature("Ogre");
 
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Include the ticked players" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Include the ticked characters" }));
     fireEvent.click(screen.getByRole("button", { name: "Add to initiative tracker" }));
 
     await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/me/tracker")).toHaveLength(1));
@@ -284,7 +284,7 @@ describe("adding to the initiative tracker", () => {
     render(<EncountersPage onOpenTracker={() => {}} />);
     await addCreature("Ogre");
 
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Include the ticked players" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Include the ticked characters" }));
     fireEvent.click(screen.getByRole("button", { name: "Add to initiative tracker" }));
 
     await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/me/tracker")).toHaveLength(1));

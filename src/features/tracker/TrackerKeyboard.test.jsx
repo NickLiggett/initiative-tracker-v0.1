@@ -59,7 +59,7 @@ describe("Space moves the turn on", () => {
 
   it("does nothing while a dialog is open", async () => {
     await openTracker();
-    fireEvent.click(footer().getByRole("button", { name: "Players" }));
+    fireEvent.click(footer().getByRole("button", { name: "Characters" }));
     await screen.findByRole("dialog");
 
     fireEvent.keyDown(document.body, { key: " " });

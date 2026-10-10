@@ -10,11 +10,11 @@ import { EMPTY_DRAFT, draftProblems, previewOf, toDraft, toRequest } from "./pla
 import { RULESETS, optionNamed, optionsFor } from "./players";
 
 /**
- * Makes a new player character or changes one. Class and species are offered for the chosen rules, and anything else
+ * Makes a new character or changes one. Class and species are offered for the chosen rules, and anything else
  * can be typed. Someone who only plays the character can change its numbers and notes, and nothing else.
  *
  * @param {?object} player the one to change, or null for a new one
- * @param {object} [start] the draft to begin with, for a copy; otherwise empty, or the player's
+ * @param {object} [start] the draft to begin with, for a copy; otherwise empty, or the character's
  * @param {(player: object) => void} onSaved
  * @param {() => void} onCancel
  */
@@ -55,7 +55,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
     setSaving(true);
     setError(null);
     try {
-      // The key is the one the name had when the player was opened, or else the rule set's class or species of that name
+      // The key is the one the name had when the character was opened, or else the rule set's class or species of that name
       // (looked up now, so that it doesn't matter whether the lists had loaded when the name was typed).
       const request = toRequest({
         ...draft,
@@ -83,7 +83,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
 
   return (
     <EditorShell
-      title={player ? `Edit ${player.name}` : "New Player Creation"}
+      title={player ? `Edit ${player.name}` : "New Character Creation"}
       problems={problems}
       error={error}
       saving={saving}
@@ -94,7 +94,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
           <FormSection title="The Character">
             {limited && (
               <Typography variant="body2" color="text.secondary">
-                {player.owner} made this player. You can keep its numbers and notes up to date; the rest is theirs to change.
+                {player.owner} made this character. You can keep its numbers and notes up to date; the rest is theirs to change.
               </Typography>
             )}
             <TextField size="small" label="Name" value={draft.name} disabled={limited} inputProps={{ maxLength: 60 }} onChange={text("name")} />
@@ -138,7 +138,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
               value={draft.playedBy}
               disabled={limited}
               onChange={text("playedBy")}
-              helperText="Optional. They need to have signed in to the app once. They'll see this player and can keep its numbers up to date."
+              helperText="Optional. The person who plays this character needs to have signed in to the app once. They'll see it and can keep its numbers up to date."
             />
           </FormSection>
         </Box>

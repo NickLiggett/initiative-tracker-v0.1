@@ -39,7 +39,7 @@ export function leaveParty(dm) {
 }
 
 /**
- * The player characters of the people who have joined the user's party, which the user can see but not change (their
+ * The characters (called players here) of the people who have joined the user's party, which the user can see but not change (their
  * `role` is "PARTY").
  * @returns {Promise<object[]>}
  */

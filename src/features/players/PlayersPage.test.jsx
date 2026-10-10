@@ -56,9 +56,9 @@ const REFERENCE = {
 async function renderPage(routes = {}, players = [thorin, borrowed]) {
   const fetchMock = stubApi({ "GET /api/players": players, ...REFERENCE, ...routes });
   render(<PlayersPage />);
-  await screen.findByRole("heading", { name: "Players" });
+  await screen.findByRole("heading", { name: "Characters" });
   if (players.length) {
-    await screen.findByRole("list", { name: "Your players" });
+    await screen.findByRole("list", { name: "Your characters" });
   }
   return fetchMock;
 }
@@ -66,7 +66,7 @@ async function renderPage(routes = {}, players = [thorin, borrowed]) {
 const card = (name) => within(screen.getByRole("group", { name }));
 const field = (label) => screen.getByLabelText(label);
 const type = (label, value) => fireEvent.change(field(label), { target: { value } });
-const openNew = () => fireEvent.click(screen.getByRole("button", { name: "New player" }));
+const openNew = () => fireEvent.click(screen.getByRole("button", { name: "New character" }));
 /** Waits for the editor's lists of classes and species to arrive, which they do a moment after it opens. */
 const listsLoaded = async () => {
   const input = field("Class"); // (while the list is open, the list has the label too)
@@ -103,18 +103,18 @@ describe("the list", () => {
   it("says when there are none", async () => {
     await renderPage({}, []);
 
-    expect(screen.getByText("You don't have any players yet. Make one with New player.")).toBeInTheDocument();
+    expect(screen.getByText("You don't have any characters yet. Make one with New character.")).toBeInTheDocument();
   });
 
   it("says when it can't load, and when nobody is signed in", async () => {
     stubApi({ "GET /api/players": () => new Response("{}", { status: 500 }) });
     const { unmount } = render(<PlayersPage />);
-    expect(await screen.findByText("Couldn't load your players. Is the backend running?")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn't load your characters. Is the backend running?")).toBeInTheDocument();
     unmount();
 
     stubApi({ "GET /api/players": () => new Response(JSON.stringify({ detail: "Sign in" }), { status: 401 }) });
     render(<PlayersPage />);
-    expect(await screen.findByText("Sign in to keep players.")).toBeInTheDocument();
+    expect(await screen.findByText("Sign in to keep characters.")).toBeInTheDocument();
   });
 });
 
@@ -198,7 +198,7 @@ describe("making a player", () => {
     openNew();
 
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-    expect(screen.getByRole("status")).toHaveTextContent("Give the player a name.");
+    expect(screen.getByRole("status")).toHaveTextContent("Give the character a name.");
 
     type("Name", "Aria");
     type("Level", "30");
@@ -242,7 +242,7 @@ describe("making a player", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(await screen.findByRole("list", { name: "Your players" })).toBeInTheDocument();
+    expect(await screen.findByRole("list", { name: "Your characters" })).toBeInTheDocument();
     expect(bodiesSentTo(fetchMock, "POST /api/players")).toEqual([]);
   });
 });
@@ -270,7 +270,7 @@ describe("changing a player", () => {
 
     fireEvent.click(card("Pip").getByRole("button", { name: "Edit" }));
 
-    expect(screen.getByText(/gm made this player/)).toBeInTheDocument();
+    expect(screen.getByText(/gm made this character/)).toBeInTheDocument();
     expect(field("Name")).toBeDisabled();
     expect(field("Class")).toBeDisabled();
     expect(field("Species")).toBeDisabled();
@@ -294,7 +294,7 @@ describe("duplicating a player", () => {
 
     fireEvent.click(card("Thorin").getByRole("button", { name: "Duplicate" }));
 
-    expect(screen.getByRole("heading", { name: "New Player Creation" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "New Character Creation" })).toBeInTheDocument();
     expect(field("Name")).toHaveValue("Thorin (copy)");
     expect(field("Played by (username)")).toHaveValue("");
     expect(field("Level")).toHaveValue("5");

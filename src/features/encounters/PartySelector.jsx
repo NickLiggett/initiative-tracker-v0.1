@@ -6,12 +6,12 @@ import { MAX_LEVEL, MIN_LEVEL } from "./encounterRules";
 const LEVELS = Array.from({ length: MAX_LEVEL - MIN_LEVEL + 1 }, (_, index) => MIN_LEVEL + index);
 
 /**
- * Who the encounter is for: the players to tick (the user's own and their party's), and characters that have no player
+ * Who the encounter is for: the characters to tick (the user's own and their party's), and characters that have no sheet
  * sheet, added by level alone.
  *
  * @param {?object[]} players null while they load
  * @param {?string} loadError
- * @param {Set<number>} ticked the ids of the players ticked
+ * @param {Set<number>} ticked the ids of the characters ticked
  * @param {(id: number) => void} onToggle
  * @param {{id: number, level: number}[]} extras
  * @param {(level: number) => void} onAddExtra
@@ -26,10 +26,10 @@ export default function PartySelector({ players, loadError, ticked, onToggle, ex
         The party
       </Typography>
       {loadError && <Alert severity="warning">{loadError}</Alert>}
-      {!players && !loadError && <CircularProgress size={20} aria-label="Loading players" />}
+      {!players && !loadError && <CircularProgress size={20} aria-label="Loading characters" />}
       {players && players.length === 0 && !loadError && (
         <Typography color="text.secondary">
-          You have no players yet: make some on the Players page, or add characters by level below.
+          You have no characters yet: make some on the Characters page, or add characters by level below.
         </Typography>
       )}
       {players && players.length > 0 && (

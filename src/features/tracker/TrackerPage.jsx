@@ -22,7 +22,7 @@ import {
 export default function TrackerPage() {
   const { combatants, setCombatants, nextId, status, notice, retry } = useSavedTracker();
   const [shownCreature, setShownCreature] = useState(null);
-  const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose player is shown
+  const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose character is shown
   const [picking, setPicking] = useState(false);
   const gridRef = useRef(null);
   useNextTurnShortcut(() => setCombatants(nextTurn));

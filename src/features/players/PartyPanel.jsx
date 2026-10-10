@@ -16,13 +16,13 @@ import { normalizeUsername, sharingErrorMessage } from "../sharing/sharing";
 import PlayerCard from "./PlayerCard";
 
 /**
- * The party: the friends who agreed to show you their players, the parties you've been asked to join or are in, and the
- * players in your party, which you can see but not change.
+ * The party: the friends who agreed to show you their characters, the parties you've been asked to join or are in, and the
+ * characters of the players in your party, which you can see but not change.
  *
  * @param {(invitations: object[]) => void} [onInvitationsChange] told whenever the requests to join a party change
  */
 export default function PartyPanel({ onInvitationsChange }) {
-  const [party, setParty] = useState(null); // { members, invitations, players }; null until loaded
+  const [party, setParty] = useState(null); // { members, invitations, players }; players are their characters; null until loaded
   const [loadError, setLoadError] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -118,7 +118,7 @@ export default function PartyPanel({ onInvitationsChange }) {
                 <Paper key={dm} variant="outlined" sx={{ p: 2, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
                   <UserAvatar username={dm} size={32} />
                   <Typography sx={{ flex: 1 }}>
-                    {dm} asked you to join their party. If you do, they can see your players (and the ones you play) to add
+                    {dm} asked you to join their party. If you do, they can see your characters (and the ones you play) to add
                     them to initiative. They can't change them.
                   </Typography>
                   <Button variant="contained" disabled={busy} onClick={() => attempt(() => acceptPartyInvitation(dm), dm)}>
@@ -137,7 +137,7 @@ export default function PartyPanel({ onInvitationsChange }) {
               Your party
             </Typography>
             <Typography color="text.secondary">
-              Ask friends to join your party. Once they accept, their players (and the ones they play) appear below, ready
+              Ask friends to join your party. Once they accept, their characters (and the ones they play) appear below, ready
               to drop into initiative. You can see them but not change them.
             </Typography>
             <Box component="ul" aria-label="People in your party" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 1 }}>
@@ -202,16 +202,16 @@ export default function PartyPanel({ onInvitationsChange }) {
             </Box>
           )}
 
-          <Box component="section" aria-label="Your party's players" sx={{ display: "grid", gap: 1.5 }}>
+          <Box component="section" aria-label="Your party's characters" sx={{ display: "grid", gap: 1.5 }}>
             <Typography variant="h5" component="h3">
-              Your party's players
+              Your party's characters
             </Typography>
             {party.players.length === 0 ? (
               <Typography color="text.secondary">
-                None yet. Players show up here once the people in your party have made some.
+                None yet. Characters show up here once the people in your party have made some.
               </Typography>
             ) : (
-              <Box component="ul" aria-label="Party players" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+              <Box component="ul" aria-label="Party characters" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
                 {party.players.map((player) => (
                   <Box component="li" key={player.id} sx={{ display: "grid" }}>
                     <PlayerCard player={player} />
@@ -228,9 +228,9 @@ export default function PartyPanel({ onInvitationsChange }) {
         title={confirming?.kind === "leave" ? `Leave ${confirming?.who}'s party?` : confirming?.accepted ? `Remove ${confirming?.who}?` : `Withdraw the request to ${confirming?.who}?`}
         text={
           confirming?.kind === "leave"
-            ? `${confirming?.who} will no longer see your players. They can ask you again.`
+            ? `${confirming?.who} will no longer see your characters. They can ask you again.`
             : confirming?.accepted
-              ? `${confirming?.who}'s players will no longer show in your party. You can ask them again.`
+              ? `${confirming?.who}'s characters will no longer show in your party. You can ask them again.`
               : `${confirming?.who} won't be asked any more. You can ask them again.`
         }
         confirmLabel={confirming?.kind === "leave" ? "Leave" : confirming?.accepted ? "Remove" : "Withdraw"}

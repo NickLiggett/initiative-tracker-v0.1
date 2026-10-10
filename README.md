@@ -232,7 +232,8 @@ Build an encounter, see how hard it is for your party, and send it to the initia
   Moderate or High encounter; above High is "Over budget") or the **2014** rules (the XP multiplied for the number of
   monsters, and for a small or large party, against each character's Easy, Medium, Hard and Deadly thresholds). It starts on
   the rules your players use. The numbers are the ones printed in the Dungeon Master's Guides, typed into
-  `encounterRules.js`: check them against your books, as Open5e's data doesn't have them.
+  `encounterRules.js` because Open5e's data doesn't have them, and every row was compared with D&D Beyond's 2014 Basic
+  Rules and Roll20's compendium of the 2024 DMG.
 - **Add to initiative tracker** rolls initiative for the monsters and puts them in the tracker, after anyone already there
   and highest first, then opens it. A kind of monster rolls once and all of it goes at that number, with the monsters
   numbered (Goblin 1, Goblin 2); tick *Roll for each monster separately* to roll for each. The ticked players go in too,

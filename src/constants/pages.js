@@ -9,5 +9,6 @@ export const Pages = {
   FEATS: "Feats",
   SHARING: "Sharing",
   PLAYERS: "Players",
+  ENCOUNTERS: "Encounters",
   SETTINGS: "Settings",
 };

@@ -151,6 +151,23 @@ which ends the provider's session too.
   components and materials, duration), effect (target, saving throw, attack roll, damage dice and types, area) and the
   text. How a spell scales with its slot isn't editable yet, but is kept when you change a spell that has it.
 
+### Classes
+
+- **Search** for a class or subclass by name, and narrow it to classes only or subclasses only. A result says which it is
+  and where it is from (the 2014 and 2024 rules, other books, or someone's homebrew).
+- A class shows its hit die, saving throws, primary ability and spellcasting, its hit points, its core traits,
+  proficiencies and starting equipment where the source has them, and its **class table**: a row for each level with the
+  features gained there, the proficiency bonus, the columns the class has of its own (Cantrips, Rages, Second Wind, ...)
+  and, for a spellcaster, the spell slots by spell level. Below it are the class's features, each with the levels it is
+  gained at. The table is worked out from the features: the source keeps each column, and each level of spell slots, as a
+  feature of its own.
+- A class lists its **subclasses**, and a subclass says which class it belongs to; each opens when chosen. A subclass has
+  its features by level, and no table.
+- **Compare** two classes: their hit die, saves, primary ability and spellcasting, and what each gains at each level, side
+  by side, then their proficiencies.
+- Classes are only read here: there is no New, Duplicate, Edit or Delete. A class is a long list of features by level, and
+  editing one would be a page of its own.
+
 ### Species
 
 - **Search** for a species or subspecies by name; results say which are subspecies and which source they come from (the
@@ -309,6 +326,8 @@ src/
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
 │   ├── spells/         SpellsPage, filters, stat block, comparison and editor; spellFormat.js (the words for a
 │   │                   spell's coded fields), compareSpells.js and spellDraft.js (the form's draft, its checks, and the request)
+│   ├── classes/        ClassesPage, filters, stat block, level table and comparison; classTable.js (the level table and
+│   │                   feature list, worked out from a class's features), classFormat.js and compareClasses.js
 │   ├── species/        SpeciesPage, its stat block and editor, speciesFormat.js (showing a trait) and speciesDraft.js
 │   │                   (the form's draft, its checks, and the request)
 │   ├── backgrounds/    BackgroundsPage, its stat block and editor, backgroundFormat.js (the kinds of benefit) and
@@ -386,9 +405,9 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
 
 ## Future plans
 
-- **More pages for the content tables.** The backend serves 33; creatures, items, spells, species, backgrounds and feats
-  have pages. By how much they would be worth and how hard they are: classes (151, with features by level; view and
-  search first), and read-only reference pages for rules (283), conditions (21) and services (30). The small lookup tables (sizes, damage types, alignments, ...) already feed the
+- **More pages for the content tables.** The backend serves 33; creatures, items, spells, classes, species, backgrounds
+  and feats have pages. What is left is read-only reference pages for rules (283), conditions (21) and services (30), and
+  a way to make and edit classes (the Classes page only reads them). The small lookup tables (sizes, damage types, alignments, ...) already feed the
   dropdowns and don't need pages.
 
 - **Make Keycloak's pages look like the app.** They are Keycloak's own theme, so signing in leaves the app's look

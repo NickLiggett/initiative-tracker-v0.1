@@ -12,7 +12,8 @@ import useWritableDocuments from "./useWritableDocuments";
  * @param {string} noun e.g. "creature"
  * @param {string} emptyText what to say before anything is chosen
  * @param {(props: {label?: string, value: object, onChange: Function, fullWidth: boolean}) => ReactNode} renderSearch
- * @param {(resource: object) => ReactNode} renderStatBlock
+ * @param {(resource: object, actions: {open: (resource: object) => void}) => ReactNode} renderStatBlock `open` shows another one
+ *   (a link from one to another, such as a class to its subclass)
  * @param {ReactNode} [filters] shown under the search, while browsing
  * @param {(resources: object[]) => ReactNode} [renderComparison] without it there is no Compare
  * @param {(props: {resource: ?object, onSaved: Function, onCancel: Function}) => ReactNode} [renderEditor]
@@ -147,7 +148,7 @@ export default function ResourcePage({
                   Choose a second {noun} to compare with.
                 </Typography>
               )}
-              {renderStatBlock(resource)}
+              {renderStatBlock(resource, { open: setResource })}
             </>
           ) : (
             <Typography color="text.secondary" sx={{ mt: 4, textAlign: "center" }}>

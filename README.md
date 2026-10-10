@@ -322,7 +322,7 @@ src/
 │                       the theme they make (theme.js), the provider that applies them and keeps them on the account
 │                       (SettingsContext.jsx), and colors.js and avatar.js (hex colors, contrast, shrinking a picture)
 ├── pages/              Placeholder for pages that don't exist yet (none at the moment)
-├── utils/              Text helpers
+├── utils/              Text and dice helpers
 └── test/               Test setup, a fake backend (fakeApi.js) and real creatures and items from the backend as fixtures
 ```
 

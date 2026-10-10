@@ -2,6 +2,7 @@ import { useState } from "react";
 import TopToolbar from "./components/layout/TopToolbar";
 import MainDrawer from "./components/layout/MainDrawer";
 import TrackerPage from "./features/tracker/TrackerPage";
+import ClassesPage from "./features/classes/ClassesPage";
 import CreaturesPage from "./features/creatures/CreaturesPage";
 import ItemsPage from "./features/items/ItemsPage";
 import SettingsPage from "./features/settings/SettingsPage";
@@ -42,6 +43,7 @@ export default function App() {
       {currentPage === Pages.CREATURES && <CreaturesPage />}
       {currentPage === Pages.ITEMS && <ItemsPage />}
       {currentPage === Pages.SPELLS && <SpellsPage />}
+      {currentPage === Pages.CLASSES && <ClassesPage />}
       {currentPage === Pages.SPECIES && <SpeciesPage />}
       {currentPage === Pages.BACKGROUNDS && <BackgroundsPage />}
       {currentPage === Pages.FEATS && <FeatsPage />}
@@ -49,7 +51,7 @@ export default function App() {
       {currentPage === Pages.PLAYERS && <PlayersPage />}
       {currentPage === Pages.ENCOUNTERS && <EncountersPage onOpenTracker={() => setCurrentPage(Pages.INITIATIVE_TRACKER)} />}
       {currentPage === Pages.SETTINGS && <SettingsPage tab={settingsTab} onTabChange={setSettingsTab} />}
-      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SPELLS, Pages.SPECIES, Pages.BACKGROUNDS, Pages.FEATS, Pages.SHARING, Pages.PLAYERS, Pages.ENCOUNTERS, Pages.SETTINGS].includes(currentPage) && (
+      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SPELLS, Pages.CLASSES, Pages.SPECIES, Pages.BACKGROUNDS, Pages.FEATS, Pages.SHARING, Pages.PLAYERS, Pages.ENCOUNTERS, Pages.SETTINGS].includes(currentPage) && (
         <PlaceholderPage title={currentPage} />
       )}
     </div>

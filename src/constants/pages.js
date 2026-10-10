@@ -4,6 +4,7 @@ export const Pages = {
   CREATURES: "Creatures",
   ITEMS: "Items",
   SPELLS: "Spells",
+  CLASSES: "Classes",
   SPECIES: "Species",
   BACKGROUNDS: "Backgrounds",
   FEATS: "Feats",

@@ -16,7 +16,7 @@ import useSavedEncounters from "./useSavedEncounters";
 /**
  * Builds an encounter: who the party is, which creatures are in it, and how hard that is by the 2014 or the 2024 rules.
  * It can be saved under a name to load again later. "Add to initiative tracker" rolls initiative for the monsters (and
- * the ticked players) and puts them in the tracker.
+ * the ticked characters) and puts them in the tracker.
  *
  * @param {() => void} onOpenTracker shows the initiative tracker, once the combatants are in it
  */
@@ -26,7 +26,7 @@ export default function EncountersPage({ onOpenTracker }) {
   const [name, setName] = useState("");
   const [working, setWorking] = useState(false); // saving, loading or deleting a saved encounter
   const [notice, setNotice] = useState(null);
-  const [ticked, setTicked] = useState(null); // the ids of the players ticked; everyone, until they have chosen
+  const [ticked, setTicked] = useState(null); // the ids of the characters ticked; everyone, until they have chosen
   const [extras, setExtras] = useState([]);
   const [monsters, setMonsters] = useState([]);
   const [ruleset, setRuleset] = useState(ENCOUNTER_RULESETS[0].key);
@@ -210,7 +210,7 @@ export default function EncountersPage({ onOpenTracker }) {
           </Button>
           <FormControlLabel
             control={<Checkbox checked={includePlayers} onChange={(event) => setIncludePlayers(event.target.checked)} />}
-            label="Include the ticked players"
+            label="Include the ticked characters"
           />
           <FormControlLabel
             control={<Checkbox checked={separately} onChange={(event) => setSeparately(event.target.checked)} />}

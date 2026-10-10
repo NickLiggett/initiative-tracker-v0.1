@@ -1,6 +1,6 @@
-// Player characters as combatants, and the dice for their initiative.
+// Characters (called players in the code) as combatants, and the dice for their initiative.
 
-/** The combatant for a player character, going into the order at this initiative. It remembers which player it is. */
+/** The combatant for a character, going into the order at this initiative. It remembers which character it is. */
 export function playerCombatant(player, initiative) {
   return {
     initiative,
@@ -14,7 +14,7 @@ export function playerCombatant(player, initiative) {
   };
 }
 
-/** The ids of the players who are already in the order. */
+/** The ids of the characters that are already in the order. */
 export function playerIdsIn(combatants) {
   return new Set(combatants.map((combatant) => combatant.playerId).filter((id) => id !== undefined && id !== null));
 }

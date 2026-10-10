@@ -19,11 +19,11 @@ import { describePlayer, formatBonus } from "../players/players";
 import { parseInitiative, playerCombatant, rollInitiative } from "./playerCombatants";
 
 /**
- * Pick player characters, yours and your party's, and say what each rolled for initiative; they go into the order with
- * their armor class and hit points filled in. Players already in the order can't be added twice.
+ * Pick characters, yours and your party's, and say what each rolled for initiative; they go into the order with
+ * their armor class and hit points filled in. Characters already in the order can't be added twice.
  *
  * @param {boolean} open
- * @param {Set<number>} inFight the ids of the players already in the order
+ * @param {Set<number>} inFight the ids of the characters already in the order
  * @param {(combatants: object[]) => void} onAdd the combatants to add (without ids)
  * @param {() => void} onClose
  * @param {() => number} [random] the dice, for tests
@@ -31,7 +31,7 @@ import { parseInitiative, playerCombatant, rollInitiative } from "./playerCombat
 export default function PlayerPicker({ open, inFight, onAdd, onClose, random = Math.random }) {
   const [players, setPlayers] = useState(null); // { mine, party }; null until loaded
   const [loadError, setLoadError] = useState(null);
-  const [chosen, setChosen] = useState({}); // player id -> the initiative typed, for those ticked
+  const [chosen, setChosen] = useState({}); // character id -> the initiative typed, for those ticked
   const [tried, setTried] = useState(false);
 
   useEffect(() => {
@@ -43,12 +43,12 @@ export default function PlayerPicker({ open, inFight, onAdd, onClose, random = M
     setLoadError(null);
     setChosen({});
     setTried(false);
-    // The party is a bonus: without it you still have your own players.
+    // The party is a bonus: without it you still have your own characters.
     Promise.all([listPlayers({ signal: controller.signal }), listPartyPlayers({ signal: controller.signal }).catch(() => [])])
       .then(([mine, party]) => setPlayers({ mine, party }))
       .catch((e) => {
         if (e.name !== "AbortError") {
-          setLoadError(e.status === 401 ? "Sign in to add players." : "Couldn't load your players. Is the backend running?");
+          setLoadError(e.status === 401 ? "Sign in to add characters." : "Couldn't load your characters. Is the backend running?");
         }
       });
     return () => controller.abort();
@@ -137,21 +137,21 @@ export default function PlayerPicker({ open, inFight, onAdd, onClose, random = M
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="player-picker-title">
-      <DialogTitle id="player-picker-title">Add players to initiative</DialogTitle>
+      <DialogTitle id="player-picker-title">Add characters to initiative</DialogTitle>
       <DialogContent>
         {loadError && <Alert severity="error">{loadError}</Alert>}
         {!players && !loadError && <CircularProgress aria-label="Loading" />}
         {players && all.length === 0 && (
           <Typography color="text.secondary">
-            You don't have any players yet. Make some on the Players page, or join a party.
+            You don't have any characters yet. Make some on the Characters page, or join a party.
           </Typography>
         )}
         {players && (
           <>
-            {list("Your players", players.mine)}
-            {list("Your party's players", players.party)}
-            {tried && ticked.length === 0 && all.length > 0 && <Alert severity="info">Tick the players to add.</Alert>}
-            {tried && missing.length > 0 && <Alert severity="warning">Give every ticked player an initiative, or roll for them.</Alert>}
+            {list("Your characters", players.mine)}
+            {list("Your party's characters", players.party)}
+            {tried && ticked.length === 0 && all.length > 0 && <Alert severity="info">Tick the characters to add.</Alert>}
+            {tried && missing.length > 0 && <Alert severity="warning">Give every ticked character an initiative, or roll for them.</Alert>}
           </>
         )}
       </DialogContent>

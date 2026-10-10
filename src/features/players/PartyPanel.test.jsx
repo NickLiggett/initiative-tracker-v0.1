@@ -81,7 +81,7 @@ describe("what's shown", () => {
   it("shows the party's players, with nothing to change", async () => {
     await renderPanel();
 
-    const players = within(screen.getByRole("list", { name: "Party players" }));
+    const players = within(screen.getByRole("list", { name: "Party characters" }));
     const card = within(players.getByRole("group", { name: "Anna's Wizard" }));
     expect(card.getByText("Level 4 Wizard")).toBeInTheDocument();
     expect(card.getByText("Made by anna")).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe("what's shown", () => {
     render(<PartyPanel />);
 
     expect(await screen.findByText("Nobody yet.")).toBeInTheDocument();
-    expect(screen.getByText(/None yet. Players show up here/)).toBeInTheDocument();
+    expect(screen.getByText(/None yet. Characters show up here/)).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Asked to join" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Parties you are in" })).not.toBeInTheDocument();
   });
@@ -187,7 +187,7 @@ describe("removing someone", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove anna" }));
 
     expect(screen.getByText("Remove anna?")).toBeInTheDocument();
-    expect(screen.getByText(/anna's players will no longer show in your party/)).toBeInTheDocument();
+    expect(screen.getByText(/anna's characters will no longer show in your party/)).toBeInTheDocument();
   });
 
   it("leaves the dialog and says why when that fails", async () => {
@@ -261,14 +261,14 @@ describe("on the Players page", () => {
     render(<PlayersPage />);
 
     const tab = await screen.findByRole("tab", { name: "Party, 1 waiting" });
-    expect(screen.getByRole("tab", { name: "Players" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("button", { name: "New player" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Characters" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("button", { name: "New character" })).toBeInTheDocument();
 
     fireEvent.click(tab);
 
     expect(await screen.findByRole("heading", { name: "Your party" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "New player" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("list", { name: "Your players" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "New character" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Your characters" })).not.toBeInTheDocument();
   });
 
   it("has no badge when nothing is waiting, and goes back to the players", async () => {
@@ -277,9 +277,9 @@ describe("on the Players page", () => {
 
     fireEvent.click(await screen.findByRole("tab", { name: "Party" }));
     await screen.findByRole("heading", { name: "Your party" });
-    fireEvent.click(screen.getByRole("tab", { name: "Players" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Characters" }));
 
-    expect(await screen.findByRole("button", { name: "New player" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "New character" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Your party" })).not.toBeInTheDocument();
   });
 
@@ -288,6 +288,6 @@ describe("on the Players page", () => {
     render(<PlayersPage />);
 
     expect(await screen.findByRole("tab", { name: "Party" })).toBeInTheDocument();
-    expect(await screen.findByText("You don't have any players yet. Make one with New player.")).toBeInTheDocument();
+    expect(await screen.findByText("You don't have any characters yet. Make one with New character.")).toBeInTheDocument();
   });
 });

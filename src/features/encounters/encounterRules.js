@@ -6,7 +6,7 @@
 // ("Building Combat Encounters"), and the 2024 budgets with Roll20's compendium of the 2024 DMG ("Plan Encounters").
 // They are the only place these numbers are kept.
 
-/** The rule sets an encounter can be measured by, as a player's `ruleset` names them. */
+/** The rule sets an encounter can be measured by, as a character's `ruleset` names them. */
 export const ENCOUNTER_RULESETS = [
   { key: "5e-2024", label: "2024 rules" },
   { key: "5e-2014", label: "2014 rules" },

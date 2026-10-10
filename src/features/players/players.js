@@ -1,6 +1,6 @@
-// Small rules for player characters, as plain functions.
+// Small rules for characters (called players in the code), as plain functions.
 
-/** The rule sets a player can use, as the backend's game system keys. */
+/** The rule sets a character can use, as the backend's game system keys. */
 export const RULESETS = [
   { key: "5e-2024", label: "2024 rules" },
   { key: "5e-2014", label: "2014 rules" },

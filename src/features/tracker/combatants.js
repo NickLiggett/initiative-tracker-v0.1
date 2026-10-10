@@ -26,6 +26,14 @@ export function removeCombatant(combatants, id) {
   return combatants.filter((combatant) => combatant.id !== id);
 }
 
+/** A character's armor class and hit points are the table's to see; anything else is hidden from players until revealed. */
+export const isCharacter = (combatant) => combatant.playerId != null || combatant.type === "PC";
+
+/** Shows or hides everything that can be hidden from the players: the monsters and others, not the characters. */
+export function setAllRevealed(combatants, revealed) {
+  return combatants.map((combatant) => (isCharacter(combatant) ? combatant : { ...combatant, revealed }));
+}
+
 /** Highest initiative first. */
 export function sortByInitiative(combatants) {
   return [...combatants].sort((a, b) => b.initiative - a.initiative);

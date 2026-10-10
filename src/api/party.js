@@ -39,10 +39,19 @@ export function leaveParty(dm) {
 }
 
 /**
- * The player characters of the people who have joined the user's party, which the user can see but not change (their
+ * The characters (called players here) of the people who have joined the user's party, which the user can see but not change (their
  * `role` is "PARTY").
  * @returns {Promise<object[]>}
  */
 export function listPartyPlayers({ signal } = {}) {
   return apiGet("/api/party/players", undefined, { signal });
+}
+
+/**
+ * The trackers of the DMs whose party the user has joined and whose fight one of their characters is in, as a player
+ * may see them: in turn order (the first is up), with a monster's `ac` and `hp` null until the DM reveals them.
+ * @returns {Promise<{dm: string, updatedAt: string, combatants: {id: number, name: string, initiative: ?number, type: string, playerId: ?number, mine: boolean, ac: ?number, hp: ?number, revealed: boolean}[]}[]>}
+ */
+export function listPartyTrackers({ signal } = {}) {
+  return apiGet("/api/party/trackers", undefined, { signal });
 }

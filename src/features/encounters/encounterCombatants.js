@@ -25,7 +25,7 @@ export function monsterCombatants(monsters, { separately = false, random = Math.
   });
 }
 
-/** The combatants for the players, each with an initiative of their own rolled. */
+/** The combatants for the characters, each with an initiative of their own rolled. */
 export function playerCombatants(players, { random = Math.random } = {}) {
   return players.map((player) => playerCombatant(player, rollInitiative(player.initiativeBonus ?? 0, random)));
 }

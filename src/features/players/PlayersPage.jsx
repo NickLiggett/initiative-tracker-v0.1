@@ -10,14 +10,14 @@ import PlayerEditor from "./PlayerEditor";
 import { duplicateDraft } from "./playerDraft";
 
 /**
- * The user's player characters: the ones they made and the ones they play. Make a new one, copy one, change it or
- * delete it. The Party tab is for friends who show you their players, and for the parties you've been asked to join.
+ * The user's characters: the ones they made and the ones they play. Make a new one, copy one, change it or
+ * delete it. The Party tab is for friends who show you their characters, and for the parties you've been asked to join.
  */
 export default function PlayersPage() {
   const [players, setPlayers] = useState(null); // null until loaded
   const [loadError, setLoadError] = useState(null);
   const [error, setError] = useState(null);
-  const [editing, setEditing] = useState(null); // { player, start }: player null for a new one; start is a copy's draft
+  const [editing, setEditing] = useState(null); // { player, start }: the character, null for a new one; start is a copy's draft
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("players");
@@ -31,7 +31,7 @@ export default function PlayersPage() {
         if (e.name === "AbortError") {
           return;
         }
-        setLoadError(e.status === 401 ? "Sign in to keep players." : "Couldn't load your players. Is the backend running?");
+        setLoadError(e.status === 401 ? "Sign in to keep characters." : "Couldn't load your characters. Is the backend running?");
       });
   }, []);
 
@@ -89,7 +89,7 @@ export default function PlayersPage() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h4" component="h2" sx={{ fontWeight: "bolder" }}>
-                Players
+                Characters
               </Typography>
               <Typography color="text.secondary">
                 The characters at your table, for the 2014 or the 2024 rules. Add one to your account and drop it into
@@ -98,12 +98,12 @@ export default function PlayersPage() {
             </Box>
             {tab === "players" && (
               <Button variant="contained" startIcon={<Add />} disabled={!players} onClick={() => setEditing({ player: null })}>
-                New player
+                New character
               </Button>
             )}
           </Box>
-          <Tabs value={tab} onChange={(event, value) => setTab(value)} aria-label="Players or party">
-            <Tab value="players" label="Players" />
+          <Tabs value={tab} onChange={(event, value) => setTab(value)} aria-label="Characters or party">
+            <Tab value="players" label="Characters" />
             <Tab value="party" label={<RequestsBadge count={waiting}>Party</RequestsBadge>} aria-label={waiting ? `Party, ${waiting} waiting` : "Party"} />
           </Tabs>
           {tab === "party" && <PartyPanel onInvitationsChange={setRequests} />}
@@ -117,11 +117,11 @@ export default function PlayersPage() {
           {tab === "players" && !players && !loadError && <CircularProgress aria-label="Loading" />}
           {tab === "players" && players?.length === 0 && (
             <Typography color="text.secondary" sx={{ mt: 2, textAlign: "center" }}>
-              You don't have any players yet. Make one with New player.
+              You don't have any characters yet. Make one with New character.
             </Typography>
           )}
           {tab === "players" && players?.length > 0 && (
-            <Box component="ul" aria-label="Your players" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+            <Box component="ul" aria-label="Your characters" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
               {players.map((player) => (
                 <Box component="li" key={player.id} sx={{ display: "grid" }}>
                   <PlayerCard
@@ -141,7 +141,7 @@ export default function PlayersPage() {
       <ConfirmDeleteDialog
         open={Boolean(deleting)}
         name={deleting?.name}
-        from="your players"
+        from="your characters"
         busy={busy}
         onCancel={() => setDeleting(null)}
         onConfirm={confirmDelete}

@@ -1,7 +1,7 @@
 // The encounters a user has saved, as plain functions. They are kept on the user's account (`/api/me/encounters`) as
 // `{version, encounters: [...]}`; each is what it takes to build the encounter again:
 //
-//   { id, name, ruleset, players: [ids of the players ticked], extras: [levels of the characters added by level],
+//   { id, name, ruleset, players: [ids of the characters ticked], extras: [levels of the characters added by level],
 //     monsters: [{key, name, count}], savedAt }
 //
 // A monster is kept by its key, with its name so that the list can be shown without looking anything up; the stat

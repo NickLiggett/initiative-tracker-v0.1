@@ -1,6 +1,7 @@
 /** The app's pages, in the order the drawer lists them. */
 export const Pages = {
   INITIATIVE_TRACKER: "Initiative Tracker",
+  PARTY_TRACKER: "Party Tracker",
   CREATURES: "Creatures",
   ITEMS: "Items",
   SPELLS: "Spells",
@@ -9,7 +10,7 @@ export const Pages = {
   BACKGROUNDS: "Backgrounds",
   FEATS: "Feats",
   SHARING: "Sharing",
-  PLAYERS: "Players",
+  PLAYERS: "Characters",
   ENCOUNTERS: "Encounters",
   SETTINGS: "Settings",
 };

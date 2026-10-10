@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import dragon from "../../test/fixtures/adult-red-dragon.json";
 import CreatureInfoDialog from "./CreatureInfoDialog";
 
@@ -41,5 +41,28 @@ describe("CreatureInfoDialog", () => {
     expect(within(dialog).getByText("Multiattack")).toBeInTheDocument();
     expect(within(dialog).getByText(/Fire Breath \(Recharge 5–6\)/)).toBeInTheDocument();
     expect(within(dialog).getByText(/Wing Attack \(costs 2 actions\)/)).toBeInTheDocument();
+  });
+
+  describe("rolling its actions", () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it("has buttons for the attacks and the damage of its actions, read from their text, and none for its traits", () => {
+      const dialog = openDialog();
+
+      expect(within(dialog).getByRole("button", { name: "Roll attack for Bite" })).toHaveTextContent("Attack +14");
+      expect(within(dialog).getByRole("button", { name: "Roll damage for Bite" })).toBeInTheDocument();
+      expect(within(dialog).getByRole("button", { name: "Roll damage for Fire Breath" })).toBeInTheDocument();
+      expect(within(dialog).queryByRole("button", { name: /Legendary Resistance/ })).not.toBeInTheDocument();
+      expect(within(dialog).queryByRole("button", { name: /Multiattack/ })).not.toBeInTheDocument();
+    });
+
+    it("rolls an attack with the creature's bonus", () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5); // a d20 of 11
+      const dialog = openDialog();
+
+      fireEvent.click(within(dialog).getByRole("button", { name: "Roll attack for Bite" }));
+
+      expect(within(dialog).getByRole("status")).toHaveTextContent("Attack 25: d20 11 + 14");
+    });
   });
 });

@@ -106,6 +106,13 @@ which ends the provider's session too.
 - **Search** by name. A creature shows as a full stat block: armor class, hit points, speeds, initiative, challenge and
   experience, ability scores with their saving throws, skills, senses, languages, damage and condition lists, traits, and
   actions grouped as actions, bonus actions, reactions and legendary actions.
+- **Rolling its attacks.** Each action that makes an attack has **Attack +N** (a d20 plus the bonus), **Adv.** and **Dis.**
+  (two d20s, the higher or the lower), **Damage** and **Crit** (the damage dice twice) buttons, and an action that deals
+  damage by a saving throw, a breath weapon say, has **Damage**. The result shows under the action, with the dice, and a
+  natural 20 or 1 is called out. They work wherever a stat block shows, the tracker's included. The bonus, damage and
+  damage types are read from the action's text (in the 2014 and the 2024 styles, for every source, Volo's and your own
+  creatures too), not from Open5e's separate attack data, which half the actions lack and which isn't always right; an
+  action that is only words, like a Multiattack, has no buttons. Dice are rolled in the browser, and nothing is saved.
 - **Compare** two creatures: a table lines up their numbers (with the difference and which is bigger), saves, skills,
   senses and defenses, then their traits and actions, with the ones both have marked as shared.
 - **New creature** and **Duplicate** (copy the one shown and change it; it remembers what it came from) open an
@@ -233,6 +240,8 @@ Build an encounter, see how hard it is for your party, and send it to the initia
   monsters, and for a small or large party, against each character's Easy, Medium, Hard and Deadly thresholds). It starts on
   the rules your players use. The numbers are the ones printed in the Dungeon Master's Guides, typed into
   `encounterRules.js`: check them against your books, as Open5e's data doesn't have them.
+- Each creature in the list says which of its attacks hits hardest on a hit (its bonus and average damage). That is one
+  attack, not a round: a Multiattack says in words how many it makes, which isn't read.
 - **Add to initiative tracker** rolls initiative for the monsters and puts them in the tracker, after anyone already there
   and highest first, then opens it. A kind of monster rolls once and all of it goes at that number, with the monsters
   numbered (Goblin 1, Goblin 2); tick *Roll for each monster separately* to roll for each. The ticked players go in too,
@@ -291,7 +300,8 @@ src/
 │   │                   PlayerSheetDialog and playerCombatants.js (adding players, and the dice)
 │   ├── creatures/      What is particular to creatures: the stat block (also used by the dialog), the editor and its
 │   │                   form, and plain-function helpers: creatureFormat.js (reading backend creature data),
-│   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON)
+│   │                   compareCreatures.js, creatureDraft.js (editor form state to backend JSON), attackParse.js (an
+│   │                   action's attack, damage and saving throw, read from its text) and AttackRoller (the roll buttons)
 │   ├── items/          ItemsPage, filters, stat block, comparison, editor and its form, and the same kind of helpers:
 │   │                   itemFormat.js, compareItems.js, itemDraft.js
 │   ├── spells/         SpellsPage, filters, stat block, comparison and editor; spellFormat.js (the words for a

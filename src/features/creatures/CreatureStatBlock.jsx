@@ -17,6 +17,7 @@ import {
   proficiencyBonusFor,
 } from "./creatureFormat";
 import Description from "../../components/Description";
+import AttackRoller from "./AttackRoller";
 
 /** Everything the backend knows about a creature, laid out like a stat block. */
 export default function CreatureStatBlock({ creature }) {
@@ -179,6 +180,7 @@ function ActionSection({ creature, type, heading, isShared }) {
           notes={actionNotes(action)}
           desc={action.desc}
           shared={isShared?.(action.name)}
+          roller={<AttackRoller name={action.name} desc={action.desc} />}
         />
       ))}
     </Section>
@@ -194,7 +196,7 @@ function actionNotes(action) {
   return notes.filter(Boolean).join("; ");
 }
 
-function Entry({ name, notes, desc, shared = false }) {
+function Entry({ name, notes, desc, shared = false, roller = null }) {
   return (
     <Box sx={{ mb: 1.5 }}>
       <Typography sx={{ fontWeight: "bold", fontStyle: "italic" }}>
@@ -203,6 +205,7 @@ function Entry({ name, notes, desc, shared = false }) {
         {shared && <Chip label="shared" size="small" variant="outlined" sx={{ ml: 1, fontStyle: "normal" }} />}
       </Typography>
       <Description text={desc} />
+      {roller}
     </Box>
   );
 }

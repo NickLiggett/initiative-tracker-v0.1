@@ -1,23 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, Button, FormControlLabel, Checkbox, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { getCreature } from "../../api/creatures";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
 import CreatureSearch from "../creatures/CreatureSearch";
 import DifficultyMeter from "./DifficultyMeter";
 import MonsterList from "./MonsterList";
 import PartySelector from "./PartySelector";
+import SavedEncountersPanel from "./SavedEncountersPanel";
 import { byInitiative, monsterCombatants, playerCombatants } from "./encounterCombatants";
 import { ENCOUNTER_RULESETS, clampLevel, creatureXp } from "./encounterRules";
 import { addToSavedTracker } from "./trackerHandoff";
 import useParty from "./useParty";
+import useSavedEncounters from "./useSavedEncounters";
 
 /**
  * Builds an encounter: who the party is, which creatures are in it, and how hard that is by the 2014 or the 2024 rules.
- * "Add to initiative tracker" rolls initiative for the monsters (and the ticked players) and puts them in the tracker.
+ * It can be saved under a name to load again later. "Add to initiative tracker" rolls initiative for the monsters (and
+ * the ticked players) and puts them in the tracker.
  *
  * @param {() => void} onOpenTracker shows the initiative tracker, once the combatants are in it
  */
 export default function EncountersPage({ onOpenTracker }) {
   const { players, loadError } = useParty();
+  const saved = useSavedEncounters();
+  const [name, setName] = useState("");
+  const [working, setWorking] = useState(false); // saving, loading or deleting a saved encounter
+  const [notice, setNotice] = useState(null);
   const [ticked, setTicked] = useState(null); // the ids of the players ticked; everyone, until they have chosen
   const [extras, setExtras] = useState([]);
   const [monsters, setMonsters] = useState([]);
@@ -69,6 +77,68 @@ export default function EncountersPage({ onOpenTracker }) {
   const setCount = (key, count) => setMonsters((current) => current.map((one) => (one.creature.key === key ? { ...one, count } : one)));
   const remove = (key) => setMonsters((current) => current.filter((one) => one.creature.key !== key));
 
+  const saveEncounter = async () => {
+    setWorking(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const playerIds = [...(ticked ?? [])].filter((id) => players?.some((player) => player.id === id));
+      await saved.save({ name, ruleset, players: playerIds, extras: extras.map((extra) => extra.level), monsters });
+      setNotice(`Saved "${name.trim()}".`);
+    } catch (e) {
+      setError(`Couldn't save the encounter: ${e.message}`);
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const loadEncounter = async (encounter) => {
+    setWorking(true);
+    setError(null);
+    setNotice(null);
+    try {
+      // The creatures are looked up again, so they are as they are now; one that is gone is left out.
+      const found = await Promise.all(
+        encounter.monsters.map(async ({ key, count }) => {
+          try {
+            return { creature: await getCreature(key), count };
+          } catch {
+            return null;
+          }
+        }),
+      );
+      const loaded = found.filter(Boolean);
+      setMonsters(loaded);
+      setExtras(encounter.extras.map((level, index) => ({ id: index + 1, level })));
+      setTicked(new Set(encounter.players));
+      if (ENCOUNTER_RULESETS.some((one) => one.key === encounter.ruleset)) {
+        setRuleset(encounter.ruleset);
+      }
+      setName(encounter.name);
+      const missing = encounter.monsters.length - loaded.length;
+      setNotice(
+        missing === 0
+          ? `Loaded "${encounter.name}".`
+          : `Loaded "${encounter.name}", but ${missing} ${missing === 1 ? "creature couldn't" : "creatures couldn't"} be found.`,
+      );
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const deleteEncounter = async (encounter) => {
+    setWorking(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await saved.remove(encounter.id);
+    } catch (e) {
+      setError(`Couldn't delete the encounter: ${e.message}`);
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const send = async () => {
     setSending(true);
     setError(null);
@@ -97,6 +167,20 @@ export default function EncountersPage({ onOpenTracker }) {
         </ToggleButtonGroup>
       </Box>
 
+      <SavedEncountersPanel
+        encounters={saved.encounters}
+        loadError={saved.loadError}
+        name={name}
+        onName={setName}
+        canSave={monsters.length > 0}
+        busy={working}
+        onSave={saveEncounter}
+        onLoad={loadEncounter}
+        onDelete={deleteEncounter}
+      />
+      {notice && <Alert severity="success">{notice}</Alert>}
+      {error && <Alert severity="error">{error}</Alert>}
+
       <PartySelector
         players={players}
         loadError={loadError}
@@ -120,11 +204,6 @@ export default function EncountersPage({ onOpenTracker }) {
       <DifficultyMeter ruleset={ruleset} levels={levels} monsters={counted} />
 
       <Box component="section" aria-label="Initiative">
-        {error && (
-          <Alert severity="error" sx={{ mb: 1 }}>
-            {error}
-          </Alert>
-        )}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
           <Button variant="contained" disabled={monsters.length === 0 || sending} onClick={send}>
             Add to initiative tracker

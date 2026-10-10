@@ -19,7 +19,7 @@ const bo = { id: 2, name: "Bo", ruleset: "5e-2024", className: "Wizard", level: 
 const cy = { id: 3, name: "Cy", ruleset: "5e-2024", className: "Cleric", level: 3, armorClass: 16, hitPoints: 24, initiativeBonus: 0, role: "PARTY", playedBy: "cyrus" };
 
 function stubBackend({ mine = [ana, bo], party = [cy], extra = {} } = {}) {
-  const base = stubApi({ "GET /api/players": mine, "GET /api/party/players": party, ...extra });
+  const base = stubApi({ "GET /api/players": mine, "GET /api/party/players": party, "GET /api/me/encounters": {}, ...extra });
   const fetchMock = vi.fn(async (url, init = {}) => {
     const address = new URL(url, "http://backend");
     if ((init.method ?? "GET") === "GET" && address.pathname === "/api/creatures") {
@@ -271,5 +271,184 @@ describe("adding to the initiative tracker", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't add them to the tracker");
     expect(opened).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Add to initiative tracker" })).toBeEnabled();
+  });
+});
+
+describe("saved encounters", () => {
+  const ambush = {
+    id: 4,
+    name: "Goblin ambush",
+    ruleset: "5e-2014",
+    players: [1],
+    extras: [5, 5],
+    monsters: [{ key: "srd_goblin", name: "Goblin", count: 3 }, { key: "srd_ogre", name: "Ogre", count: 1 }],
+    savedAt: "2026-10-10T12:00:00.000Z",
+  };
+  const withSaved = (...encounters) => ({
+    "GET /api/me/encounters": { version: 1, encounters },
+    "PUT /api/me/encounters": {},
+    "GET /api/creatures/srd_goblin": goblin,
+    "GET /api/creatures/srd_ogre": ogre,
+  });
+  const saved = () => within(screen.getByRole("region", { name: "Saved encounters" }));
+
+  it("lists what is saved, with what is in each", async () => {
+    stubBackend({ extra: withSaved(ambush) });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+
+    const list = within(await screen.findByRole("list", { name: "Saved" }));
+    expect(list.getByText("Goblin ambush")).toBeInTheDocument();
+    expect(list.getByText("3 Goblin, 1 Ogre · 3 characters")).toBeInTheDocument();
+  });
+
+  it("says nothing is saved yet", async () => {
+    stubBackend({ extra: withSaved() });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+
+    expect(await screen.findByText(/Nothing saved yet/)).toBeInTheDocument();
+  });
+
+  it("can't save without creatures or a name", async () => {
+    stubBackend({ extra: withSaved() });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+    await screen.findByText(/Nothing saved yet/);
+
+    expect(saved().getByRole("button", { name: "Save" })).toBeDisabled();
+    await addCreature("Goblin");
+    expect(saved().getByRole("button", { name: "Save" })).toBeDisabled(); // no name
+    fireEvent.change(screen.getByLabelText("Encounter name"), { target: { value: "  " } });
+    expect(saved().getByRole("button", { name: "Save" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Encounter name"), { target: { value: "Ambush" } });
+    expect(saved().getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
+  it("saves the encounter under its name: the creatures by key, the ticked players and the characters by level", async () => {
+    const fetchMock = stubBackend({ extra: withSaved() });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+    await screen.findByRole("checkbox", { name: "Include Ana" });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Include Cy" })); // left out
+    fireEvent.change(screen.getByLabelText("Level of the character to add"), { target: { value: "5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add a character" }));
+    await addCreature("Goblin");
+    fireEvent.click(await screen.findByRole("button", { name: "More Goblin" }));
+    fireEvent.click(screen.getByRole("button", { name: "2014 rules" }));
+    fireEvent.change(screen.getByLabelText("Encounter name"), { target: { value: " Goblin ambush " } });
+
+    fireEvent.click(saved().getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText('Saved "Goblin ambush".')).toBeInTheDocument();
+    const [body] = bodiesSentTo(fetchMock, "PUT /api/me/encounters");
+    expect(body.version).toBe(1);
+    expect(body.encounters).toHaveLength(1);
+    expect(body.encounters[0]).toMatchObject({
+      id: 1,
+      name: "Goblin ambush",
+      ruleset: "5e-2014",
+      players: [1, 2],
+      extras: [5],
+      monsters: [{ key: "srd_goblin", name: "Goblin", count: 2 }],
+    });
+    expect(body.encounters[0].monsters[0]).not.toHaveProperty("creature");
+    expect(within(await screen.findByRole("list", { name: "Saved" })).getByText("Goblin ambush")).toBeInTheDocument();
+  });
+
+  it("replaces the encounter with the same name, and says it will", async () => {
+    const fetchMock = stubBackend({ extra: withSaved(ambush) });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+    await screen.findByRole("list", { name: "Saved" });
+    await addCreature("Ogre");
+    fireEvent.change(screen.getByLabelText("Encounter name"), { target: { value: "goblin AMBUSH" } });
+
+    expect(saved().getByText("Saving replaces the encounter with this name.")).toBeInTheDocument();
+    fireEvent.click(saved().getByRole("button", { name: "Replace" }));
+
+    await screen.findByText(/Saved "goblin AMBUSH"/);
+    const [body] = bodiesSentTo(fetchMock, "PUT /api/me/encounters");
+    expect(body.encounters).toHaveLength(1);
+    expect(body.encounters[0]).toMatchObject({ id: 4, monsters: [{ key: "srd_ogre", name: "Ogre", count: 1 }] });
+  });
+
+  it("builds a saved encounter again: its creatures, party and rules, as the creatures are now", async () => {
+    stubBackend({ extra: withSaved(ambush) });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+    await screen.findByRole("checkbox", { name: "Include Ana" });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Load Goblin ambush" }));
+
+    expect(await screen.findByText('Loaded "Goblin ambush".')).toBeInTheDocument();
+    expect(screen.getByLabelText("Number of Goblin")).toHaveTextContent("3");
+    expect(screen.getByLabelText("Number of Ogre")).toHaveTextContent("1");
+    expect(screen.getByRole("button", { name: "2014 rules" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("checkbox", { name: "Include Ana" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Include Bo" })).not.toBeChecked();
+    expect(screen.getAllByText("Level 5")).toHaveLength(2);
+    expect(screen.getByLabelText("Encounter name")).toHaveValue("Goblin ambush");
+    // 2 + 1 characters: the players' levels and two level 5 extras make four
+    expect(difficulty().getByText(/for the number of monsters/)).toBeInTheDocument();
+  });
+
+  it("leaves out a creature that can't be found, and says so", async () => {
+    stubBackend({ extra: { ...withSaved(ambush), "GET /api/creatures/srd_ogre": () => new Response("{}", { status: 404 }) } });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Load Goblin ambush" }));
+
+    expect(await screen.findByText('Loaded "Goblin ambush", but 1 creature couldn\'t be found.')).toBeInTheDocument();
+    expect(screen.getByLabelText("Number of Goblin")).toHaveTextContent("3");
+    expect(screen.queryByLabelText("Number of Ogre")).not.toBeInTheDocument();
+  });
+
+  it("deletes a saved encounter, leaving the others", async () => {
+    const other = { ...ambush, id: 5, name: "Zombies" };
+    const fetchMock = stubBackend({ extra: withSaved(ambush, other) });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Delete Goblin ambush" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/me/encounters")).toHaveLength(1));
+    expect(bodiesSentTo(fetchMock, "PUT /api/me/encounters")[0].encounters.map((one) => one.name)).toEqual(["Zombies"]);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Delete Goblin ambush" })).not.toBeInTheDocument());
+  });
+
+  it("changes what the account has now, not what was loaded, so another tab's save isn't lost", async () => {
+    let calls = 0;
+    const fetchMock = stubBackend({
+      extra: {
+        ...withSaved(),
+        // the account has one more by the time of the save
+        "GET /api/me/encounters": () => ({ version: 1, encounters: ++calls === 1 ? [] : [{ ...ambush, id: 9, name: "From another tab" }] }),
+      },
+    });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+    await screen.findByText(/Nothing saved yet/);
+    await addCreature("Ogre");
+    fireEvent.change(screen.getByLabelText("Encounter name"), { target: { value: "Mine" } });
+
+    fireEvent.click(saved().getByRole("button", { name: "Save" }));
+
+    await screen.findByText('Saved "Mine".');
+    expect(bodiesSentTo(fetchMock, "PUT /api/me/encounters")[0].encounters.map((one) => one.name)).toEqual(["From another tab", "Mine"]);
+  });
+
+  it("says why it couldn't be saved, and stays", async () => {
+    stubBackend({ extra: { ...withSaved(), "PUT /api/me/encounters": () => new Response(JSON.stringify({ detail: "too big" }), { status: 413 }) } });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+    await screen.findByText(/Nothing saved yet/);
+    await addCreature("Ogre");
+    fireEvent.change(screen.getByLabelText("Encounter name"), { target: { value: "Mine" } });
+
+    fireEvent.click(saved().getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save the encounter");
+    expect(saved().getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
+  it("still builds encounters when the saved ones can't be loaded", async () => {
+    stubBackend({ extra: { "GET /api/me/encounters": () => new Response("{}", { status: 500 }) } });
+    render(<EncountersPage onOpenTracker={() => {}} />);
+
+    expect(await screen.findByText("Couldn't load your saved encounters.")).toBeInTheDocument();
+    await addCreature("Ogre");
+    expect(await screen.findByLabelText("Number of Ogre")).toBeInTheDocument();
   });
 });

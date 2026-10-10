@@ -123,3 +123,33 @@ describe("choosing a creature in the form", () => {
     expect(footer().getByLabelText("AC")).toHaveValue("15");
   });
 });
+
+describe("revealing a monster's AC and HP to the players", () => {
+  const goblin = { id: 3, name: "Goblin", initiative: 12, ac: 15, hp: 7, reaction: false, type: "Creature", creature: null };
+  const ogre = { id: 4, name: "Ogre", initiative: 5, ac: 11, hp: 59, reaction: false, type: "Creature", creature: null, revealed: true };
+
+  const sentStates = (fetchMock) =>
+    fetchMock.mock.calls.filter(([, init = {}]) => init.method === "PUT").map(([, init]) => JSON.parse(init.body));
+
+  async function openFight() {
+    const fetchMock = stubApi({
+      "GET /api/me/tracker": toSavedState([gribble, goblin, ogre]),
+      "PUT /api/me/tracker": (body) => body,
+    });
+    render(<TrackerPage />);
+    await screen.findByText("Gribble");
+    return fetchMock;
+  }
+
+  it("reveals and hides every monster at once", async () => {
+    const fetchMock = await openFight();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reveal all" }));
+    await waitFor(() => expect(sentStates(fetchMock)).toHaveLength(1), { timeout: 3000 });
+    expect(sentStates(fetchMock)[0].combatants.map((row) => row.revealed)).toEqual([undefined, true, true]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide all" }));
+    await waitFor(() => expect(sentStates(fetchMock)).toHaveLength(2), { timeout: 3000 });
+    expect(sentStates(fetchMock)[1].combatants.map((row) => row.revealed)).toEqual([undefined, false, false]);
+  });
+});

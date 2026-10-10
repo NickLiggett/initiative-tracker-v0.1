@@ -14,6 +14,7 @@ import {
   nextTurn,
   previousTurn,
   removeCombatant,
+  setAllRevealed,
   sortByInitiative,
   updateCombatant,
 } from "./combatants";
@@ -33,6 +34,7 @@ export default function TrackerPage() {
     onDelete: (id) => setCombatants((current) => removeCombatant(current, id)),
     onShowCreature: setShownCreature,
     onShowPlayer: setShownPlayer,
+    onRevealChange: (id, revealed) => setCombatants((current) => updateCombatant(current, id, { revealed })),
   });
 
   const addCombatant = (combatant) => {
@@ -86,6 +88,8 @@ export default function TrackerPage() {
           toolbar: {
             onPrevious: () => setCombatants(previousTurn),
             onNext: () => setCombatants(nextTurn),
+            onRevealAll: () => setCombatants((current) => setAllRevealed(current, true)),
+            onHideAll: () => setCombatants((current) => setAllRevealed(current, false)),
             saveStatus: status,
             notice,
             onRetry: retry,

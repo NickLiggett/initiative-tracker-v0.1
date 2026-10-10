@@ -6,6 +6,7 @@ import ClassesPage from "./features/classes/ClassesPage";
 import CreaturesPage from "./features/creatures/CreaturesPage";
 import ItemsPage from "./features/items/ItemsPage";
 import SettingsPage from "./features/settings/SettingsPage";
+import PartyTrackerPage from "./features/party-tracker/PartyTrackerPage";
 import PlayersPage from "./features/players/PlayersPage";
 import SharingPage from "./features/sharing/SharingPage";
 import BackgroundsPage from "./features/backgrounds/BackgroundsPage";
@@ -40,6 +41,7 @@ export default function App() {
         setCurrentPage={setCurrentPage}
       />
       {currentPage === Pages.INITIATIVE_TRACKER && <TrackerPage />}
+      {currentPage === Pages.PARTY_TRACKER && <PartyTrackerPage />}
       {currentPage === Pages.CREATURES && <CreaturesPage />}
       {currentPage === Pages.ITEMS && <ItemsPage />}
       {currentPage === Pages.SPELLS && <SpellsPage />}
@@ -51,7 +53,7 @@ export default function App() {
       {currentPage === Pages.PLAYERS && <PlayersPage />}
       {currentPage === Pages.ENCOUNTERS && <EncountersPage onOpenTracker={() => setCurrentPage(Pages.INITIATIVE_TRACKER)} />}
       {currentPage === Pages.SETTINGS && <SettingsPage tab={settingsTab} onTabChange={setSettingsTab} />}
-      {![Pages.INITIATIVE_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SPELLS, Pages.CLASSES, Pages.SPECIES, Pages.BACKGROUNDS, Pages.FEATS, Pages.SHARING, Pages.PLAYERS, Pages.ENCOUNTERS, Pages.SETTINGS].includes(currentPage) && (
+      {![Pages.INITIATIVE_TRACKER, Pages.PARTY_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SPELLS, Pages.CLASSES, Pages.SPECIES, Pages.BACKGROUNDS, Pages.FEATS, Pages.SHARING, Pages.PLAYERS, Pages.ENCOUNTERS, Pages.SETTINGS].includes(currentPage) && (
         <PlaceholderPage title={currentPage} />
       )}
     </div>

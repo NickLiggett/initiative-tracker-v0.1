@@ -12,8 +12,10 @@ const SAVE_TEXT = {
  * The grid's toolbar: step the turn order back or forward, with whether the tracker is saved to the account between.
  * @param {"loading"|"saving"|"saved"|"failed"|"off"} saveStatus see useSavedTracker
  * @param {?string} notice something to tell the user about what was loaded
+ * @param {() => void} onRevealAll show the players every monster's AC and HP (see the "Players see" column)
+ * @param {() => void} onHideAll hide them all again
  */
-export default function GridToolbar({ onPrevious, onNext, saveStatus, notice, onRetry }) {
+export default function GridToolbar({ onPrevious, onNext, onRevealAll, onHideAll, saveStatus, notice, onRetry }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
       <Button onClick={onPrevious} aria-label="Previous turn">
@@ -31,6 +33,14 @@ export default function GridToolbar({ onPrevious, onNext, saveStatus, notice, on
             </Typography>
           )
         )}
+        <div>
+          <Button size="small" onClick={onRevealAll}>
+            Reveal all
+          </Button>
+          <Button size="small" onClick={onHideAll}>
+            Hide all
+          </Button>
+        </div>
         {notice && (
           <Typography variant="caption" color="warning.main" component="div">
             {notice}

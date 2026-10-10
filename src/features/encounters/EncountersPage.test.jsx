@@ -68,7 +68,8 @@ describe("the party", () => {
     render(<EncountersPage onOpenTracker={() => {}} />);
 
     for (const name of ["Ana", "Bo", "Cy"]) {
-      expect(await screen.findByRole("checkbox", { name: `Include ${name}` })).toBeChecked();
+      const box = await screen.findByRole("checkbox", { name: `Include ${name}` });
+      await waitFor(() => expect(box).toBeChecked()); // everyone is ticked a moment after they appear
     }
     expect(screen.getByText("Level 3 Fighter · Dwarf")).toBeInTheDocument();
     expect(screen.getByText(/from cyrus/)).toBeInTheDocument();

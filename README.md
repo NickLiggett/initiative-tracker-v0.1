@@ -95,6 +95,9 @@ which ends the provider's session too.
   armor class and hit points filled in, and a character already in the order can't be added twice. A character's row has the
   same document icon as a creature's, which opens their card as it is now (their level or notes may have changed). The
   tracker remembers which character a row is, not a copy of them.
+- **What the players see.** Each monster or other non-character row has an eye button (column **Players see**) that shows
+  its AC and HP to the players watching the fight, or hides them again; **Reveal all** and **Hide all** above the grid
+  do every one at once. Characters' AC and HP are always shown to their party. Nothing is revealed by default.
 - **Creatures** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
   uses. The document icon opens the creature's stat block.
 - **Your tracker is kept on your account.** A moment after any change (adding, editing, sorting, stepping the turn,
@@ -222,6 +225,14 @@ once. An invitation is for that one address, not a link to pass around, and expi
 backend with invitations and sign-in (`email_verified` in the token), so the `dev` profile can send invitations but
 never accept them.
 
+### Party Tracker
+
+For the people in a DM's party: **Party Tracker** in the drawer shows the initiative tracker of each DM whose party you
+have joined and whose fight one of your characters is in, one table for each DM. It is for watching only. The first row
+is whose turn it is ("Up now"), your own characters are marked "Yours", and it updates by itself every few seconds
+(not while the tab is hidden). A monster's AC and HP show as **?** until the DM reveals them (see the tracker above); the
+creature a row is, and the DM's notes, are never sent. If none of your characters is in a fight, it says so.
+
 ### Characters
 
 A **player** is a person with an account in the app. A **character** is the sheet they play: a record made by one user
@@ -345,6 +356,7 @@ src/
 │   │                   rules and their tables), encounterCombatants.js (monsters and characters as combatants, with their
 │   │                   initiative), trackerHandoff.js (adding them to the saved tracker), and savedEncounters.js with
 │   │                   useSavedEncounters.js and SavedEncountersPanel (keeping encounters under a name)
+│   ├── party-tracker/  PartyTrackerPage (a DM's fight, for watching) and usePartyTrackers (asking again every few seconds)
 │   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
 │   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)

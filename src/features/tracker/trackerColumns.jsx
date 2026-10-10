@@ -1,12 +1,13 @@
-import { Checkbox, Tooltip, Typography } from "@mui/material";
-import { Clear as ClearIcon, Article as ArticleIcon } from "@mui/icons-material";
+import { Checkbox, IconButton, Tooltip, Typography } from "@mui/material";
+import { Clear as ClearIcon, Article as ArticleIcon, Visibility, VisibilityOff } from "@mui/icons-material";
 import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatures/creatureFormat";
+import { isCharacter } from "./combatants";
 
 /**
  * The initiative grid's columns.
- * @param {{combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function, onShowPlayer: Function}} handlers
+ * @param {{combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function, onShowPlayer: Function, onRevealChange: Function}} handlers
  */
-export function buildColumns({ combatants, onReactionChange, onDelete, onShowCreature, onShowPlayer }) {
+export function buildColumns({ combatants, onReactionChange, onDelete, onShowCreature, onShowPlayer, onRevealChange }) {
   const anyLegendary = combatants.some((combatant) => legendaryActionsPerRound(combatant.creature) > 0);
 
   return [
@@ -14,6 +15,23 @@ export function buildColumns({ combatants, onReactionChange, onDelete, onShowCre
     { field: "name", headerName: "Name", width: 150, editable: true },
     { field: "ac", headerName: "AC", sortable: false, editable: true },
     { field: "hp", headerName: "HP", sortable: false, editable: true },
+    {
+      field: "revealed",
+      headerName: "Players see",
+      sortable: false,
+      renderCell: (params) =>
+        isCharacter(params.row) ? null : (
+          <Tooltip title={params.row.revealed ? "Players see its AC and HP" : "Hidden from players: AC and HP show as ?"}>
+            <IconButton
+              size="small"
+              aria-label={`${params.row.revealed ? "Hide" : "Reveal"} AC and HP ${params.row.revealed ? "of" : "for"} ${params.row.name}`}
+              onClick={() => onRevealChange(params.row.id, !params.row.revealed)}
+            >
+              {params.row.revealed ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+        ),
+    },
     {
       field: "reaction",
       headerName: "Reaction",

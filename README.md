@@ -220,6 +220,25 @@ party.
 
 Players go into the initiative order from the tracker (see below).
 
+### Encounters
+
+Build an encounter, see how hard it is for your party, and send it to the initiative tracker.
+
+- **The party** is your players and your party's, all included to begin with; untick anyone who isn't there. Characters
+  who have no player sheet can be added by level alone.
+- **The creatures** are searched for by name and added; adding one again counts another. Each shows its challenge rating
+  and XP, with buttons for how many, its stat block, and to remove it.
+- **Difficulty** is measured by the **2024** rules (the monsters' XP added up against the party's XP budget for a Low,
+  Moderate or High encounter; above High is "Over budget") or the **2014** rules (the XP multiplied for the number of
+  monsters, and for a small or large party, against each character's Easy, Medium, Hard and Deadly thresholds). It starts on
+  the rules your players use. The numbers are the ones printed in the Dungeon Master's Guides, typed into
+  `encounterRules.js`: check them against your books, as Open5e's data doesn't have them.
+- **Add to initiative tracker** rolls initiative for the monsters and puts them in the tracker, after anyone already there
+  and highest first, then opens it. A kind of monster rolls once and all of it goes at that number, with the monsters
+  numbered (Goblin 1, Goblin 2); tick *Roll for each monster separately* to roll for each. The ticked players go in too,
+  each with their own roll, unless you untick *Include the ticked players*. Each combatant gets the creature's armor
+  class and hit points and its stat block.
+
 ### Settings
 
 Open it from the account menu (your picture at the top right) or the drawer.
@@ -282,6 +301,9 @@ src/
 │   ├── backgrounds/    BackgroundsPage, its stat block and editor, backgroundFormat.js (the kinds of benefit) and
 │   │                   backgroundDraft.js (the form's draft, its checks, and the request)
 │   ├── feats/          FeatsPage, filters, stat block and editor, featFormat.js and featDraft.js
+│   ├── encounters/     EncountersPage (party, creatures, difficulty), encounterRules.js (the 2014 and 2024 difficulty
+│   │                   rules and their tables), encounterCombatants.js (monsters and players as combatants, with their
+│   │                   initiative) and trackerHandoff.js (adding them to the saved tracker)
 │   ├── players/        PlayersPage, PartyPanel, PlayerCard and PlayerEditor, players.js (rules, labels, class and species options)
 │   │                   and playerDraft.js (the form's draft, its checks, and the request)
 │   ├── sharing/        SharingPage and its document cards, and sharing.js (the username, email and role rules)
@@ -361,8 +383,6 @@ The backend stores derived numbers (modifiers, saves, passive Perception, `speed
   session lasts); a silent check could skip that.
 - **Production sign-in settings** in the backend's realm: email verification, a real mail server, a password policy,
   and the app's real address instead of `http://localhost:*`.
-- **Players in the tracker.** Pick players, yours and your party's, and drop them into initiative with their armor
-  class and hit points filled in.
 - **Separate documents** (say, one per campaign), so a DM can share one and keep another private. The backend allows
   it; the editors would need a "save into which document" choice.
 - **Legendary checkboxes that remember their state.** They're uncontrolled today, so they reset when the row

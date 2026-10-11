@@ -9,6 +9,13 @@ const creatures = createResourceApi("/api/creatures");
  */
 export const searchCreatures = creatures.search;
 
+/**
+ * One page of the creatures matching `name`, `type` and `size` (keys), `crMin` and `crMax`, with where it is in the whole
+ * list. See `createResourceApi` for the paging and `sort`.
+ * @returns {Promise<{content: object[], page: object}>}
+ */
+export const listCreatures = (request) => creatures.list(request);
+
 /** One creature by key, e.g. "srd_adult-red-dragon". */
 export const getCreature = creatures.get;
 

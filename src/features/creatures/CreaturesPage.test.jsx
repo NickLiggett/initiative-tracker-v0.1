@@ -11,10 +11,10 @@ describe("CreaturesPage", () => {
   it("prompts for a search, then shows the chosen creature's stat block", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ content: [dragon] }) })),
+      vi.fn(async (url) => ({ ok: true, status: 200, json: async () => ({ content: url.includes("/api/creatures") ? [dragon] : [] }) })),
     );
     render(<CreaturesPage />);
-    expect(screen.getByText("Search for a creature to see its stat block.")).toBeInTheDocument();
+    expect(screen.getByText("Press Search to list the creatures that match, or choose one above.")).toBeInTheDocument();
 
     const input = screen.getByRole("combobox", { name: "Creature" });
     fireEvent.focus(input);
@@ -28,7 +28,11 @@ describe("CreaturesPage", () => {
   it("compares the chosen creature with a second one, and goes back when comparing stops", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ content: [dragon, blackDragon] }) })),
+      vi.fn(async (url) => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ content: url.includes("/api/creatures") ? [dragon, blackDragon] : [] }), // the type and size lists are empty
+      })),
     );
     render(<CreaturesPage />);
     expect(screen.getByRole("button", { name: "Compare" })).toBeDisabled();

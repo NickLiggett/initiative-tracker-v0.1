@@ -122,7 +122,7 @@ function stubBackend(extra = {}, spells = [fireball, shield, detectMagic, mine])
           one.name.toLowerCase().includes((params.name ?? "").toLowerCase()) &&
           (params.level === undefined || String(one.level) === params.level) &&
           (params.school === undefined || one.school.key === params.school) &&
-          (params.class === undefined || one.classes.some((c) => c.key === params.class)) &&
+          (params.class === undefined || one.classes.some((c) => params.class.split(",").includes(c.key))) &&
           (params.damageType === undefined || one.damageTypes.includes(params.damageType)) &&
           (params.concentration === undefined || String(one.concentration) === params.concentration) &&
           (params.ritual === undefined || String(one.ritual) === params.ritual),
@@ -157,7 +157,7 @@ describe("reading a spell", () => {
   it("shows it like a spell card", async () => {
     stubBackend();
     render(<SpellsPage />);
-    expect(screen.getByText("Search for a spell to see its details.")).toBeInTheDocument();
+    expect(screen.getByText("Press Search to list the spells that match, or choose one above.")).toBeInTheDocument();
 
     await pick("Spell", "Fireball");
 
@@ -267,8 +267,8 @@ describe("filtering", () => {
     await search("sh");
 
     await waitFor(() => {
-      const classes = fetchMock.searches.filter((params) => params.name === "sh").map((params) => params.class).sort();
-      expect(classes).toEqual(["srd-2024_wizard", "srd_wizard"]);
+      const classes = fetchMock.searches.filter((params) => params.name === "sh").map((params) => params.class);
+      expect(classes).toEqual(["srd_wizard,srd-2024_wizard"]); // one request, for both
     });
     expect(await screen.findByRole("option", { name: /Shield/ })).toBeInTheDocument();
   });

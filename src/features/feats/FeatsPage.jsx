@@ -26,7 +26,7 @@ export default function FeatsPage() {
       renderSearch={(props) => <ResourceSearch noun="feat" search={search} secondary={describeResult} {...props} />}
       filters={<FeatFilters filters={filters} onChange={setFilters} />}
       renderResults={({ onOpen }) => (
-        <ResultsSearch noun="feat" plural="feats" list={list} filterCriteria={narrowed} columns={COLUMNS} onOpen={onOpen} />
+        <ResultsSearch noun="feat" plural="feats" list={list} filterCriteria={narrowed} columns={COLUMNS} onOpen={onOpen} autoRun />
       )}
       renderStatBlock={(feat) => <FeatStatBlock feat={feat} />}
       renderComparison={(feats) => <FeatComparison feats={feats} />}

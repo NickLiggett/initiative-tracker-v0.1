@@ -68,8 +68,9 @@ describe("listing feats as a table", () => {
     expect(within(first).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
       "Grappler", "General", "Strength or Dexterity 13 or higher", "5e 2024 Rules",
     ]);
-    expect(fetchMock.searches).toHaveLength(1); // one request, not one for each spelling
-    expect(fetchMock.searches[0]).toMatchObject({ type: "General", sort: "name,asc" });
+    const asked = fetchMock.searches.filter((search) => search.type);
+    expect(asked).toHaveLength(2); // the filter re-lists at once, and Search again: one request each, not one for each spelling
+    expect(asked.every((search) => search.type === "General" && search.sort === "name,asc")).toBe(true);
   });
 
   it("lists only the feats with a prerequisite, and sorts by type", async () => {

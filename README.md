@@ -131,16 +131,16 @@ which ends the provider's session too.
 
 ### Search results
 
-Spells, Creatures, Items and Feats can also list everything that matches as a table, not just one at a time. Under the
+Spells, Creatures and Items can also list everything that matches as a table, not just one at a time. Under the
 search box is a **Name contains** box (optional) and a **Search** button (Enter works too): press it and every match is
 listed, a page at a time (25, 50 or 100), with the number found. So choosing the Divination school and pressing Search
 lists all the divination spells, and typing "dragon" in Creatures lists every creature with dragon in its name.
-Classes, Species and Backgrounds are short lists, so they are listed as soon as the page opens (and again when the Classes filter
-changes); the name still waits for Search.
+Feats, Classes, Species and Backgrounds are short lists, so they are listed as soon as the page opens (and again when a filter
+changes, as on Feats and Classes); the name still waits for Search.
 
 - **Filters.** Spells, Items, Feats and Classes use the filters already under the search box; Creatures have Type, Size
   and a range of challenge ratings (**CR from** and **CR to**, `1/4` works). Changing a filter or the name changes
-  nothing until you press Search again (on Classes it re-lists at once).
+  nothing until you press Search again (on Feats and Classes it re-lists at once).
 - **Items** are two collections (ordinary and magic) and a page can't be told off two at once, so the table lists one
   at a time: choose **Magic items** or **Ordinary items** next to the name box. The Rarity filter only applies to magic
   items. (The search box above still finds both together.)

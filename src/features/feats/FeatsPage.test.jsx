@@ -82,15 +82,15 @@ describe("reading a feat", () => {
     stubBackend();
     render(<FeatsPage />);
 
-    expect(screen.getByText("Press Search to list the feats that match, or choose one above.")).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Feat results" })).toBeInTheDocument();
     await pick("Alert");
 
     expect(await screen.findByRole("heading", { name: "Alert" })).toBeInTheDocument();
     expect(screen.getByText("Origin feat")).toBeInTheDocument();
-    expect(screen.getByText("5e 2024 Rules")).toBeInTheDocument();
+    expect(screen.getAllByText("5e 2024 Rules").length).toBeGreaterThan(0); // also a column of the table behind
     expect(screen.getByText("You add your proficiency bonus to initiative rolls.")).toBeInTheDocument();
     expect(screen.getByText("You can swap initiative with an ally.")).toBeInTheDocument();
-    expect(screen.queryByText(/Prerequisite/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Prerequisite:")).not.toBeInTheDocument();
   });
 
   it("shows the prerequisite, and writes a type that is in capitals like the others", async () => {
@@ -99,7 +99,7 @@ describe("reading a feat", () => {
 
     await pick("Grappler");
 
-    expect(await screen.findByText("Strength or Dexterity 13 or higher")).toBeInTheDocument();
+    expect(await screen.findAllByText("Strength or Dexterity 13 or higher")).not.toHaveLength(0);
     expect(screen.getByText("Prerequisite:")).toBeInTheDocument();
     expect(screen.getByText("General feat")).toBeInTheDocument();
   });

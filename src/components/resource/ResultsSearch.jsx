@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { Search } from "@mui/icons-material";
 import ResultsTable from "./ResultsTable";
@@ -15,10 +15,21 @@ import useResultsSearch from "./useResultsSearch";
  * @param {{field: string, direction: "asc"|"desc"}} [defaultSort]
  * @param {(resource: object) => void} onOpen
  * @param {ReactNode} [extra] more to ask for, next to the name: filters that only the table uses
+ * @param {boolean} [autoRun] for a short list: list everything straight away, and again when a filter changes, rather
+ *   than waiting for Search (the name still waits for it)
  */
-export default function ResultsSearch({ list, filterCriteria, columns, defaultSort = { field: "name", direction: "asc" }, onOpen, noun, plural, extra }) {
+export default function ResultsSearch({ list, filterCriteria, columns, defaultSort = { field: "name", direction: "asc" }, onOpen, noun, plural, extra, autoRun = false }) {
   const [name, setName] = useState("");
   const search = useResultsSearch(list, defaultSort);
+  const nameTyped = useRef(name);
+  nameTyped.current = name;
+  const { run } = search;
+
+  useEffect(() => {
+    if (autoRun) {
+      run({ name: nameTyped.current.trim(), ...filterCriteria });
+    }
+  }, [autoRun, filterCriteria, run]);
 
   const submit = (event) => {
     event.preventDefault();

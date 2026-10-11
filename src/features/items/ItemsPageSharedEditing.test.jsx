@@ -57,7 +57,7 @@ describe("items in a document shared with the user", () => {
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByText("It will be removed from GM's campaign for good. This can't be undone.")).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
-    expect(await screen.findByText("Search for an item to see its details.")).toBeInTheDocument();
+    expect(await screen.findByText("Press Search to list the items that match, or choose one above.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/items/u3-campaign_lantern", expect.objectContaining({ method: "DELETE" }));
   });
 

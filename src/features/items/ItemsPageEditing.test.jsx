@@ -167,7 +167,7 @@ describe("changing your own items", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
 
-    expect(await screen.findByText("Search for an item to see its details.")).toBeInTheDocument();
+    expect(await screen.findByText("Press Search to list the items that match, or choose one above.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/items/u1-homebrew_rope", expect.objectContaining({ method: "DELETE" }));
   });
 
@@ -179,7 +179,7 @@ describe("changing your own items", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Delete" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
 
-    expect(await screen.findByText("Search for an item to see its details.")).toBeInTheDocument();
+    expect(await screen.findByText("Press Search to list the items that match, or choose one above.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith("/api/magicitems/u1-homebrew_bag", expect.objectContaining({ method: "DELETE" }));
     expect(fetchMock).not.toHaveBeenCalledWith("/api/items/u1-homebrew_bag", expect.anything());
   });

@@ -131,16 +131,23 @@ which ends the provider's session too.
 
 ### Search results
 
-Spells and Creatures can also list everything that matches as a table, not just one at a time. Under the search box is a
-**Name contains** box (optional) and a **Search** button (Enter works too): press it and every match is listed, a page
-at a time (25, 50 or 100), with the number found. So choosing the Divination school and pressing Search lists all the
-divination spells, and typing "dragon" in Creatures lists every creature with dragon in its name.
+Spells, Creatures, Items and Feats can also list everything that matches as a table, not just one at a time. Under the
+search box is a **Name contains** box (optional) and a **Search** button (Enter works too): press it and every match is
+listed, a page at a time (25, 50 or 100), with the number found. So choosing the Divination school and pressing Search
+lists all the divination spells, and typing "dragon" in Creatures lists every creature with dragon in its name.
+Classes and Species are short lists, so they are listed as soon as the page opens (and again when the Classes filter
+changes); the name still waits for Search.
 
-- **Filters.** Spells use the filters already under the search box (level, school, class, damage type, concentration,
-  ritual); Creatures have Type, Size and a range of challenge ratings (**CR from** and **CR to**, `1/4` works).
-  Changing a filter or the name changes nothing until you press Search again.
-- **Sorting.** Click a column header: Name and Level for spells; Name, CR, AC and HP for creatures. Click again to
-  reverse. (Columns the backend can't sort, like School or Type, are plain headers.)
+- **Filters.** Spells, Items, Feats and Classes use the filters already under the search box; Creatures have Type, Size
+  and a range of challenge ratings (**CR from** and **CR to**, `1/4` works). Changing a filter or the name changes
+  nothing until you press Search again (on Classes it re-lists at once).
+- **Items** are two collections (ordinary and magic) and a page can't be told off two at once, so the table lists one
+  at a time: choose **Magic items** or **Ordinary items** next to the name box. The Rarity filter only applies to magic
+  items. (The search box above still finds both together.)
+- **Sorting.** Click a column header; click again to reverse. Spells: Name, Level. Creatures: Name, CR, AC, HP. Items:
+  Name, Cost, Weight. Feats: Name, Type, Prerequisite. Classes: Name, Spellcasting. Species: Name, Kind. Columns the
+  backend can't sort, like School or Category, are plain headers. Items with no price in their source (most magic
+  items) sort first when the cost is reversed.
 - **Opening one.** Click a row to read it (the usual stat block, with Compare, Duplicate and the rest). **Back to
   results** returns to the same page of the same search.
 - The box with the dropdown at the top still works for jumping straight to one thing.
@@ -329,7 +336,7 @@ src/
 │   ├── spells.js       The spells collection, and searchSpells (with its filters)
 │   ├── species.js      The species collection (search, get, create, replace, copy, remove)
 │   ├── backgrounds.js  The backgrounds collection
-│   ├── feats.js        The feats collection, and searchFeats (a type found however it is capitalized)
+│   ├── feats.js        The feats collection, searchFeats and listFeats (a type matches in any case, on the backend)
 │   ├── players.js      Characters (called players here): list, create, replace, delete
 │   ├── party.js        The party: members, requests to join, and the party's characters
 │   ├── documents.js    The signed-in user, documents, and who they are shared with (share, change role, stop sharing, invite by email)

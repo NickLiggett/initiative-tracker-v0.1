@@ -40,7 +40,7 @@ const tough = {
 };
 const feats = [alert, grappler, tough];
 
-/** A backend whose feat list answers a search the way the real one does: by name, exact type and hasPrerequisite. */
+/** A backend whose feat list answers a search the way the real one does: by name, type (in any case) and hasPrerequisite. */
 function stubBackend(extra = {}) {
   const base = stubApi({ ...OWNERSHIP_ROUTES, ...extra });
   const fetchMock = vi.fn(async (url, init = {}) => {
@@ -50,7 +50,7 @@ function stubBackend(extra = {}) {
       const type = address.searchParams.get("type");
       const needs = address.searchParams.get("hasPrerequisite");
       const found = feats.filter(
-        (one) => one.name.toLowerCase().includes(name) && (type === null || one.type === type) && (needs === null || String(one.hasPrerequisite) === needs),
+        (one) => one.name.toLowerCase().includes(name) && (type === null || one.type.toLowerCase() === type.toLowerCase()) && (needs === null || String(one.hasPrerequisite) === needs),
       );
       return new Response(JSON.stringify({ content: found }), { status: 200 });
     }
@@ -82,7 +82,7 @@ describe("reading a feat", () => {
     stubBackend();
     render(<FeatsPage />);
 
-    expect(screen.getByText("Search for a feat to see what it does.")).toBeInTheDocument();
+    expect(screen.getByText("Press Search to list the feats that match, or choose one above.")).toBeInTheDocument();
     await pick("Alert");
 
     expect(await screen.findByRole("heading", { name: "Alert" })).toBeInTheDocument();

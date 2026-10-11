@@ -96,11 +96,11 @@ describe("reading a species", () => {
     stubBackend();
     render(<SpeciesPage />);
 
-    expect(screen.getByText("Search for a species to see its traits.")).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Species results" })).toBeInTheDocument();
     await pick("Species", "Dwarf");
 
     expect(await screen.findByRole("heading", { name: "Dwarf" })).toBeInTheDocument();
-    expect(screen.getByText("5e 2014 Rules")).toBeInTheDocument();
+    expect(screen.getAllByText("5e 2014 Rules").length).toBeGreaterThan(0); // also a column of the table, kept mounted behind
     expect(screen.getByText("Wizards of the Coast · 5th Edition 2014")).toBeInTheDocument();
     expect(screen.getByText("Your dwarf character has an assortment of inborn abilities.")).toBeInTheDocument();
     expect(screen.getByText("Ability Score Increase")).toBeInTheDocument(); // once, as the trait's name
@@ -186,7 +186,7 @@ describe("making and changing species", () => {
       },
     ]);
     expect(screen.getByRole("heading", { name: "Lizardfolk" })).toBeInTheDocument();
-    expect(screen.getByText("dev's homebrew")).toBeInTheDocument();
+    expect(screen.getAllByText("dev's homebrew").length).toBeGreaterThan(0);
   });
 
   it("can't be saved until it is fixed, and says what is wrong", async () => {

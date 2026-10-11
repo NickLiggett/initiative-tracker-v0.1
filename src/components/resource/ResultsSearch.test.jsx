@@ -165,4 +165,22 @@ describe("ResultsSearch", () => {
     expect(await screen.findByText("Newer")).toBeInTheDocument();
     expect(screen.queryByText(/Couldn't load/)).not.toBeInTheDocument();
   });
+
+  it("with autoRun lists everything at once, and again when a filter changes, but waits for Search on the name", async () => {
+    const list = stubList(() => answer([row("a", "Augury")]));
+    const { rerender } = renderSearch(list, { autoRun: true });
+
+    expect(await screen.findByRole("table", { name: "Spell results" })).toBeInTheDocument();
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(list.mock.calls[0][0].criteria).toEqual({ name: "", school: "divination" });
+    expect(screen.queryByText(/Press Search/)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Name contains"), { target: { value: "shield" } });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(list).toHaveBeenCalledTimes(1);
+
+    rerender(<ResultsSearch noun="spell" plural="spells" list={list} filterCriteria={{ school: "evocation" }} columns={columns} onOpen={() => {}} autoRun />);
+    await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    expect(list.mock.calls[1][0].criteria).toEqual({ name: "shield", school: "evocation" });
+  });
 });

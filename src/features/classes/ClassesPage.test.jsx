@@ -114,14 +114,14 @@ describe("reading a class", () => {
     stubBackend();
     render(<ClassesPage />);
 
-    expect(screen.getByText("Search for a class or subclass to see its level table and features.")).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Class results" })).toBeInTheDocument();
     await pick("Class", "Wizard");
 
     expect(await screen.findByRole("heading", { name: "Wizard" })).toBeInTheDocument();
-    expect(screen.getByText("5e 2014 Rules")).toBeInTheDocument();
-    expect(screen.getByText("d6")).toBeInTheDocument();
-    expect(screen.getByText("Intelligence, Wisdom")).toBeInTheDocument();
-    expect(screen.getByText("Full caster")).toBeInTheDocument();
+    expect(screen.getAllByText("5e 2014 Rules").length).toBeGreaterThan(0); // also a column of the table, kept mounted behind
+    expect(screen.getAllByText("d6").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Intelligence, Wisdom").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Full caster").length).toBeGreaterThan(0);
     expect(screen.getByText("6 + your Constitution modifier")).toBeInTheDocument();
     expect(screen.getByText("None")).toBeInTheDocument(); // the armor proficiencies
     expect(screen.getByText("You start with a quarterstaff.")).toBeInTheDocument();

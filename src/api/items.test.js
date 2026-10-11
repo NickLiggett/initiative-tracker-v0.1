@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stubApi } from "../test/fakeApi";
-import { searchItems } from "./items";
+import { listItems, searchItems } from "./items";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -45,5 +45,23 @@ describe("searchItems", () => {
     await searchItems("ro", { category: "weapon", rarity: "rare" });
 
     expect(urls(fetchMock)).toEqual(["/api/magicitems?name=ro&pageSize=25&sort=name&category=weapon&rarity=rare"]);
+  });
+});
+
+describe("listItems", () => {
+  it("lists a page of the magic items, with the rarity", async () => {
+    const fetchMock = stubSearch();
+
+    await listItems({ kind: "magic", name: "ro", category: "ring", rarity: "rare", page: 2, pageSize: 50, sort: "cost,desc" });
+
+    expect(urls(fetchMock)).toEqual(["/api/magicitems?page=2&pageSize=50&sort=cost%2Cdesc&name=ro&category=ring&rarity=rare"]);
+  });
+
+  it("lists a page of the ordinary items, which have no rarity", async () => {
+    const fetchMock = stubSearch();
+
+    await listItems({ kind: "item", name: "ro", rarity: "rare", page: 0, pageSize: 25, sort: "name,asc" });
+
+    expect(urls(fetchMock)).toEqual(["/api/items?page=0&pageSize=25&sort=name%2Casc&name=ro"]);
   });
 });

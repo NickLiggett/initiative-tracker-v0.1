@@ -35,3 +35,14 @@ export function isMagicItem(item) {
 export function apiFor(item) {
   return isMagicItem(item) ? magicItemsApi : itemsApi;
 }
+
+/**
+ * One page of the ordinary items or of the magic items (a page can't be told off two collections at once) whose name
+ * contains `name`, narrowed by `category` and, for magic items, `rarity`; see `createResourceApi` for the paging and `sort`.
+ * @param {"item"|"magic"} kind which of the two to list
+ */
+export function listItems({ kind, name, category, rarity, page, pageSize, sort, signal }) {
+  return kind === "magic"
+    ? magicItemsApi.list({ name, category, rarity, page, pageSize, sort, signal })
+    : itemsApi.list({ name, category, page, pageSize, sort, signal });
+}

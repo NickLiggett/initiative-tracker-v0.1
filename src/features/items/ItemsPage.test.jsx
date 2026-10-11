@@ -38,7 +38,7 @@ describe("ItemsPage", () => {
   it("finds items and magic items together, and shows the one chosen", async () => {
     stubBackend();
     render(<ItemsPage />);
-    expect(screen.getByText("Search for an item to see its details.")).toBeInTheDocument();
+    expect(screen.getByText("Press Search to list the items that match, or choose one above.")).toBeInTheDocument();
 
     type("bag");
 

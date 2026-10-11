@@ -1,18 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { searchFeats, typeSpellings } from "./feats";
+import { listFeats, searchFeats } from "./feats";
 import { stubApi } from "../test/fakeApi";
 
 afterEach(() => vi.unstubAllGlobals());
 
 const feat = (key, name) => ({ key, name });
 const paramsOf = (url) => Object.fromEntries(new URL(url, "http://backend").searchParams);
-
-describe("typeSpellings", () => {
-  it("gives a type as written and in capitals, once each", () => {
-    expect(typeSpellings("General")).toEqual(["General", "GENERAL"]);
-    expect(typeSpellings("GENERAL")).toEqual(["GENERAL"]);
-  });
-});
 
 describe("searchFeats", () => {
   it("asks for the feats with that name, by name", async () => {
@@ -32,17 +25,23 @@ describe("searchFeats", () => {
     expect(paramsOf(fetchMock.mock.calls[0][0])).not.toHaveProperty("type");
   });
 
-  it("finds a type however it is capitalized: one request for each spelling, joined, each feat once, by name", async () => {
-    const answers = {
-      General: [feat("b_grappler", "Grappler"), feat("a_alert", "Alert")],
-      GENERAL: [feat("c_actor", "Actor"), feat("a_alert", "Alert")],
-    };
-    const fetchMock = vi.fn(async (url) => new Response(JSON.stringify({ content: answers[paramsOf(url).type] }), { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+  it("passes the type on as it is, in one request", async () => {
+    const fetchMock = stubApi({ "GET /api/feats": { content: [feat("a", "Alert")] } });
 
-    const found = await searchFeats("", { type: "General" });
+    await expect(searchFeats("", { type: "General" })).resolves.toEqual([feat("a", "Alert")]);
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(found.map((one) => one.name)).toEqual(["Actor", "Alert", "Grappler"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(paramsOf(fetchMock.mock.calls[0][0])).toMatchObject({ type: "General" });
+  });
+});
+
+describe("listFeats", () => {
+  it("asks for a page, sorted, with the whole answer", async () => {
+    const answer = { content: [feat("a", "Alert")], page: { number: 1, size: 25, totalElements: 30, totalPages: 2 } };
+    const fetchMock = stubApi({ "GET /api/feats": answer });
+
+    await expect(listFeats({ name: "a", type: "Origin", page: 1, pageSize: 25, sort: "type,desc" })).resolves.toEqual(answer);
+
+    expect(paramsOf(fetchMock.mock.calls[0][0])).toEqual({ name: "a", type: "Origin", page: "1", pageSize: "25", sort: "type,desc" });
   });
 });

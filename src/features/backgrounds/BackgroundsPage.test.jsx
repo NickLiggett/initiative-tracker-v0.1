@@ -50,11 +50,11 @@ describe("reading a background", () => {
     stubBackend();
     render(<BackgroundsPage />);
 
-    expect(screen.getByText("Search for a background to see what it gives a character.")).toBeInTheDocument();
+    expect(await screen.findByRole("table", { name: "Background results" })).toBeInTheDocument();
     await pick("Acolyte");
 
     expect(await screen.findByRole("heading", { name: "Acolyte" })).toBeInTheDocument();
-    expect(screen.getByText("5e 2014 Rules")).toBeInTheDocument();
+    expect(screen.getAllByText("5e 2014 Rules").length).toBeGreaterThan(0); // also a column of the table behind
     expect(screen.getByText("You spent your life in service to a temple.")).toBeInTheDocument();
     expect(screen.getByText("Skill Proficiencies")).toBeInTheDocument();
     expect(screen.getByText("Insight, Religion")).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe("making and changing backgrounds", () => {
       },
     ]);
     expect(screen.getByRole("heading", { name: "Sailor" })).toBeInTheDocument();
-    expect(screen.getByText("dev's homebrew")).toBeInTheDocument();
+    expect(screen.getAllByText("dev's homebrew").length).toBeGreaterThan(0);
   });
 
   it("changes one of the user's own, starting from what it is", async () => {

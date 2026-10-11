@@ -135,7 +135,7 @@ Spells, Creatures, Items and Feats can also list everything that matches as a ta
 search box is a **Name contains** box (optional) and a **Search** button (Enter works too): press it and every match is
 listed, a page at a time (25, 50 or 100), with the number found. So choosing the Divination school and pressing Search
 lists all the divination spells, and typing "dragon" in Creatures lists every creature with dragon in its name.
-Classes and Species are short lists, so they are listed as soon as the page opens (and again when the Classes filter
+Classes, Species and Backgrounds are short lists, so they are listed as soon as the page opens (and again when the Classes filter
 changes); the name still waits for Search.
 
 - **Filters.** Spells, Items, Feats and Classes use the filters already under the search box; Creatures have Type, Size
@@ -145,7 +145,7 @@ changes); the name still waits for Search.
   at a time: choose **Magic items** or **Ordinary items** next to the name box. The Rarity filter only applies to magic
   items. (The search box above still finds both together.)
 - **Sorting.** Click a column header; click again to reverse. Spells: Name, Level. Creatures: Name, CR, AC, HP. Items:
-  Name, Cost, Weight. Feats: Name, Type, Prerequisite. Classes: Name, Spellcasting. Species: Name, Kind. Columns the
+  Name, Cost, Weight. Feats: Name, Type, Prerequisite. Classes: Name, Spellcasting. Species: Name, Kind. Backgrounds: Name. Columns the
   backend can't sort, like School or Category, are plain headers. Items with no price in their source (most magic
   items) sort first when the cost is reversed.
 - **Opening one.** Click a row to read it (the usual stat block, with Compare, Duplicate and the rest). **Back to

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Alert, Box, Button, Typography } from "@mui/material";
-import { Add, CompareArrows, ContentCopy, Delete, Edit } from "@mui/icons-material";
+import { Add, ArrowBack, CompareArrows, ContentCopy, Delete, Edit } from "@mui/icons-material";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import useWritableDocuments from "./useWritableDocuments";
 
@@ -15,6 +15,9 @@ import useWritableDocuments from "./useWritableDocuments";
  * @param {(resource: object, actions: {open: (resource: object) => void}) => ReactNode} renderStatBlock `open` shows another one
  *   (a link from one to another, such as a class to its subclass)
  * @param {ReactNode} [filters] shown under the search, while browsing
+ * @param {(actions: {onOpen: (resource: object) => void}) => ReactNode} [renderResults] a way to list everything that
+ *   matches, as a table, shown while nothing is chosen (see ResultsSearch). Choosing one shows it, with a way back; it
+ *   stays mounted meanwhile, so the same page of the same search is there on the way back
  * @param {(resources: object[]) => ReactNode} [renderComparison] without it there is no Compare
  * @param {(props: {resource: ?object, onSaved: Function, onCancel: Function}) => ReactNode} [renderEditor]
  *   `resource` is the one to change, or null to make a new one. Without it there is no New, Duplicate or Edit
@@ -27,6 +30,7 @@ export default function ResourcePage({
   renderSearch,
   renderStatBlock,
   filters,
+  renderResults,
   renderComparison,
   renderEditor,
   copy,
@@ -133,6 +137,11 @@ export default function ResourcePage({
             )}
           </Box>
           {filters}
+          {resource && renderResults && (
+            <Button startIcon={<ArrowBack />} sx={{ mt: 1 }} onClick={() => { setResource(null); stopComparing(); }}>
+              Back to results
+            </Button>
+          )}
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>
               {error}
@@ -151,11 +160,16 @@ export default function ResourcePage({
               {renderStatBlock(resource, { open: setResource })}
             </>
           ) : (
-            <Typography color="text.secondary" sx={{ mt: 4, textAlign: "center" }}>
-              {emptyText}
-            </Typography>
+            !renderResults && (
+              <Typography color="text.secondary" sx={{ mt: 4, textAlign: "center" }}>
+                {emptyText}
+              </Typography>
+            )
           )}
         </>
+      )}
+      {renderResults && (
+        <Box hidden={Boolean(resource) || Boolean(editing)}>{renderResults({ onOpen: setResource })}</Box>
       )}
 
       <ConfirmDeleteDialog

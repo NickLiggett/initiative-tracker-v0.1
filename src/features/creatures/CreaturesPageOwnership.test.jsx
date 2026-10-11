@@ -87,7 +87,7 @@ describe("changing your own creatures", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete" }));
 
-    expect(await screen.findByText("Search for a creature to see its stat block.")).toBeInTheDocument();
+    expect(await screen.findByText("Press Search to list the creatures that match, or choose one above.")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/creatures/u1-homebrew_gribble",
       expect.objectContaining({ method: "DELETE" }),

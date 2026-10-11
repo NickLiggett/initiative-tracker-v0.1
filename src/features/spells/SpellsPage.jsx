@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { listClasses, listDamageTypes, listSpellSchools } from "../../api/reference";
-import { searchSpells, spellsApi } from "../../api/spells";
+import { listSpells, searchSpells, spellsApi } from "../../api/spells";
 import ResourcePage from "../../components/resource/ResourcePage";
 import ResourceSearch from "../../components/resource/ResourceSearch";
+import ResultsSearch from "../../components/resource/ResultsSearch";
 import SpellComparison from "./SpellComparison";
 import SpellEditor from "./SpellEditor";
 import SpellFilters, { NO_FILTERS, searchFilters } from "./SpellFilters";
 import SpellStatBlock from "./SpellStatBlock";
-import { spellKind } from "./spellFormat";
+import { castingTimeText, levelName, spellKind } from "./spellFormat";
 
 /** Search for a spell and read it, compare it with another, or make, change and delete your own. */
 export default function SpellsPage() {
@@ -27,6 +28,8 @@ export default function SpellsPage() {
   const narrowed = useMemo(() => searchFilters(filters, lists.classes), [filters, lists.classes]);
   const search = useCallback((text, { signal }) => searchSpells(text, { ...narrowed, signal }), [narrowed]);
 
+  const list = useCallback(({ criteria, ...paging }) => listSpells({ ...criteria, ...paging }), []);
+
   return (
     <ResourcePage
       noun="spell"
@@ -35,6 +38,9 @@ export default function SpellsPage() {
         <ResourceSearch noun="spell" plural="spells" search={search} secondary={describeResult} {...props} />
       )}
       filters={<SpellFilters filters={filters} onChange={setFilters} {...lists} />}
+      renderResults={({ onOpen }) => (
+        <ResultsSearch noun="spell" plural="spells" list={list} filterCriteria={narrowed} columns={COLUMNS} onOpen={onOpen} />
+      )}
       renderStatBlock={(spell) => <SpellStatBlock spell={spell} />}
       renderComparison={(spells) => <SpellComparison spells={spells} />}
       renderEditor={({ resource, onSaved, onCancel }) => <SpellEditor spell={resource} onSaved={onSaved} onCancel={onCancel} />}
@@ -48,3 +54,13 @@ export default function SpellsPage() {
 function describeResult(spell) {
   return [spellKind(spell), spell.document?.displayName ?? spell.document?.name].filter(Boolean).join(" · ");
 }
+
+/** What the table of spells shows. Only what the backend can sort by, as it is stored, has a `sortField`. */
+const COLUMNS = [
+  { key: "name", label: "Name", sortField: "name", render: (spell) => spell.name },
+  { key: "level", label: "Level", sortField: "level", render: (spell) => (spell.level === 0 ? "Cantrip" : levelName(spell.level).replace(" level", "")) },
+  { key: "school", label: "School", render: (spell) => spell.school?.name ?? "" },
+  { key: "time", label: "Casting time", render: (spell) => castingTimeText(spell.castingTime) },
+  { key: "tags", label: "", render: (spell) => [spell.concentration && "Concentration", spell.ritual && "Ritual"].filter(Boolean).join(", ") },
+  { key: "source", label: "Source", render: (spell) => spell.document?.displayName ?? spell.document?.name ?? "" },
+];

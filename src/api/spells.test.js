@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { searchSpells, spellsApi } from "./spells";
+import { listSpells, searchSpells, spellsApi } from "./spells";
 import { stubApi } from "../test/fakeApi";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -41,27 +41,26 @@ describe("searchSpells", () => {
     expect(paramsOf(urlsOf(fetchMock)[0]).class).toBe("srd_wizard");
   });
 
-  it("asks once for each of several classes, and joins the answers: each spell once, by name", async () => {
-    const answers = {
-      srd_wizard: [spell("a_fireball", "Fireball"), spell("a_shield", "Shield")],
-      "srd-2024_wizard": [spell("b_fireball", "Fireball"), spell("a_shield", "Shield")],
-    };
-    const fetchMock = vi.fn(async (url) => new Response(JSON.stringify({ content: answers[paramsOf(url).class] }), { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+  it("asks once for several classes: the spells on the list of any of them", async () => {
+    const fetchMock = stubApi({ "GET /api/spells": { content: [spell("a_fireball", "Fireball")] } });
 
     const found = await searchSpells("", { classKeys: ["srd_wizard", "srd-2024_wizard"] });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(found.map((one) => one.key)).toEqual(["a_fireball", "b_fireball", "a_shield"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(paramsOf(urlsOf(fetchMock)[0]).class).toBe("srd_wizard,srd-2024_wizard");
+    expect(found.map((one) => one.key)).toEqual(["a_fireball"]);
   });
+});
 
-  it("gives no more than the page size of the joined answers", async () => {
-    const many = (prefix) => Array.from({ length: 5 }, (_, index) => spell(`${prefix}${index}`, `${prefix}${index}`));
-    vi.stubGlobal("fetch", vi.fn(async (url) => new Response(JSON.stringify({ content: many(paramsOf(url).class) }), { status: 200 })));
+describe("listSpells", () => {
+  it("asks for a page, in an order, with the filters, and gives the page with where it is in the list", async () => {
+    const answer = { content: [spell("srd_augury", "Augury")], page: { number: 1, size: 25, totalElements: 31, totalPages: 2 } };
+    const fetchMock = stubApi({ "GET /api/spells": answer });
 
-    const found = await searchSpells("", { classKeys: ["a", "b"], pageSize: 6 });
+    const found = await listSpells({ name: "", school: "divination", classKeys: ["a", "b"], page: 1, pageSize: 25, sort: "level,desc" });
 
-    expect(found).toHaveLength(6);
+    expect(found).toEqual(answer);
+    expect(paramsOf(urlsOf(fetchMock)[0])).toEqual({ school: "divination", class: "a,b", page: "1", pageSize: "25", sort: "level,desc" });
   });
 });
 

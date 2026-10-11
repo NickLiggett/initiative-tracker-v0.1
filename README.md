@@ -129,6 +129,22 @@ which ends the provider's session too.
   working them out.
 - **Edit** and **Delete** appear on creatures in a document you own, or that someone shared with you as an editor.
 
+### Search results
+
+Spells and Creatures can also list everything that matches as a table, not just one at a time. Under the search box is a
+**Name contains** box (optional) and a **Search** button (Enter works too): press it and every match is listed, a page
+at a time (25, 50 or 100), with the number found. So choosing the Divination school and pressing Search lists all the
+divination spells, and typing "dragon" in Creatures lists every creature with dragon in its name.
+
+- **Filters.** Spells use the filters already under the search box (level, school, class, damage type, concentration,
+  ritual); Creatures have Type, Size and a range of challenge ratings (**CR from** and **CR to**, `1/4` works).
+  Changing a filter or the name changes nothing until you press Search again.
+- **Sorting.** Click a column header: Name and Level for spells; Name, CR, AC and HP for creatures. Click again to
+  reverse. (Columns the backend can't sort, like School or Type, are plain headers.)
+- **Opening one.** Click a row to read it (the usual stat block, with Compare, Duplicate and the rest). **Back to
+  results** returns to the same page of the same search.
+- The box with the dropdown at the top still works for jumping straight to one thing.
+
 ### Items
 
 - **Search** items and magic items together, filtered by kind, category and rarity. An item shows its cost (in gp, sp
@@ -326,7 +342,8 @@ src/
 │   ├── resource/       What every kind of content (creatures, items, ...) shares: ResourcePage (search, compare, new,
 │   │                   duplicate, edit, delete), ResourceSearch, ComparisonTable (and compareRows.js, its row builders),
 │   │                   EditorShell, FormSection, ItemsEditor (a list in a form that can be added to, reordered and
-│   │                   trimmed), StatBlockParts, ConfirmDialog
+│   │                   trimmed), StatBlockParts, ConfirmDialog, and ResultsSearch with ResultsTable and
+│   │                   useResultsSearch (Search, then a sortable, paged table of everything that matches)
 │   └── Description.jsx Trait, action and item text (bold, italic, headings, lists, tables)
 ├── auth/               Signing in: the provider (AuthContext), the gate that shows the login page, and plain-function helpers:
 │                       pkce.js, tokens.js (kept for the tab), oidc.js (addresses and token requests)

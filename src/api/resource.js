@@ -17,6 +17,15 @@ export function createResourceApi(path) {
       return page.content;
     },
 
+    /**
+     * One page of those matching the filters, with where it is in the whole list. `sort` is a field of the result,
+     * optionally with a direction ("level", "challengeRating,desc").
+     * @returns {Promise<{content: object[], page: {number: number, size: number, totalElements: number, totalPages: number}}>}
+     */
+    list({ page = 0, pageSize = 25, sort = "name", signal, ...filters } = {}) {
+      return apiGet(path, { page, pageSize, sort, ...filters }, { signal });
+    },
+
     /** One by key, e.g. "srd_adult-red-dragon". */
     get(key, { signal } = {}) {
       return apiGet(at(key), undefined, { signal });

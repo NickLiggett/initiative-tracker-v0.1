@@ -27,6 +27,9 @@ describe("sanitizeSettings", () => {
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
       savedFilters: {},
+      font: "default",
+      textSize: "normal",
+      favoritePages: [],
       avatarVersion: 1759,
     });
   });

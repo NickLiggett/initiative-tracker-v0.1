@@ -11,6 +11,17 @@ describe("buildTheme", () => {
     expect(theme.palette.secondary.main).toBe("#8d6e63");
   });
 
+  it("uses the typeface and text size chosen, and MUI's own for the defaults", () => {
+    const chosen = buildTheme({ ...DEFAULT_SETTINGS, font: "serif", textSize: "large" });
+    expect(chosen.typography.fontFamily).toContain("Georgia");
+    expect(chosen.typography.fontSize).toBe(16);
+
+    const usual = buildTheme(DEFAULT_SETTINGS);
+    expect(usual.typography.fontFamily).toContain("Roboto");
+    expect(usual.typography.fontSize).toBe(14);
+    expect(buildTheme({ font: "comic", textSize: "huge" }).typography.fontSize).toBe(14);
+  });
+
   it("makes text readable on each main color", () => {
     const onYellow = buildTheme({ ...DEFAULT_SETTINGS, primary: "#ffeb3b" }).palette.primary.contrastText;
     const onNavy = buildTheme({ ...DEFAULT_SETTINGS, primary: "#1a237e" }).palette.primary.contrastText;

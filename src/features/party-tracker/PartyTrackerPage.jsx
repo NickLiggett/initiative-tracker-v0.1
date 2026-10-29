@@ -18,7 +18,7 @@ export default function PartyTrackerPage() {
     <Box sx={{ width: "min(900px, 90%)", mt: 5, display: "grid", gap: 2 }}>
       <Box>
         <Typography variant="h4" component="h2" sx={{ fontWeight: "bolder" }}>
-          Party Tracker
+          Player View
         </Typography>
         <Typography color="text.secondary">
           The fights your characters are in, from the initiative tracker of the DM whose party you've joined. It updates

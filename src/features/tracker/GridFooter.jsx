@@ -1,17 +1,19 @@
 import { useRef, useState } from "react";
 import { Box, Button, ButtonGroup, useMediaQuery } from "@mui/material";
 import CombatantForm, { EMPTY_COMBATANT } from "./CombatantForm";
+import ConfirmDialog from "../../components/resource/ConfirmDialog";
 import { applyChange } from "./creaturePrefill";
 
 const NO_ERRORS = { name: false, initiative: false, type: false };
 
 /**
  * The grid's footer: the form for adding combatants (Enter in a field submits it), and Submit / Characters (pick characters to
- * add) / Clear / Sort. Choosing a creature fills in the name, initiative, AC and HP the user hasn't typed.
+ * add) / Clear (after asking) / Sort. Choosing a creature fills in the name, initiative, AC and HP the user hasn't typed.
  */
 export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
   const [form, setForm] = useState(EMPTY_COMBATANT);
   const [errors, setErrors] = useState(NO_ERRORS);
+  const [confirmingClear, setConfirmingClear] = useState(false);
   const nameInputRef = useRef();
   const narrow = useMediaQuery("(max-width: 730px)");
 
@@ -59,10 +61,21 @@ export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
         <ButtonGroup orientation={narrow ? "horizontal" : "vertical"} aria-label="combatant actions">
           <Button type="submit">Submit</Button>
           <Button onClick={onAddPlayers}>Characters</Button>
-          <Button onClick={onClear}>Clear</Button>
+          <Button onClick={() => setConfirmingClear(true)}>Clear</Button>
           <Button onClick={onSort}>Sort</Button>
         </ButtonGroup>
       </div>
+      <ConfirmDialog
+        open={confirmingClear}
+        title="Clear the tracker?"
+        text="This removes everyone from the initiative tracker."
+        confirmLabel="Clear"
+        onCancel={() => setConfirmingClear(false)}
+        onConfirm={() => {
+          setConfirmingClear(false);
+          onClear();
+        }}
+      />
     </Box>
   );
 }

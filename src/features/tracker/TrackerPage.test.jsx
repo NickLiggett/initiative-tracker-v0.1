@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { stubApi } from "../../test/fakeApi";
 import { toSavedState } from "./trackerState";
 import TrackerPage from "./TrackerPage";
@@ -73,9 +73,27 @@ describe("TrackerPage", () => {
     await screen.findByText("Gribble");
 
     fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Clear" }));
 
     await waitFor(() => expect(puts(fetchMock)).toHaveLength(1), { timeout: 3000 });
     expect(JSON.parse(puts(fetchMock)[0][1].body)).toEqual({ version: 1, combatants: [] });
+  });
+
+  it("keeps everyone when the user changes their mind about clearing", async () => {
+    const fetchMock = stubApi({
+      "GET /api/me/tracker": toSavedState([gribble]),
+      "PUT /api/me/tracker": (body) => body,
+    });
+    render(<TrackerPage />);
+    await screen.findByText("Gribble");
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Clear the tracker?");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByText("Gribble")).toBeInTheDocument();
+    expect(puts(fetchMock)).toHaveLength(0);
   });
 
   it("offers to try again when a save didn't work", async () => {

@@ -248,9 +248,9 @@ once. An invitation is for that one address, not a link to pass around, and expi
 backend with invitations and sign-in (`email_verified` in the token), so the `dev` profile can send invitations but
 never accept them.
 
-### Party Tracker
+### Player View
 
-For the people in a DM's party: **Party Tracker** in the drawer shows the initiative tracker of each DM whose party you
+For the people in a DM's party: **Player View** in the drawer shows the initiative tracker of each DM whose party you
 have joined and whose fight one of your characters is in, one table for each DM. It is for watching only. The first row
 is whose turn it is ("Up now"), your own characters are marked "Yours", and it updates by itself every few seconds
 (not while the tab is hidden). A monster's AC and HP show as **?** until the DM reveals them (see the tracker above); the

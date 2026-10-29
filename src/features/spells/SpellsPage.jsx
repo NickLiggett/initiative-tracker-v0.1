@@ -33,6 +33,7 @@ export default function SpellsPage() {
   return (
     <ResourcePage
       noun="spell"
+      description="Spells, with their level, school, casting time, range and which classes can cast them."
       emptyText="Search for a spell to see its details."
       renderSearch={(props) => (
         <ResourceSearch noun="spell" plural="spells" search={search} secondary={describeResult} {...props} />

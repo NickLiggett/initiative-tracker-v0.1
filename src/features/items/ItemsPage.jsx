@@ -45,6 +45,7 @@ export default function ItemsPage() {
   return (
     <ResourcePage
       noun="item"
+      description="Items are weapons, armor, gear and magic items, with costs, weights and rarity. Look them up here, or make your own homebrew items to hand out to your players."
       emptyText="Search for an item to see its details."
       renderSearch={(props) => (
         <ResourceSearch

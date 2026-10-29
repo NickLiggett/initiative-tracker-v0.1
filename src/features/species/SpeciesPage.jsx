@@ -17,6 +17,7 @@ export default function SpeciesPage() {
   return (
     <ResourcePage
       noun="species"
+      description="Species (formerly races) give a character its size, speed, senses and innate traits."
       emptyText="Search for a species to see its traits."
       renderSearch={(props) => (
         <ResourceSearch noun="species" plural="species" search={searchSpecies} secondary={describeResult} {...props} />

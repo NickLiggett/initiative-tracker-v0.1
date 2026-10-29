@@ -10,6 +10,7 @@ import useWritableDocuments from "./useWritableDocuments";
  *
  * What differs between kinds is passed in:
  * @param {string} noun e.g. "creature"
+ * @param {string} [description] a line under which the page says what this kind of content is, shown while browsing
  * @param {string} emptyText what to say before anything is chosen
  * @param {(props: {label?: string, value: object, onChange: Function, fullWidth: boolean}) => ReactNode} renderSearch
  * @param {(resource: object, actions: {open: (resource: object) => void}) => ReactNode} renderStatBlock `open` shows another one
@@ -26,6 +27,7 @@ import useWritableDocuments from "./useWritableDocuments";
  */
 export default function ResourcePage({
   noun,
+  description,
   emptyText,
   renderSearch,
   renderStatBlock,
@@ -95,6 +97,11 @@ export default function ResourcePage({
         </Box>
       ) : (
         <>
+          {description && (
+            <Typography color="text.secondary" sx={{ mb: 2 }}>
+              {description}
+            </Typography>
+          )}
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             <Box sx={{ flex: 1 }}>{renderSearch({ value: resource, onChange: setResource, fullWidth: true })}</Box>
             {comparing && (

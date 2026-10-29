@@ -14,11 +14,11 @@ export const getFeat = featsApi.get;
  *
  * @returns {Promise<object[]>} at most `pageSize`
  */
-export function searchFeats(name, { type, hasPrerequisite, pageSize = 25, signal } = {}) {
-  return featsApi.search(name, { type, hasPrerequisite, pageSize, signal });
+export function searchFeats(name, { type, hasPrerequisite, document, pageSize = 25, signal } = {}) {
+  return featsApi.search(name, { type, hasPrerequisite, document, pageSize, signal });
 }
 
 /** One page of the feats matching the filters (the same as `searchFeats` takes, and a `name`); see `createResourceApi`. */
-export function listFeats({ name, type, hasPrerequisite, page, pageSize, sort, signal }) {
-  return featsApi.list({ name, type, hasPrerequisite, page, pageSize, sort, signal });
+export function listFeats({ name, type, hasPrerequisite, document, page, pageSize, sort, signal }) {
+  return featsApi.list({ name, type, hasPrerequisite, document, page, pageSize, sort, signal });
 }

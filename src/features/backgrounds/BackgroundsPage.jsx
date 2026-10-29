@@ -1,7 +1,8 @@
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { backgroundsApi, searchBackgrounds } from "../../api/backgrounds";
 import ResourcePage from "../../components/resource/ResourcePage";
 import ResourceSearch from "../../components/resource/ResourceSearch";
+import SourceFilters, { NO_SOURCE_FILTERS, sourceCriteria } from "../../components/resource/SourceFilters";
 import ResultsSearch from "../../components/resource/ResultsSearch";
 import BackgroundComparison from "./BackgroundComparison";
 import BackgroundEditor from "./BackgroundEditor";
@@ -12,6 +13,9 @@ import BackgroundStatBlock from "./BackgroundStatBlock";
  * a table at once, being few.
  */
 export default function BackgroundsPage() {
+  const [filters, setFilters] = useState(NO_SOURCE_FILTERS);
+  const narrowed = useMemo(() => sourceCriteria(filters), [filters]);
+  const search = useCallback((text, { signal }) => searchBackgrounds(text, { ...narrowed, signal }), [narrowed]);
   const list = useCallback(({ criteria, ...paging }) => backgroundsApi.list({ ...criteria, ...paging }), []);
 
   return (
@@ -19,9 +23,10 @@ export default function BackgroundsPage() {
       noun="background"
       description="Backgrounds describe where a character came from: the skills, tools, languages and starting equipment it grants, and the feat or feature that comes with it."
       emptyText="Search for a background to see what it gives a character."
-      renderSearch={(props) => <ResourceSearch noun="background" search={searchBackgrounds} {...props} />}
+      renderSearch={(props) => <ResourceSearch noun="background" search={search} {...props} />}
+      filters={<SourceFilters page="backgrounds" filters={filters} onChange={setFilters} />}
       renderResults={({ onOpen }) => (
-        <ResultsSearch noun="background" plural="backgrounds" list={list} filterCriteria={NO_FILTERS} columns={COLUMNS} onOpen={onOpen} autoRun />
+        <ResultsSearch noun="background" plural="backgrounds" list={list} filterCriteria={narrowed} columns={COLUMNS} onOpen={onOpen} autoRun />
       )}
       renderStatBlock={(background) => <BackgroundStatBlock background={background} />}
       renderComparison={(backgrounds) => <BackgroundComparison backgrounds={backgrounds} />}
@@ -32,7 +37,6 @@ export default function BackgroundsPage() {
   );
 }
 
-const NO_FILTERS = {};
 
 /** What the table of backgrounds shows. Only what the backend can sort by, as it is stored, has a `sortField`. */
 const COLUMNS = [

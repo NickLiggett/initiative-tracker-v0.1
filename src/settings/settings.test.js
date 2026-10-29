@@ -26,6 +26,7 @@ describe("sanitizeSettings", () => {
       hpMode: "down",
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
+      savedFilters: {},
       avatarVersion: 1759,
     });
   });

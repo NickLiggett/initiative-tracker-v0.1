@@ -10,8 +10,8 @@ export const getSpell = spellsApi.get;
  * What the backend is asked for a set of filters (see `searchSpells`): the class keys go as one comma-separated list.
  * @returns {object} query parameters
  */
-export function spellQuery({ level, school, classKeys = [], damageType, concentration, ritual } = {}) {
-  return { level, school, class: classKeys.length ? classKeys.join(",") : undefined, damageType, concentration, ritual };
+export function spellQuery({ level, school, classKeys = [], damageType, concentration, ritual, document } = {}) {
+  return { document, level, school, class: classKeys.length ? classKeys.join(",") : undefined, damageType, concentration, ritual };
 }
 
 /**

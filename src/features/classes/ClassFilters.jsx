@@ -1,10 +1,15 @@
 import { Box, TextField } from "@mui/material";
+import SavedFilters from "../../components/resource/SavedFilters";
+import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 
-export const NO_FILTERS = { show: "" };
+export const NO_FILTERS = { show: "", sources: [] };
 
 /** What to ask the search for, from the filters as chosen: `subclass` is false for classes only and true for subclasses only. */
 export function searchFilters(filters) {
-  return { subclass: filters.show === "classes" ? false : filters.show === "subclasses" ? true : undefined };
+  return {
+    subclass: filters.show === "classes" ? false : filters.show === "subclasses" ? true : undefined,
+    document: sourceParam(filters.sources),
+  };
 }
 
 /** Narrows what the class search finds: classes, subclasses or both. */
@@ -25,6 +30,8 @@ export default function ClassFilters({ filters, onChange }) {
         <option value="classes">Classes only</option>
         <option value="subclasses">Subclasses only</option>
       </TextField>
+      <SourceFilter value={filters.sources} onChange={(sources) => onChange({ ...filters, sources })} />
+      <SavedFilters page="classes" defaults={NO_FILTERS} filters={filters} onApply={onChange} />
     </Box>
   );
 }

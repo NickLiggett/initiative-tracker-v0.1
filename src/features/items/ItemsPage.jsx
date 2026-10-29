@@ -4,6 +4,7 @@ import { apiFor, listItems, searchItems } from "../../api/items";
 import { listItemCategories, listItemRarities } from "../../api/reference";
 import ResourcePage from "../../components/resource/ResourcePage";
 import ResourceSearch from "../../components/resource/ResourceSearch";
+import { sourceParam } from "../../components/resource/SourceFilter";
 import ResultsSearch from "../../components/resource/ResultsSearch";
 import ItemComparison from "./ItemComparison";
 import ItemEditor from "./ItemEditor";
@@ -31,14 +32,15 @@ export default function ItemsPage() {
     return () => controller.abort();
   }, []);
 
-  const search = useCallback((text, { signal }) => searchItems(text, { ...filters, signal }), [filters]);
+  const search = useCallback((text, { signal }) => searchItems(text, { ...filters, document: sourceParam(filters.sources), signal }), [filters]);
   const narrowed = useMemo(
     () => ({
       kind: tableKind,
       category: filters.category || undefined,
       rarity: tableKind === "magic" ? filters.rarity || undefined : undefined, // ordinary items have none
+      document: sourceParam(filters.sources),
     }),
-    [tableKind, filters.category, filters.rarity],
+    [tableKind, filters.category, filters.rarity, filters.sources],
   );
   const list = useCallback(({ criteria, ...paging }) => listItems({ ...criteria, ...paging }), []);
 

@@ -251,3 +251,17 @@ describe("making and changing feats", () => {
     expect(fetchMock.mock.calls.some(([url, init]) => url === "/api/feats/u1-homebrew_tough" && init?.method === "DELETE")).toBe(true);
   });
 });
+
+describe("narrowing to sources", () => {
+  it("asks for only the sources chosen, in the search and in the table", async () => {
+    const fetchMock = stubBackend();
+    render(<FeatsPage />);
+    await screen.findByRole("table", { name: "Feat results" });
+
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Sources" }));
+    fireEvent.click(await screen.findByRole("option", { name: "u1-homebrew" }));
+
+    const asked = () => fetchMock.mock.calls.map(([url]) => url).filter((url) => url.includes("/api/feats"));
+    await waitFor(() => expect(asked().some((url) => url.includes("document=u1-homebrew"))).toBe(true));
+  });
+});

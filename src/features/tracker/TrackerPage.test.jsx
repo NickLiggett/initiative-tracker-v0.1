@@ -44,6 +44,26 @@ describe("TrackerPage", () => {
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Saved to your account"));
   });
 
+  it("keeps a cell edit that is still open when Next turn is clicked", async () => {
+    const fetchMock = stubApi({
+      "GET /api/me/tracker": toSavedState([gribble, snarl]),
+      "PUT /api/me/tracker": (body) => body,
+    });
+    render(<TrackerPage />);
+    const cell = (await screen.findByText("18")).closest('[data-field="initiative"]');
+
+    fireEvent.doubleClick(cell);
+    const input = cell.querySelector("input");
+    fireEvent.change(input, { target: { value: "25" } });
+    await new Promise((resolve) => setTimeout(resolve, 300)); // the grid takes typing after a short pause
+    const next = screen.getByRole("button", { name: "Next turn" });
+    fireEvent.click(next);
+
+    await waitFor(() => expect(puts(fetchMock).length).toBeGreaterThan(0), { timeout: 3000 });
+    const saved = JSON.parse(puts(fetchMock).at(-1)[1].body).combatants;
+    expect(saved.find((combatant) => combatant.name === "Gribble").initiative).toBe(25);
+  });
+
   it("clearing the tracker is saved too", async () => {
     const fetchMock = stubApi({
       "GET /api/me/tracker": toSavedState([gribble]),

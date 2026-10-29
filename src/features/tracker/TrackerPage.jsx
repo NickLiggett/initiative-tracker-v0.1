@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { DataGrid } from "@mui/x-data-grid";
+import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
@@ -19,6 +19,8 @@ import {
   updateCombatant,
 } from "./combatants";
 
+const EDITABLE_FIELDS = ["initiative", "name", "ac", "hp"];
+
 /** The initiative tracker: the turn order as an editable grid, with a form to add combatants. */
 export default function TrackerPage() {
   const { combatants, setCombatants, nextId, status, notice, retry } = useSavedTracker();
@@ -26,6 +28,7 @@ export default function TrackerPage() {
   const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose character is shown
   const [picking, setPicking] = useState(false);
   const gridRef = useRef(null);
+  const apiRef = useGridApiRef();
   useNextTurnShortcut(() => setCombatants(nextTurn));
 
   const columns = buildColumns({
@@ -37,6 +40,22 @@ export default function TrackerPage() {
     onRevealChange: (id, revealed) => setCombatants((current) => updateCombatant(current, id, { revealed })),
   });
 
+  /**
+   * Wraps an action of the toolbar or footer so that a cell still being edited is saved first. The grid only does that
+   * itself when focus goes to another cell or outside the grid, and these buttons are inside it.
+   */
+  const committing =
+    (action) =>
+    (...args) => {
+      const editing = apiRef.current.state.editRows ?? {};
+      for (const [id, fields] of Object.entries(editing)) {
+        for (const field of Object.keys(fields)) {
+          apiRef.current.publishEvent("cellEditStop", { id, field, reason: "cellFocusOut" });
+        }
+      }
+      return action(...args);
+    };
+
   const addCombatant = (combatant) => {
     const id = nextId.current++;
     setCombatants((current) => [...current, { ...combatant, id }]);
@@ -47,24 +66,31 @@ export default function TrackerPage() {
     setPicking(false);
   };
 
-  /** Applies an edited cell. HP accepts "+5" (heal) and "-7" (damage) as well as a new value. */
-  const handleCellEditStop = (params, event) => {
-    const input = event?.target?.value;
-    if (input === undefined) {
-      return;
+  /**
+   * Applies an edited row. HP accepts "+5" (heal) and "-7" (damage) as well as a new value. This is the grid's own commit
+   * of the edit, so it also happens when focus leaves the cell (clicking Next turn), and not when Escape cancels it.
+   */
+  const processRowUpdate = (newRow, oldRow) => {
+    const changes = {};
+    for (const field of EDITABLE_FIELDS) {
+      if (newRow[field] === oldRow[field]) {
+        continue;
+      }
+      const input = newRow[field];
+      let value;
+      if (field === "name") {
+        value = String(input);
+      } else if (field === "hp") {
+        value = applyHpInput(oldRow.hp, input);
+      } else {
+        value = parseInt(input, 10);
+      }
+      if (!Number.isNaN(value)) {
+        changes[field] = value; // an input that isn't a number keeps the old value
+      }
     }
-    let value;
-    if (params.field === "name") {
-      value = input;
-    } else if (params.field === "hp") {
-      value = applyHpInput(params.value, input);
-    } else {
-      value = parseInt(input, 10);
-    }
-    if (Number.isNaN(value)) {
-      return; // keep the old value
-    }
-    setCombatants((current) => updateCombatant(current, params.id, { [params.field]: value }));
+    setCombatants((current) => updateCombatant(current, oldRow.id, changes));
+    return { ...oldRow, ...changes };
   };
 
   /** Selects the text of the cell being edited, so typing replaces it. */
@@ -79,6 +105,7 @@ export default function TrackerPage() {
     <div style={{ width: "80%", height: "80%", marginTop: 40 }}>
       <DataGrid
         ref={gridRef}
+        apiRef={apiRef}
         rows={combatants}
         columns={columns}
         columnHeaderHeight={50}
@@ -86,24 +113,24 @@ export default function TrackerPage() {
         slots={{ toolbar: GridToolbar, footer: GridFooter }}
         slotProps={{
           toolbar: {
-            onPrevious: () => setCombatants(previousTurn),
-            onNext: () => setCombatants(nextTurn),
-            onRevealAll: () => setCombatants((current) => setAllRevealed(current, true)),
-            onHideAll: () => setCombatants((current) => setAllRevealed(current, false)),
+            onPrevious: committing(() => setCombatants(previousTurn)),
+            onNext: committing(() => setCombatants(nextTurn)),
+            onRevealAll: committing(() => setCombatants((current) => setAllRevealed(current, true))),
+            onHideAll: committing(() => setCombatants((current) => setAllRevealed(current, false))),
             saveStatus: status,
             notice,
             onRetry: retry,
           },
           footer: {
-            onAdd: addCombatant,
-            onAddPlayers: () => setPicking(true),
-            onClear: () => setCombatants([]),
-            onSort: () => setCombatants(sortByInitiative),
+            onAdd: committing(addCombatant),
+            onAddPlayers: committing(() => setPicking(true)),
+            onClear: committing(() => setCombatants([])),
+            onSort: committing(() => setCombatants(sortByInitiative)),
           },
         }}
         localeText={{ noRowsLabel: "Add a character" }}
         onCellEditStart={selectEditedInput}
-        onCellEditStop={handleCellEditStop}
+        processRowUpdate={processRowUpdate}
         disableColumnMenu
         sx={{ border: "1px solid" }}
       />

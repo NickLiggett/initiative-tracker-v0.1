@@ -124,6 +124,10 @@ which ends the provider's session too.
 - **Temp HP and damage.** Damage typed as -7 in the HP column (+7 when counting up, or in the Damage taken column,
   which shows what the row has lost and needs its max HP) uses up the row's temporary HP before its own. Setting the
   HP to a number, or healing, leaves temporary HP alone. Temp HP and notes are the DM's: players never see them.
+- **Undo and redo.** The **Undo** and **Redo** buttons above the grid (Ctrl+Z, and Ctrl+Y or Ctrl+Shift+Z, when you
+  aren't typing in a field or in a dialog) take back and bring back the last 50 changes to the order: edits, adding,
+  deleting, Clear, Sort, turns, and what players see. Deleting a row or clearing the tracker also offers **Undo** for a
+  few seconds. Opening another tracker forgets the history.
 - **Several trackers.** The button at the top of the grid (the tracker's name) opens **Trackers**: name the tracker in
   use, **Start new** (the one in use is put away under its name), or **Open** one put away (the one in use is put away
   instead), exactly as it was left, with its turn, hit points and who the players see. Switching saves first, and

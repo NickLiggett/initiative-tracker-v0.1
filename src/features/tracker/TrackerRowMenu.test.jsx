@@ -68,6 +68,36 @@ describe("a row's menu", () => {
   });
 });
 
+describe("taking changes back", () => {
+  it("offers to undo a delete right where it happened", async () => {
+    await renderTracker();
+
+    rightClick("Snarl");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    await waitFor(() => expect(screen.queryByText("Snarl")).not.toBeInTheDocument());
+    fireEvent.click(await screen.findByRole("button", { name: "Undo: Deleted Snarl" }));
+
+    expect(await screen.findByText("Snarl")).toBeInTheDocument();
+  });
+
+  it("undoes and redoes with the toolbar buttons and the keyboard", async () => {
+    await renderTracker();
+    expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
+    rightClick("Snarl");
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    await waitFor(() => expect(screen.queryByText("Snarl")).not.toBeInTheDocument());
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+    expect(await screen.findByText("Snarl")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Redo" })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Redo" }));
+    await waitFor(() => expect(screen.queryByText("Snarl")).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(await screen.findByText("Snarl")).toBeInTheDocument();
+  });
+});
+
 describe("editing a row", () => {
   async function openEditor(name) {
     rightClick(name);

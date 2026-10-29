@@ -1,4 +1,5 @@
 import { Box, TextField } from "@mui/material";
+import SavedFilters from "../../components/resource/SavedFilters";
 import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 
 export const NO_FILTERS = { type: "", size: "", crMin: "", crMax: "", sources: [] };
@@ -44,6 +45,7 @@ export default function CreatureFilters({ filters, onChange, types, sizes }) {
       <TextField size="small" label="CR from" value={filters.crMin} onChange={(event) => set({ crMin: event.target.value })} sx={{ width: 90 }} />
       <TextField size="small" label="CR to" value={filters.crMax} onChange={(event) => set({ crMax: event.target.value })} sx={{ width: 90 }} />
       <SourceFilter value={filters.sources} onChange={(sources) => set({ sources })} />
+      <SavedFilters page="creatures" defaults={NO_FILTERS} filters={filters} onApply={onChange} />
     </Box>
   );
 }

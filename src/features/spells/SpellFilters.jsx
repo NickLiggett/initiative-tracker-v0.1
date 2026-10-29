@@ -1,4 +1,5 @@
 import { Box, TextField, ToggleButton } from "@mui/material";
+import SavedFilters from "../../components/resource/SavedFilters";
 import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 import { levelName } from "./spellFormat";
 
@@ -79,6 +80,7 @@ export default function SpellFilters({ filters, onChange, schools, classes, dama
         Ritual
       </ToggleButton>
       <SourceFilter value={filters.sources} onChange={(sources) => set({ sources })} />
+      <SavedFilters page="spells" defaults={NO_FILTERS} filters={filters} onApply={onChange} />
     </Box>
   );
 }

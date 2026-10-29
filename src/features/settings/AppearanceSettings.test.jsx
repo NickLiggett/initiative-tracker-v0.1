@@ -196,6 +196,7 @@ describe("saving to the account", () => {
       hpMode: "down",
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
+      savedFilters: {},
     });
   });
 

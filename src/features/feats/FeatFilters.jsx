@@ -1,4 +1,5 @@
 import { Box, TextField, ToggleButton } from "@mui/material";
+import SavedFilters from "../../components/resource/SavedFilters";
 import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 import { FEAT_TYPES } from "./featFormat";
 
@@ -42,6 +43,7 @@ export default function FeatFilters({ filters, onChange }) {
         Has a prerequisite
       </ToggleButton>
       <SourceFilter value={filters.sources} onChange={(sources) => set({ sources })} />
+      <SavedFilters page="feats" defaults={NO_FILTERS} filters={filters} onApply={onChange} />
     </Box>
   );
 }

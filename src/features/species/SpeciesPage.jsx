@@ -26,7 +26,7 @@ export default function SpeciesPage() {
       renderSearch={(props) => (
         <ResourceSearch noun="species" plural="species" search={search} secondary={describeResult} {...props} />
       )}
-      filters={<SourceFilters filters={filters} onChange={setFilters} />}
+      filters={<SourceFilters page="species" filters={filters} onChange={setFilters} />}
       renderResults={({ onOpen }) => (
         <ResultsSearch noun="species" plural="species" list={list} filterCriteria={narrowed} columns={COLUMNS} onOpen={onOpen} autoRun />
       )}

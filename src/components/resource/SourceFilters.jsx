@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import SavedFilters from "./SavedFilters";
 import SourceFilter, { sourceParam } from "./SourceFilter";
 
 export const NO_SOURCE_FILTERS = { sources: [] };
@@ -7,10 +8,11 @@ export const NO_SOURCE_FILTERS = { sources: [] };
 export const sourceCriteria = (filters) => ({ document: sourceParam(filters.sources) });
 
 /** The filters of a page that has no others than the sources to look in. */
-export default function SourceFilters({ filters, onChange }) {
+export default function SourceFilters({ page, filters, onChange }) {
   return (
     <Box role="group" aria-label="Filters" sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 2, mt: 1 }}>
       <SourceFilter value={filters.sources} onChange={(sources) => onChange({ ...filters, sources })} />
+      <SavedFilters page={page} defaults={NO_SOURCE_FILTERS} filters={filters} onApply={onChange} />
     </Box>
   );
 }

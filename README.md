@@ -167,6 +167,9 @@ changes, as on Feats and Classes); the name still waits for Search.
 - **Sources.** Every page's filters have a **Sources** box: pick one or more books or collections (including your own
   and shared homebrew) to keep only their content, in the search and in the table. Nothing picked means all of them.
   Adding a creature to the tracker or to an encounter has the same box beside its creature search.
+- **Saved filters.** The **Saved filters** button next to the filters keeps the filters as they are now under a name
+  (**Save these filters…**; the same name replaces), applies a saved set with a click, and deletes one with its bin.
+  Each page has its own, up to 20, kept on your account (the `savedFilters` setting) so they follow you.
 - **Items** are two collections (ordinary and magic) and a page can't be told off two at once, so the table lists one
   at a time: choose **Magic items** or **Ordinary items** next to the name box. The Rarity filter only applies to magic
   items. (The search box above still finds both together.)

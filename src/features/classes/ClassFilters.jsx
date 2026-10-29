@@ -1,4 +1,5 @@
 import { Box, TextField } from "@mui/material";
+import SavedFilters from "../../components/resource/SavedFilters";
 import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 
 export const NO_FILTERS = { show: "", sources: [] };
@@ -30,6 +31,7 @@ export default function ClassFilters({ filters, onChange }) {
         <option value="subclasses">Subclasses only</option>
       </TextField>
       <SourceFilter value={filters.sources} onChange={(sources) => onChange({ ...filters, sources })} />
+      <SavedFilters page="classes" defaults={NO_FILTERS} filters={filters} onApply={onChange} />
     </Box>
   );
 }

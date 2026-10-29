@@ -24,7 +24,7 @@ export default function BackgroundsPage() {
       description="Backgrounds describe where a character came from: the skills, tools, languages and starting equipment it grants, and the feat or feature that comes with it."
       emptyText="Search for a background to see what it gives a character."
       renderSearch={(props) => <ResourceSearch noun="background" search={search} {...props} />}
-      filters={<SourceFilters filters={filters} onChange={setFilters} />}
+      filters={<SourceFilters page="backgrounds" filters={filters} onChange={setFilters} />}
       renderResults={({ onOpen }) => (
         <ResultsSearch noun="background" plural="backgrounds" list={list} filterCriteria={narrowed} columns={COLUMNS} onOpen={onOpen} autoRun />
       )}

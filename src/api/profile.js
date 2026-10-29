@@ -10,10 +10,10 @@ export function getSettings({ signal } = {}) {
   return apiGet("/api/me/settings", undefined, { signal });
 }
 
-/** Replaces the user's settings (`mode`, `primary`, `secondary`, `hpMode`, `trackerColumns`, `noteNames`). Resolves to what was kept. */
+/** Replaces the user's settings (`mode`, `primary`, `secondary`, `hpMode`, `trackerColumns`, `noteNames`, `savedFilters`). Resolves to what was kept. */
 export function saveSettings(settings) {
-  const { mode, primary, secondary, hpMode, trackerColumns, noteNames } = settings;
-  return apiSend("PUT", "/api/me/settings", { mode, primary, secondary, hpMode, trackerColumns, noteNames });
+  const { mode, primary, secondary, hpMode, trackerColumns, noteNames, savedFilters } = settings;
+  return apiSend("PUT", "/api/me/settings", { mode, primary, secondary, hpMode, trackerColumns, noteNames, savedFilters });
 }
 
 /** The state the user left their tracker in: an object, empty if they've never saved one. */

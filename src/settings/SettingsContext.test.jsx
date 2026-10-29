@@ -182,6 +182,7 @@ describe("changing settings", () => {
       hpMode: "down",
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
+      savedFilters: {},
     });
   });
 
@@ -374,6 +375,7 @@ describe("settings an earlier version kept only in this browser", () => {
       hpMode: "down",
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
+      savedFilters: {},
     });
     expect(requests(fetchMock, "PUT /api/me/avatar")).toHaveLength(0);
     expect(probe()).toBe("dark|#2e7d32|#ab47bc|dev|none");

@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS = {
   hpMode: "down", // how the initiative tracker counts hit points: "down" from the most, or "up" from none
   trackerColumns: DEFAULT_TRACKER_COLUMNS, // the columns the initiative tracker shows (see features/tracker/columnChoices.js)
   noteNames: DEFAULT_NOTE_NAMES, // what the tracker's three Notes columns are called; blank for the usual name
+  savedFilters: {}, // the filters saved by name for each page that has them: { spells: [{ name, filters }] }
   avatarVersion: null, // when the avatar picture on the account was saved; null for none
 };
 
@@ -39,7 +40,30 @@ export const COLOR_PRESETS = [
 ];
 
 /** The settings that are kept as chosen, as opposed to `avatarVersion`, which the account works out. */
-export const CHOSEN = ["mode", "primary", "secondary", "hpMode", "trackerColumns", "noteNames"];
+export const CHOSEN = ["mode", "primary", "secondary", "hpMode", "trackerColumns", "noteNames", "savedFilters"];
+
+export const MAX_SAVED_FILTERS = 20; // for each page
+export const MAX_SAVED_FILTER_NAME_LENGTH = 40;
+const MAX_FILTER_PAGES = 12;
+
+const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+
+/** Saved filters fit to use: each page's list has only named ones with filters, no more than are allowed. */
+export function sanitizeSavedFilters(raw) {
+  if (!isPlainObject(raw)) {
+    return {};
+  }
+  const kept = {};
+  for (const [page, list] of Object.entries(raw).slice(0, MAX_FILTER_PAGES)) {
+    if (page && page.length <= 30 && Array.isArray(list)) {
+      kept[page] = list
+        .filter((one) => isPlainObject(one) && typeof one.name === "string" && one.name.trim() && isPlainObject(one.filters))
+        .map((one) => ({ name: one.name.trim().slice(0, MAX_SAVED_FILTER_NAME_LENGTH), filters: one.filters }))
+        .slice(0, MAX_SAVED_FILTERS);
+    }
+  }
+  return kept;
+}
 
 /** Whether a setting is as it was: some are lists, so this compares what they say, not which list it is. */
 export const sameSetting = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -60,6 +84,7 @@ export function sanitizeSettings(raw) {
     hpMode: settings.hpMode === "up" ? "up" : DEFAULT_SETTINGS.hpMode,
     trackerColumns: sanitizeColumns(settings.trackerColumns),
     noteNames: sanitizeNoteNames(settings.noteNames),
+    savedFilters: sanitizeSavedFilters(settings.savedFilters),
     avatarVersion: Number.isFinite(version) && version >= 0 ? Math.trunc(version) : null,
   };
 }

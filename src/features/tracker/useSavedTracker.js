@@ -19,10 +19,12 @@ let lastSave = Promise.resolve();
  * which tracker the account has in use: see api/profile.js) and loads the tracker the account then has, so a user can
  * put one tracker away and bring another back.
  *
+ * `loadKey` changes each time a tracker is loaded, so what was kept about the one before (such as undo) can be dropped.
+ *
  * `status` is "loading", "saving", "saved", "failed" (the last save didn't work; `retry` tries again) or "off" (the
  * saved tracker couldn't be loaded, so nothing is saved, rather than risk replacing it).
  *
- * @returns {{combatants: object[], setCombatants: Function, name: string, setName: Function, switchTracker: Function, nextId: {current: number}, status: string, notice: ?string, retry: Function}}
+ * @returns {{combatants: object[], setCombatants: Function, name: string, setName: Function, switchTracker: Function, loadKey: number, nextId: {current: number}, status: string, notice: ?string, retry: Function}}
  */
 export default function useSavedTracker({ delay = SAVE_DELAY_MS } = {}) {
   const [combatants, setCombatants] = useState([]);
@@ -150,5 +152,5 @@ export default function useSavedTracker({ delay = SAVE_DELAY_MS } = {}) {
     [save],
   );
 
-  return { combatants, setCombatants, name, setName, switchTracker, nextId, status, notice, retry: save };
+  return { combatants, setCombatants, name, setName, switchTracker, loadKey, nextId, status, notice, retry: save };
 }

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Menu, MenuItem } from "@mui/material";
+import { Button, Menu, MenuItem, Snackbar } from "@mui/material";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
@@ -13,6 +13,7 @@ import { playerIdsIn } from "./playerCombatants";
 import { columnLabel, TRACKER_COLUMNS } from "./columnChoices";
 import { buildColumns, isCellEditable } from "./trackerColumns";
 import useSavedTracker from "./useSavedTracker";
+import useUndo from "./useUndo";
 import useNextTurnShortcut from "./useNextTurnShortcut";
 import {
   editedFields,
@@ -31,18 +32,27 @@ export const LONG_PRESS_MS = 500;
 
 /** The initiative tracker: the turn order as an editable grid, with a form to add combatants. */
 export default function TrackerPage() {
-  const { combatants, setCombatants, name, setName, switchTracker, nextId, status, notice, retry } = useSavedTracker();
+  const { combatants, setCombatants: setSaved, name, setName, switchTracker, loadKey, nextId, status, notice, retry } = useSavedTracker();
+  const { change: setCombatants, undo, redo, canUndo, canRedo } = useUndo(combatants, setSaved, loadKey);
   const [shownCreature, setShownCreature] = useState(null);
   const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose character is shown
   const [picking, setPicking] = useState(false);
   const [showingTrackers, setShowingTrackers] = useState(false);
   const [rowMenu, setRowMenu] = useState(null); // { id, top, left } of the menu on a row
   const [editing, setEditing] = useState(null); // the combatant being edited
+  const [told, setTold] = useState(null); // what was just removed, offered to be taken back
   const pressTimer = useRef(null);
   const { settings } = useSettings();
   const gridRef = useRef(null);
   const apiRef = useGridApiRef();
   useNextTurnShortcut(() => setCombatants(nextTurn));
+
+  /** Removes a row, and says so for a few seconds with the chance to take it back. */
+  const remove = (id) => {
+    const gone = combatants.find((combatant) => combatant.id === id);
+    setCombatants((current) => removeCombatant(current, id));
+    setTold(`Deleted ${gone?.name ?? "the row"}`);
+  };
 
   const columns = buildColumns({
     hpMode: settings.hpMode,
@@ -51,7 +61,7 @@ export default function TrackerPage() {
     onEdit: setEditing,
     combatants,
     onReactionChange: (id, reaction) => setCombatants((current) => updateCombatant(current, id, { reaction })),
-    onDelete: (id) => setCombatants((current) => removeCombatant(current, id)),
+    onDelete: (id) => remove(id),
     onShowCreature: setShownCreature,
     onShowPlayer: setShownPlayer,
     onRevealChange: (id, field, shown) => setCombatants((current) => updateCombatant(current, id, fieldShownChange(field, shown))),
@@ -143,6 +153,10 @@ export default function TrackerPage() {
             onNext: committing(() => setCombatants(nextTurn)),
             onRevealAll: committing(() => setCombatants((current) => setAllRevealed(current, true))),
             onHideAll: committing(() => setCombatants((current) => setAllRevealed(current, false))),
+            onUndo: committing(undo),
+            onRedo: committing(redo),
+            canUndo,
+            canRedo,
             trackerName: name,
             onOpenTrackers: committing(() => setShowingTrackers(true)),
             saveStatus: status,
@@ -152,7 +166,10 @@ export default function TrackerPage() {
           footer: {
             onAdd: committing(addCombatant),
             onAddPlayers: committing(() => setPicking(true)),
-            onClear: committing(() => setCombatants([])),
+            onClear: committing(() => {
+              setCombatants([]);
+              setTold("Cleared the tracker");
+            }),
             onSort: committing(() => setCombatants(sortByInitiative)),
           },
         }}
@@ -179,7 +196,7 @@ export default function TrackerPage() {
         </MenuItem>
         <MenuItem
           onClick={() => {
-            setCombatants((current) => removeCombatant(current, menuRow.id));
+            remove(menuRow.id);
             setRowMenu(null);
           }}
         >
@@ -198,6 +215,25 @@ export default function TrackerPage() {
           onClose={() => setEditing(null)}
         />
       )}
+      <Snackbar
+        open={Boolean(told)}
+        message={told}
+        autoHideDuration={6000}
+        onClose={(event, reason) => reason !== "clickaway" && setTold(null)}
+        action={
+          <Button
+            color="inherit"
+            size="small"
+            aria-label={`Undo: ${told}`}
+            onClick={() => {
+              undo();
+              setTold(null);
+            }}
+          >
+            Undo
+          </Button>
+        }
+      />
       <TrackersDialog
         open={showingTrackers}
         name={name}

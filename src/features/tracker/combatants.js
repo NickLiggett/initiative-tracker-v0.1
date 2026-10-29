@@ -117,9 +117,42 @@ export function removeCombatant(combatants, id) {
 /** A character's armor class and hit points are the table's to see; anything else is hidden from players until revealed. */
 export const isCharacter = (combatant) => combatant.playerId != null || combatant.type === "PC";
 
-/** Shows or hides everything that can be hidden from the players: the monsters and others, not the characters. */
+/** What the DM can hide from the players about a monster or other row that isn't a character. */
+export const HIDEABLE = ["name", "ac", "hp"];
+
+/**
+ * Whether the players see this field of the row. Characters' are always shown. Rows kept before AC and HP could be
+ * shown on their own have one `revealed` for both, which stands for them until they are set separately.
+ */
+export function fieldShown(combatant, field) {
+  if (isCharacter(combatant)) {
+    return true;
+  }
+  if (field === "name") {
+    return !combatant.nameHidden;
+  }
+  return combatant[`${field}Revealed`] ?? Boolean(combatant.revealed);
+}
+
+/** What to change on a row to show or hide one of its fields from the players. */
+export const fieldShownChange = (field, shown) => (field === "name" ? { nameHidden: !shown } : { [`${field}Revealed`]: shown });
+
+/** Shows or hides one field of every row that isn't a character. */
+export function setFieldShownForAll(combatants, field, shown) {
+  return combatants.map((combatant) => (isCharacter(combatant) ? combatant : { ...combatant, ...fieldShownChange(field, shown) }));
+}
+
+/** Whether the players see this field of every row that isn't a character (false if there are none). */
+export function allFieldShown(combatants, field) {
+  const hideable = combatants.filter((combatant) => !isCharacter(combatant));
+  return hideable.length > 0 && hideable.every((combatant) => fieldShown(combatant, field));
+}
+
+/** Shows or hides the AC and HP of everything that can be hidden from the players: the monsters and others, not the characters. */
 export function setAllRevealed(combatants, revealed) {
-  return combatants.map((combatant) => (isCharacter(combatant) ? combatant : { ...combatant, revealed }));
+  return setFieldShownForAll(setFieldShownForAll(combatants, "ac", revealed), "hp", revealed).map((combatant) =>
+    isCharacter(combatant) ? combatant : { ...combatant, revealed },
+  );
 }
 
 /** Highest initiative first. */

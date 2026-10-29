@@ -194,7 +194,7 @@ describe("saving to the account", () => {
       primary: "#2e7d32",
       secondary: "#8d6e63",
       hpMode: "down",
-      trackerColumns: ["initiative", "name", "ac", "hp", "revealed", "reaction", "legendaryOptions"],
+      trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
     });
   });

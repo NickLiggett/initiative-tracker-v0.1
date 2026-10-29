@@ -68,7 +68,7 @@ describe("TrackerSettings", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Temp HP" }));
     fireEvent.click(screen.getByRole("checkbox", { name: "AC" }));
 
-    expect(loadCachedSettings("dev").trackerColumns).toEqual(["initiative", "name", "hp", "tempHp", "revealed", "reaction", "legendaryOptions"]);
+    expect(loadCachedSettings("dev").trackerColumns).toEqual(["initiative", "name", "hp", "tempHp", "reaction", "legendaryOptions"]);
     await waitFor(() => expect(sent(fetchMock, "PUT /api/me/settings")).toHaveLength(1), { timeout: 3000 });
     expect(JSON.parse(sent(fetchMock, "PUT /api/me/settings")[0][1].body).trackerColumns).toContain("tempHp");
 

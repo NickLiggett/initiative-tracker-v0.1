@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyHpInput, nextTurn, previousTurn, removeCombatant, setAllRevealed, sortByInitiative, updateCombatant } from "./combatants";
+import { allFieldShown, applyHpInput, fieldShown, fieldShownChange, setFieldShownForAll, nextTurn, previousTurn, removeCombatant, setAllRevealed, sortByInitiative, updateCombatant } from "./combatants";
 
 const party = [
   { id: 1, name: "Aria", initiative: 12, reaction: true },
@@ -67,5 +67,38 @@ describe("setAllRevealed", () => {
   it("does not change what it was given", () => {
     setAllRevealed(rows, false);
     expect(rows[2].revealed).toBe(true);
+  });
+});
+
+describe("what the players see of a row", () => {
+  const goblin = { id: 3, name: "Goblin", type: "Creature" };
+
+  it("shows a name unless hidden, and AC and HP only when revealed, each on its own", () => {
+    expect(["name", "ac", "hp"].map((field) => fieldShown(goblin, field))).toEqual([true, false, false]);
+    expect(fieldShown({ ...goblin, nameHidden: true, acRevealed: true }, "name")).toBe(false);
+    expect(fieldShown({ ...goblin, nameHidden: true, acRevealed: true }, "ac")).toBe(true);
+    expect(fieldShown({ ...goblin, nameHidden: true, acRevealed: true }, "hp")).toBe(false);
+  });
+
+  it("lets the older single flag stand for AC and HP until they are set apart", () => {
+    const old = { ...goblin, revealed: true };
+    expect([fieldShown(old, "ac"), fieldShown(old, "hp")]).toEqual([true, true]);
+    expect([fieldShown({ ...old, hpRevealed: false }, "ac"), fieldShown({ ...old, hpRevealed: false }, "hp")]).toEqual([true, false]);
+  });
+
+  it("always shows a character", () => {
+    expect(["name", "ac", "hp"].map((field) => fieldShown({ type: "PC", nameHidden: true }, field))).toEqual([true, true, true]);
+  });
+
+  it("changes one field of every row but the characters, and says when all are shown", () => {
+    const rows = [{ id: 1, type: "PC" }, goblin, { id: 4, name: "Orc", type: "Creature" }];
+
+    const shown = setFieldShownForAll(rows, "hp", true);
+
+    expect(shown.map((row) => row.hpRevealed)).toEqual([undefined, true, true]);
+    expect(allFieldShown(shown, "hp")).toBe(true);
+    expect(allFieldShown(shown, "ac")).toBe(false);
+    expect(allFieldShown([rows[0]], "hp")).toBe(false);
+    expect(fieldShownChange("name", false)).toEqual({ nameHidden: true });
   });
 });

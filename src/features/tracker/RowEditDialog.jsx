@@ -15,6 +15,7 @@ import {
 import { MAX_NOTE_LENGTH, NOTE_FIELDS } from "./columnChoices";
 import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatures/creatureFormat";
 import { COMBATANT_TYPES } from "./CombatantForm";
+import { fieldShown, isCharacter } from "./combatants";
 import PlayerPicker from "./PlayerPicker";
 import { playerCombatant } from "./playerCombatants";
 
@@ -38,7 +39,9 @@ function toDraft(combatant) {
     ...Object.fromEntries(NOTE_FIELDS.map((field) => [field, combatant[field] ?? ""])),
     legendaryActions: asText(combatant.legendaryActions),
     legendaryResistances: asText(combatant.legendaryResistances),
-    revealed: Boolean(combatant.revealed),
+    nameShown: fieldShown(combatant, "name"),
+    acShown: fieldShown(combatant, "ac"),
+    hpShown: fieldShown(combatant, "hp"),
     creature: combatant.creature ?? null,
     playerId: combatant.playerId ?? null,
   };
@@ -57,7 +60,7 @@ function toChanges(draft) {
     ...Object.fromEntries(NOTE_FIELDS.map((field) => [field, draft[field] === "" ? undefined : draft[field]])),
     legendaryActions: draft.legendaryActions === "" ? undefined : parseInt(draft.legendaryActions, 10),
     legendaryResistances: draft.legendaryResistances === "" ? undefined : parseInt(draft.legendaryResistances, 10),
-    revealed: draft.revealed,
+    ...(isCharacter(draft) ? {} : { nameHidden: !draft.nameShown, acRevealed: draft.acShown, hpRevealed: draft.hpShown }),
     creature: draft.creature,
     playerId: draft.playerId ?? undefined,
   };
@@ -106,7 +109,7 @@ export default function RowEditDialog({ combatant, noteFields = [], inFight, onS
   };
 
   const creatureNote = (count, own) => (draft.creature ? `Blank is the creature's own (${own})` : count);
-  const isCharacter = draft.type === "PC" || draft.playerId != null;
+  const character = isCharacter(draft);
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="row-edit-title">
@@ -178,11 +181,22 @@ export default function RowEditDialog({ combatant, noteFields = [], inFight, onS
           />
         </Box>
 
-        {!isCharacter && (
-          <FormControlLabel
-            control={<Switch checked={draft.revealed} onChange={(event) => change({ revealed: event.target.checked })} />}
-            label="Players see its AC and HP"
-          />
+        {!character && (
+          <Box>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              {[
+                ["nameShown", "name"],
+                ["acShown", "AC"],
+                ["hpShown", "HP"],
+              ].map(([field, what]) => (
+                <FormControlLabel
+                  key={field}
+                  control={<Switch checked={draft[field]} onChange={(event) => change({ [field]: event.target.checked })} />}
+                  label={`Players see its ${what}`}
+                />
+              ))}
+            </Box>
+          </Box>
         )}
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>

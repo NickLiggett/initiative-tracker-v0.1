@@ -106,6 +106,14 @@ describe("PartyTrackerPage", () => {
     expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
   });
 
+  it("calls a monster whose name the DM hid an unknown creature", async () => {
+    stubApi({ "GET /api/party/trackers": [fight(wizard, { ...goblin, name: null })] });
+    render(<PartyTrackerPage />);
+
+    expect(await screen.findByText("Unknown creature")).toBeInTheDocument();
+    expect(screen.queryByText("Goblin")).not.toBeInTheDocument();
+  });
+
   it("stops asking while the tab is hidden", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const fetchMock = stubApi({ "GET /api/party/trackers": [fight(wizard)] });

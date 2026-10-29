@@ -16,10 +16,12 @@ import useSavedTracker from "./useSavedTracker";
 import useNextTurnShortcut from "./useNextTurnShortcut";
 import {
   editedFields,
+  fieldShownChange,
   nextTurn,
   previousTurn,
   removeCombatant,
   setAllRevealed,
+  setFieldShownForAll,
   sortByInitiative,
   updateCombatant,
 } from "./combatants";
@@ -52,7 +54,8 @@ export default function TrackerPage() {
     onDelete: (id) => setCombatants((current) => removeCombatant(current, id)),
     onShowCreature: setShownCreature,
     onShowPlayer: setShownPlayer,
-    onRevealChange: (id, revealed) => setCombatants((current) => updateCombatant(current, id, { revealed })),
+    onRevealChange: (id, field, shown) => setCombatants((current) => updateCombatant(current, id, fieldShownChange(field, shown))),
+    onRevealAllChange: (field, shown) => setCombatants((current) => setFieldShownForAll(current, field, shown)),
   });
 
   /**

@@ -1,6 +1,7 @@
 import { Box, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 
-export const NO_FILTERS = { kind: "all", category: "", rarity: "" };
+export const NO_FILTERS = { kind: "all", category: "", rarity: "", sources: [] };
 
 const KINDS = [
   { value: "all", label: "All" },
@@ -47,6 +48,7 @@ export default function ItemFilters({ filters, onChange, categories, rarities })
         options={rarities}
         onChange={(rarity) => onChange({ ...filters, rarity, kind: rarity ? "magic" : filters.kind })}
       />
+      <SourceFilter value={filters.sources} onChange={(sources) => onChange({ ...filters, sources })} />
     </Box>
   );
 }

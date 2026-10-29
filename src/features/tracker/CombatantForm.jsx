@@ -1,6 +1,6 @@
 import { Autocomplete, Checkbox, FormControl, TextField, Typography } from "@mui/material";
 import { useState } from "react";
-import CreatureSearch from "../creatures/CreatureSearch";
+import { CreatureSearchWithSources } from "../creatures/CreatureSearch";
 
 export const COMBATANT_TYPES = ["PC", "NPC", "Creature", "Other"];
 
@@ -85,7 +85,7 @@ export default function CombatantForm({ form, errors, onChange, nameInputRef }) 
         </FormControl>
         {form.type === "Creature" && (
           <div style={{ display: "flex", alignItems: "center" }}>
-            <CreatureSearch value={form.creature} onChange={(creature) => onChange({ creature })} />
+            <CreatureSearchWithSources value={form.creature} onChange={(creature) => onChange({ creature })} />
             <div style={{ display: "flex", alignItems: "center", marginLeft: 15 }}>
               <Typography>Mob:</Typography>
               <Checkbox />

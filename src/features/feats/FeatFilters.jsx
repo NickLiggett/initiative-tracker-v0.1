@@ -1,11 +1,12 @@
 import { Box, TextField, ToggleButton } from "@mui/material";
+import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 import { FEAT_TYPES } from "./featFormat";
 
-export const NO_FILTERS = { type: "", hasPrerequisite: false };
+export const NO_FILTERS = { type: "", hasPrerequisite: false, sources: [] };
 
 /** What to ask the search for, from the filters as chosen. */
 export function searchFilters(filters) {
-  return { type: filters.type || undefined, hasPrerequisite: filters.hasPrerequisite || undefined };
+  return { type: filters.type || undefined, hasPrerequisite: filters.hasPrerequisite || undefined, document: sourceParam(filters.sources) };
 }
 
 /** Narrows what the feat search finds: the kind of feat, and whether it has a prerequisite. */
@@ -40,6 +41,7 @@ export default function FeatFilters({ filters, onChange }) {
       >
         Has a prerequisite
       </ToggleButton>
+      <SourceFilter value={filters.sources} onChange={(sources) => set({ sources })} />
     </Box>
   );
 }

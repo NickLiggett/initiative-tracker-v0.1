@@ -13,10 +13,10 @@ export const magicItemsApi = createResourceApi("/api/magicitems");
  * @param {string} [rarity] a rarity key, e.g. "rare"; only magic items have one, so this leaves out ordinary items
  * @returns {Promise<object[]>} at most `pageSize`
  */
-export async function searchItems(name, { kind = "all", category, rarity, pageSize = 25, signal } = {}) {
+export async function searchItems(name, { kind = "all", category, rarity, document, pageSize = 25, signal } = {}) {
   const [ordinary, magic] = await Promise.all([
-    kind !== "magic" && !rarity ? itemsApi.search(name, { category, pageSize, signal }) : [],
-    kind !== "item" ? magicItemsApi.search(name, { category, rarity, pageSize, signal }) : [],
+    kind !== "magic" && !rarity ? itemsApi.search(name, { category, document, pageSize, signal }) : [],
+    kind !== "item" ? magicItemsApi.search(name, { category, rarity, document, pageSize, signal }) : [],
   ]);
   return [...ordinary, ...magic]
     .sort((a, b) => a.name.localeCompare(b.name) || a.key.localeCompare(b.key))
@@ -41,8 +41,8 @@ export function apiFor(item) {
  * contains `name`, narrowed by `category` and, for magic items, `rarity`; see `createResourceApi` for the paging and `sort`.
  * @param {"item"|"magic"} kind which of the two to list
  */
-export function listItems({ kind, name, category, rarity, page, pageSize, sort, signal }) {
+export function listItems({ kind, name, category, rarity, document, page, pageSize, sort, signal }) {
   return kind === "magic"
-    ? magicItemsApi.list({ name, category, rarity, page, pageSize, sort, signal })
-    : itemsApi.list({ name, category, page, pageSize, sort, signal });
+    ? magicItemsApi.list({ name, category, rarity, document, page, pageSize, sort, signal })
+    : itemsApi.list({ name, category, document, page, pageSize, sort, signal });
 }

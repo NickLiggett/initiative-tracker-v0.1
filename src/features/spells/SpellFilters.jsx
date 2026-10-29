@@ -1,7 +1,8 @@
 import { Box, TextField, ToggleButton } from "@mui/material";
+import SourceFilter, { sourceParam } from "../../components/resource/SourceFilter";
 import { levelName } from "./spellFormat";
 
-export const NO_FILTERS = { level: "", school: "", className: "", damageType: "", concentration: false, ritual: false };
+export const NO_FILTERS = { level: "", school: "", className: "", damageType: "", concentration: false, ritual: false, sources: [] };
 
 /**
  * The classes to choose from by name: a class that exists under several rules (the 2014 and 2024 Wizard) is one choice,
@@ -27,6 +28,7 @@ export function searchFilters(filters, classes) {
     damageType: filters.damageType || undefined,
     concentration: filters.concentration || undefined,
     ritual: filters.ritual || undefined,
+    document: sourceParam(filters.sources),
   };
 }
 
@@ -76,6 +78,7 @@ export default function SpellFilters({ filters, onChange, schools, classes, dama
       <ToggleButton size="small" value="ritual" selected={filters.ritual} onChange={() => set({ ritual: !filters.ritual })} sx={{ textTransform: "none" }}>
         Ritual
       </ToggleButton>
+      <SourceFilter value={filters.sources} onChange={(sources) => set({ sources })} />
     </Box>
   );
 }

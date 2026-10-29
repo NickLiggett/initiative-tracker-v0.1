@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, Box, Button, FormControlLabel, Checkbox, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { getCreature } from "../../api/creatures";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
-import CreatureSearch from "../creatures/CreatureSearch";
+import { CreatureSearchWithSources } from "../creatures/CreatureSearch";
 import DifficultyMeter from "./DifficultyMeter";
 import MonsterList from "./MonsterList";
 import PartySelector from "./PartySelector";
@@ -195,7 +195,7 @@ export default function EncountersPage({ onOpenTracker }) {
         <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
           The creatures
         </Typography>
-        <CreatureSearch key={searchKey} value={null} onChange={addCreature} fullWidth />
+        <CreatureSearchWithSources resetKey={searchKey} value={null} onChange={addCreature} fullWidth />
         <Box sx={{ mt: 1 }}>
           <MonsterList monsters={monsters} onCount={setCount} onRemove={remove} onShow={setShown} />
         </Box>

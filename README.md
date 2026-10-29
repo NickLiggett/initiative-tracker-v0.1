@@ -164,6 +164,9 @@ changes, as on Feats and Classes); the name still waits for Search.
 - **Filters.** Spells, Items, Feats and Classes use the filters already under the search box; Creatures have Type, Size
   and a range of challenge ratings (**CR from** and **CR to**, `1/4` works). Changing a filter or the name changes
   nothing until you press Search again (on Feats and Classes it re-lists at once).
+- **Sources.** Every page's filters have a **Sources** box: pick one or more books or collections (including your own
+  and shared homebrew) to keep only their content, in the search and in the table. Nothing picked means all of them.
+  Adding a creature to the tracker or to an encounter has the same box beside its creature search.
 - **Items** are two collections (ordinary and magic) and a page can't be told off two at once, so the table lists one
   at a time: choose **Magic items** or **Ordinary items** next to the name box. The Rarity filter only applies to magic
   items. (The search box above still finds both together.)

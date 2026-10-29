@@ -6,10 +6,18 @@
 
 export const TRACKER_VERSION = 1;
 
-/** The state to keep for these combatants. */
-export function toSavedState(combatants) {
+export const MAX_TRACKER_NAME_LENGTH = 60;
+
+/** The name a saved state has, or "" (a tracker made before they had names). */
+export function trackerName(state) {
+  return typeof state?.name === "string" ? state.name.slice(0, MAX_TRACKER_NAME_LENGTH) : "";
+}
+
+/** The state to keep for these combatants, and the name of the tracker (left out when it has none). */
+export function toSavedState(combatants, name = "") {
   return {
     version: TRACKER_VERSION,
+    ...(name && { name }),
     combatants: combatants.map(({ creature, creatureKey, ...combatant }) => ({
       ...combatant,
       creatureKey: creature?.key ?? creatureKey ?? null, // a creature that couldn't be loaded is still remembered

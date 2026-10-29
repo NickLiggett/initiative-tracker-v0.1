@@ -1,8 +1,15 @@
-import { Alert, Box, Chip, CircularProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { useState } from "react";
+import { Alert, Box, Chip, CircularProgress, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import usePartyTrackers from "./usePartyTrackers";
 
 /** What is shown for an armor class or hit points the DM hasn't revealed. */
 export const HIDDEN = "?";
+
+/** Which tracker an entry is: a DM can have several, and only one of them is live. */
+const trackerKey = (tracker) => `${tracker.dm}#${tracker.trackerId ?? "live"}`;
+const isLive = (tracker) => tracker.live !== false;
+const trackerLabel = (tracker) =>
+  `${tracker.dm}${tracker.name ? `: ${tracker.name}` : ""}${isLive(tracker) ? "" : " (saved)"}`;
 
 const shown = (value) => (value === null || value === undefined ? HIDDEN : value);
 
@@ -13,6 +20,8 @@ const shown = (value) => (value === null || value === undefined ? HIDDEN : value
  */
 export default function PartyTrackerPage() {
   const { trackers, error } = usePartyTrackers();
+  const [chosen, setChosen] = useState(null); // the key of the tracker the user picked
+  const showing = trackers?.find((tracker) => trackerKey(tracker) === chosen) ?? trackers?.[0];
 
   return (
     <Box sx={{ width: "min(900px, 90%)", mt: 5, display: "grid", gap: 2 }}>
@@ -33,9 +42,23 @@ export default function PartyTrackerPage() {
           No DM has one of your characters in a fight right now. When one does, it shows here.
         </Typography>
       )}
-      {trackers?.map((tracker) => (
-        <FightTable key={tracker.dm} tracker={tracker} />
-      ))}
+      {trackers?.length > 1 && (
+        <TextField
+          select
+          size="small"
+          label="Tracker"
+          value={trackerKey(showing)}
+          onChange={(event) => setChosen(event.target.value)}
+          helperText="Your characters are in more than one tracker. Pick which to watch."
+        >
+          {trackers.map((tracker) => (
+            <MenuItem key={trackerKey(tracker)} value={trackerKey(tracker)}>
+              {trackerLabel(tracker)}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+      {showing && <FightTable key={trackerKey(showing)} tracker={showing} />}
     </Box>
   );
 }
@@ -46,6 +69,8 @@ function FightTable({ tracker }) {
     <Box component="section" aria-label={`${tracker.dm}'s fight`} sx={{ display: "grid", gap: 1 }}>
       <Typography variant="h6" component="h3">
         {tracker.dm}'s fight
+        {tracker.name && `: ${tracker.name}`}
+        {!isLive(tracker) && <Chip size="small" variant="outlined" label="Saved, not live" sx={{ ml: 1 }} />}
       </Typography>
       <TableContainer component={Paper} variant="outlined">
         <Table size="small" aria-label={`${tracker.dm}'s turn order`}>

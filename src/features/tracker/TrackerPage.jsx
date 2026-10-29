@@ -5,6 +5,7 @@ import GridToolbar from "./GridToolbar";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
 import PlayerPicker from "./PlayerPicker";
 import PlayerSheetDialog from "./PlayerSheetDialog";
+import TrackersDialog from "./TrackersDialog";
 import { playerIdsIn } from "./playerCombatants";
 import { buildColumns } from "./trackerColumns";
 import useSavedTracker from "./useSavedTracker";
@@ -23,10 +24,11 @@ const EDITABLE_FIELDS = ["initiative", "name", "ac", "hp"];
 
 /** The initiative tracker: the turn order as an editable grid, with a form to add combatants. */
 export default function TrackerPage() {
-  const { combatants, setCombatants, nextId, status, notice, retry } = useSavedTracker();
+  const { combatants, setCombatants, name, setName, switchTracker, nextId, status, notice, retry } = useSavedTracker();
   const [shownCreature, setShownCreature] = useState(null);
   const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose character is shown
   const [picking, setPicking] = useState(false);
+  const [showingTrackers, setShowingTrackers] = useState(false);
   const gridRef = useRef(null);
   const apiRef = useGridApiRef();
   useNextTurnShortcut(() => setCombatants(nextTurn));
@@ -117,6 +119,8 @@ export default function TrackerPage() {
             onNext: committing(() => setCombatants(nextTurn)),
             onRevealAll: committing(() => setCombatants((current) => setAllRevealed(current, true))),
             onHideAll: committing(() => setCombatants((current) => setAllRevealed(current, false))),
+            trackerName: name,
+            onOpenTrackers: committing(() => setShowingTrackers(true)),
             saveStatus: status,
             notice,
             onRetry: retry,
@@ -133,6 +137,13 @@ export default function TrackerPage() {
         processRowUpdate={processRowUpdate}
         disableColumnMenu
         sx={{ border: "1px solid" }}
+      />
+      <TrackersDialog
+        open={showingTrackers}
+        name={name}
+        onRename={setName}
+        onSwitch={switchTracker}
+        onClose={() => setShowingTrackers(false)}
       />
       <PlayerPicker open={picking} inFight={playerIdsIn(combatants)} onAdd={addPlayers} onClose={() => setPicking(false)} />
       {shownPlayer && (

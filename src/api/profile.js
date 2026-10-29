@@ -26,6 +26,30 @@ export function saveTracker(state) {
   return apiSend("PUT", "/api/me/tracker", state);
 }
 
+/**
+ * The trackers the user has put away to come back to, newest first: the tracker being used (see `getTracker`) is not
+ * among them.
+ * @returns {Promise<{id: number, name: string, updatedAt: string, combatants: number}[]>}
+ */
+export function listTrackers({ signal } = {}) {
+  return apiGet("/api/me/trackers", undefined, { signal });
+}
+
+/** Puts the tracker in use away and starts an empty one with this name. Resolves to the new tracker's state. */
+export function createTracker(name) {
+  return apiSend("POST", "/api/me/trackers", { name });
+}
+
+/** Puts the tracker in use away and brings back a saved one. Resolves to that tracker's state. */
+export function openTracker(id) {
+  return apiSend("POST", `/api/me/trackers/${id}/open`);
+}
+
+/** Deletes a saved tracker. */
+export function deleteTracker(id) {
+  return apiSend("DELETE", `/api/me/trackers/${id}`);
+}
+
 /** The encounters the user saved on the Encounters page: an object, empty if they've never saved one. */
 export function getEncounters({ signal } = {}) {
   return apiGet("/api/me/encounters", undefined, { signal });

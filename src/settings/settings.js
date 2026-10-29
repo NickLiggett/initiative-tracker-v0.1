@@ -5,12 +5,20 @@
 // be sent. Only this file touches the browser's storage.
 
 import { normalizeHex } from "./colors";
+import {
+  DEFAULT_NOTE_NAMES,
+  DEFAULT_TRACKER_COLUMNS,
+  sanitizeColumns,
+  sanitizeNoteNames,
+} from "../features/tracker/columnChoices";
 
 export const DEFAULT_SETTINGS = {
   mode: "light",
   primary: "#1976d2",
   secondary: "#ab47bc", // MUI purple 400: clear enough to see against both the light and the dark page
   hpMode: "down", // how the initiative tracker counts hit points: "down" from the most, or "up" from none
+  trackerColumns: DEFAULT_TRACKER_COLUMNS, // the columns the initiative tracker shows (see features/tracker/columnChoices.js)
+  noteNames: DEFAULT_NOTE_NAMES, // what the tracker's three Notes columns are called; blank for the usual name
   avatarVersion: null, // when the avatar picture on the account was saved; null for none
 };
 
@@ -31,11 +39,14 @@ export const COLOR_PRESETS = [
 ];
 
 /** The settings that are kept as chosen, as opposed to `avatarVersion`, which the account works out. */
-export const CHOSEN = ["mode", "primary", "secondary", "hpMode"];
+export const CHOSEN = ["mode", "primary", "secondary", "hpMode", "trackerColumns", "noteNames"];
+
+/** Whether a setting is as it was: some are lists, so this compares what they say, not which list it is. */
+export const sameSetting = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 /** Whether the colors, mode and the rest of what is chosen are the defaults. */
 export function isDefaultLook(settings) {
-  return CHOSEN.every((name) => settings[name] === DEFAULT_SETTINGS[name]);
+  return CHOSEN.every((name) => sameSetting(settings[name], DEFAULT_SETTINGS[name]));
 }
 
 /** Settings fit to use: anything missing or not allowed is replaced by the default. */
@@ -47,6 +58,8 @@ export function sanitizeSettings(raw) {
     primary: normalizeHex(settings.primary) ?? DEFAULT_SETTINGS.primary,
     secondary: normalizeHex(settings.secondary) ?? DEFAULT_SETTINGS.secondary,
     hpMode: settings.hpMode === "up" ? "up" : DEFAULT_SETTINGS.hpMode,
+    trackerColumns: sanitizeColumns(settings.trackerColumns),
+    noteNames: sanitizeNoteNames(settings.noteNames),
     avatarVersion: Number.isFinite(version) && version >= 0 ? Math.trunc(version) : null,
   };
 }

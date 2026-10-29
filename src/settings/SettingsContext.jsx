@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import { deleteAvatar, getSettings, saveSettings, uploadAvatar } from "../api/profile";
 import {
   CHOSEN,
+  sameSetting,
   DEFAULT_SETTINGS,
   cacheSettings,
   dataUrlToBlob,
@@ -150,7 +151,7 @@ export function SettingsProvider({ children }) {
       const { settings: current, signedIn: known } = latest.current;
       const next = sanitizeSettings({ ...current, ...changes });
       const kept = keep(next);
-      if (known && CHOSEN.some((name) => next[name] !== current[name])) {
+      if (known && CHOSEN.some((name) => !sameSetting(next[name], current[name]))) {
         unsent.current = next;
         clearTimeout(timer.current);
         timer.current = setTimeout(flush, SAVE_DELAY_MS);

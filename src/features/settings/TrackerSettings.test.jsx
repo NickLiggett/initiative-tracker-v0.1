@@ -52,4 +52,38 @@ describe("TrackerSettings", () => {
 
     expect(screen.getByRole("button", { name: "Count up" })).toHaveAttribute("aria-pressed", "true");
   });
+
+  it("shows the default columns ticked, with initiative and name that can't be turned off", async () => {
+    await renderSettings();
+
+    expect(screen.getByRole("checkbox", { name: "AC" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Temp HP" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Name" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Reset to defaults" })).toBeDisabled();
+  });
+
+  it("turns columns on and off, keeps the choice, and resets to the defaults", async () => {
+    const fetchMock = await renderSettings();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Temp HP" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "AC" }));
+
+    expect(loadCachedSettings("dev").trackerColumns).toEqual(["initiative", "name", "hp", "tempHp", "revealed", "reaction", "legendaryOptions"]);
+    await waitFor(() => expect(sent(fetchMock, "PUT /api/me/settings")).toHaveLength(1), { timeout: 3000 });
+    expect(JSON.parse(sent(fetchMock, "PUT /api/me/settings")[0][1].body).trackerColumns).toContain("tempHp");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset to defaults" }));
+
+    expect(screen.getByRole("checkbox", { name: "AC" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Temp HP" })).not.toBeChecked();
+  });
+
+  it("names a Notes column", async () => {
+    await renderSettings();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Name of Notes 2" }), { target: { value: "Conditions" } });
+
+    expect(loadCachedSettings("dev").noteNames).toEqual(["", "Conditions", ""]);
+    expect(screen.getByRole("checkbox", { name: "Conditions" })).toBeInTheDocument();
+  });
 });

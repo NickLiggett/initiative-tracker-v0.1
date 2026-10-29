@@ -115,6 +115,13 @@ which ends the provider's session too.
   **Count up**, where it starts at 0/20 and damage takes it up. Typing +5 or -7 in the HP column adds or takes away
   that much of the number shown, whichever way it counts. A combatant added before the maximum was kept shows just
   its number.
+- **Choosing columns.** **Settings > Tracker > Columns** lists every column with the defaults marked, and **Reset to
+  defaults**. Initiative and Name are always shown. The others are **Temp HP**, **Damage taken**, three **Notes**
+  columns (give each a name, such as Conditions), and an **Edit** button for each row, for screens where right-click
+  or holding a row isn't handy. The choice is saved to your account (`trackerColumns` and `noteNames` settings).
+- **Temp HP and damage.** Damage typed as -7 in the HP column (+7 when counting up, or in the Damage taken column,
+  which shows what the row has lost and needs its max HP) uses up the row's temporary HP before its own. Setting the
+  HP to a number, or healing, leaves temporary HP alone. Temp HP and notes are the DM's: players never see them.
 - **Several trackers.** The button at the top of the grid (the tracker's name) opens **Trackers**: name the tracker in
   use, **Start new** (the one in use is put away under its name), or **Open** one put away (the one in use is put away
   instead), exactly as it was left, with its turn, hit points and who the players see. Switching saves first, and

@@ -12,13 +12,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { MAX_NOTE_LENGTH, NOTE_FIELDS } from "./columnChoices";
 import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatures/creatureFormat";
 import { COMBATANT_TYPES } from "./CombatantForm";
 import PlayerPicker from "./PlayerPicker";
 import { playerCombatant } from "./playerCombatants";
 
 const MAX_NAME_LENGTH = 40;
-const MAX_DIGITS = { initiative: 2, ac: 2, hp: 4, maxHp: 4, legendaryActions: 1, legendaryResistances: 1 };
+const MAX_DIGITS = { initiative: 2, ac: 2, hp: 4, maxHp: 4, tempHp: 4, legendaryActions: 1, legendaryResistances: 1 };
 
 const asText = (value) => (value === undefined || value === null ? "" : String(value));
 /** A number from what was typed, "" when nothing was. */
@@ -33,6 +34,8 @@ function toDraft(combatant) {
     ac: asText(combatant.ac),
     hp: asText(combatant.hp),
     maxHp: asText(combatant.maxHp),
+    tempHp: asText(combatant.tempHp),
+    ...Object.fromEntries(NOTE_FIELDS.map((field) => [field, combatant[field] ?? ""])),
     legendaryActions: asText(combatant.legendaryActions),
     legendaryResistances: asText(combatant.legendaryResistances),
     revealed: Boolean(combatant.revealed),
@@ -50,6 +53,8 @@ function toChanges(draft) {
     ac: asNumber(draft.ac),
     hp: asNumber(draft.hp),
     maxHp: draft.maxHp === "" ? undefined : parseInt(draft.maxHp, 10),
+    tempHp: draft.tempHp === "" ? undefined : parseInt(draft.tempHp, 10),
+    ...Object.fromEntries(NOTE_FIELDS.map((field) => [field, draft[field] === "" ? undefined : draft[field]])),
     legendaryActions: draft.legendaryActions === "" ? undefined : parseInt(draft.legendaryActions, 10),
     legendaryResistances: draft.legendaryResistances === "" ? undefined : parseInt(draft.legendaryResistances, 10),
     revealed: draft.revealed,
@@ -63,11 +68,12 @@ function toChanges(draft) {
  * has, whether the players see its AC and HP, or give it a character's stats to make it that character (it keeps its
  * initiative). Nothing changes until Save.
  * @param {object} combatant the row being changed
+ * @param {{field: string, label: string}[]} noteFields the Notes columns being shown, to write in here too
  * @param {Set<number>} inFight the ids of the characters in the order, so one can't be in it twice
  * @param {(changes: object) => void} onSave
  * @param {() => void} onClose
  */
-export default function RowEditDialog({ combatant, inFight, onSave, onClose }) {
+export default function RowEditDialog({ combatant, noteFields = [], inFight, onSave, onClose }) {
   const [draft, setDraft] = useState(() => toDraft(combatant));
   const [choosing, setChoosing] = useState(false);
   const [tried, setTried] = useState(false);
@@ -85,7 +91,9 @@ export default function RowEditDialog({ combatant, inFight, onSave, onClose }) {
 
   /** Becomes this character: its stats replace the row's, but the initiative stays. */
   const assign = (player) => {
-    change(toDraft(playerCombatant(player, draft.initiative)));
+    const stats = toDraft(playerCombatant(player, draft.initiative));
+    const kept = ["tempHp", ...NOTE_FIELDS]; // the row's own temporary hit points and notes stay
+    change(Object.fromEntries(Object.entries(stats).filter(([field]) => !kept.includes(field))));
     setChoosing(false);
   };
 
@@ -134,7 +142,20 @@ export default function RowEditDialog({ combatant, inFight, onSave, onClose }) {
           <TextField label="AC" size="small" inputProps={{ inputMode: "numeric" }} value={draft.ac} onChange={digits("ac")} />
           <TextField label="HP" size="small" inputProps={{ inputMode: "numeric" }} value={draft.hp} onChange={digits("hp")} helperText="Hit points left" />
           <TextField label="Max HP" size="small" inputProps={{ inputMode: "numeric" }} value={draft.maxHp} onChange={digits("maxHp")} />
+          <TextField label="Temp HP" size="small" inputProps={{ inputMode: "numeric" }} value={draft.tempHp} onChange={digits("tempHp")} />
         </Box>
+
+        {noteFields.map(({ field, label }) => (
+          <TextField
+            key={field}
+            label={label}
+            size="small"
+            fullWidth
+            multiline
+            value={draft[field]}
+            onChange={(event) => change({ [field]: event.target.value.slice(0, MAX_NOTE_LENGTH) })}
+          />
+        ))}
 
         <Box sx={{ display: "flex", gap: 2 }}>
           <TextField

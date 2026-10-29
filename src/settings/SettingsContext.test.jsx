@@ -180,6 +180,8 @@ describe("changing settings", () => {
       primary: "#333333",
       secondary: "#ab47bc",
       hpMode: "down",
+      trackerColumns: ["initiative", "name", "ac", "hp", "revealed", "reaction", "legendaryOptions"],
+      noteNames: ["", "", ""],
     });
   });
 
@@ -370,6 +372,8 @@ describe("settings an earlier version kept only in this browser", () => {
       primary: "#2e7d32",
       secondary: "#ab47bc",
       hpMode: "down",
+      trackerColumns: ["initiative", "name", "ac", "hp", "revealed", "reaction", "legendaryOptions"],
+      noteNames: ["", "", ""],
     });
     expect(requests(fetchMock, "PUT /api/me/avatar")).toHaveLength(0);
     expect(probe()).toBe("dark|#2e7d32|#ab47bc|dev|none");

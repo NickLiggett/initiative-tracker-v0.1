@@ -10,7 +10,8 @@ import RowEditDialog from "./RowEditDialog";
 import TrackersDialog from "./TrackersDialog";
 import { useSettings } from "../../settings/SettingsContext";
 import { playerIdsIn } from "./playerCombatants";
-import { buildColumns } from "./trackerColumns";
+import { columnLabel, TRACKER_COLUMNS } from "./columnChoices";
+import { buildColumns, isCellEditable } from "./trackerColumns";
 import useSavedTracker from "./useSavedTracker";
 import useNextTurnShortcut from "./useNextTurnShortcut";
 import {
@@ -43,6 +44,9 @@ export default function TrackerPage() {
 
   const columns = buildColumns({
     hpMode: settings.hpMode,
+    visible: settings.trackerColumns,
+    noteNames: settings.noteNames,
+    onEdit: setEditing,
     combatants,
     onReactionChange: (id, reaction) => setCombatants((current) => updateCombatant(current, id, { reaction })),
     onDelete: (id) => setCombatants((current) => removeCombatant(current, id)),
@@ -106,6 +110,9 @@ export default function TrackerPage() {
     onTouchEnd: () => clearTimeout(pressTimer.current),
     onTouchCancel: () => clearTimeout(pressTimer.current),
   };
+  const noteFields = TRACKER_COLUMNS.filter((column) => column.note !== undefined && settings.trackerColumns.includes(column.id)).map(
+    (column) => ({ field: column.id, label: columnLabel(column, settings.noteNames) }),
+  );
   const menuRow = rowMenu && combatants.find((combatant) => combatant.id === rowMenu.id);
 
   /** Selects the text of the cell being edited, so typing replaces it. */
@@ -149,6 +156,7 @@ export default function TrackerPage() {
         localeText={{ noRowsLabel: "Add a character" }}
         onCellEditStart={selectEditedInput}
         processRowUpdate={processRowUpdate}
+        isCellEditable={isCellEditable}
         disableColumnMenu
         sx={{ border: "1px solid" }}
       />
@@ -178,6 +186,7 @@ export default function TrackerPage() {
       {editing && (
         <RowEditDialog
           combatant={editing}
+          noteFields={noteFields}
           inFight={playerIdsIn(combatants)}
           onSave={(changes) => {
             setCombatants((current) => updateCombatant(current, editing.id, changes));

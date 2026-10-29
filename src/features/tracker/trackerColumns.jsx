@@ -1,7 +1,8 @@
 import { Checkbox, IconButton, Tooltip, Typography } from "@mui/material";
-import { Clear as ClearIcon, Article as ArticleIcon, Visibility, VisibilityOff } from "@mui/icons-material";
+import { Clear as ClearIcon, Article as ArticleIcon, Edit as EditIcon, Visibility, VisibilityOff } from "@mui/icons-material";
 import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatures/creatureFormat";
-import { formatHp, isCharacter, shownHp } from "./combatants";
+import { columnLabel, TRACKER_COLUMNS, DEFAULT_TRACKER_COLUMNS, DEFAULT_NOTE_NAMES } from "./columnChoices";
+import { damageTaken, formatHp, knowsMaxHp, isCharacter, shownHp } from "./combatants";
 
 /** How many legendary actions a row has: what was set for it, otherwise its creature's. */
 export const legendaryActionsOf = (combatant) => combatant.legendaryActions ?? legendaryActionsPerRound(combatant.creature);
@@ -9,14 +10,31 @@ export const legendaryActionsOf = (combatant) => combatant.legendaryActions ?? l
 /** How many Legendary Resistance uses a row has: what was set for it, otherwise its creature's. */
 export const legendaryResistancesOf = (combatant) => combatant.legendaryResistances ?? legendaryResistancesPerDay(combatant.creature);
 
-/**
- * The initiative grid's columns.
- * @param {{hpMode: "down"|"up", combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function, onShowPlayer: Function, onRevealChange: Function}} handlers
- */
-export function buildColumns({ hpMode = "down", combatants, onReactionChange, onDelete, onShowCreature, onShowPlayer, onRevealChange }) {
-  const anyLegendary = combatants.some((combatant) => legendaryActionsOf(combatant) > 0);
+/** Whether a cell can be edited: the damage taken needs the most hit points to be known. */
+export const isCellEditable = ({ field, row }) => field !== "damageTaken" || knowsMaxHp(row);
 
-  return [
+/**
+ * The initiative grid's columns: the ones chosen in Settings (see columnChoices.js), then the one with the buttons for
+ * showing a creature or character, and for deleting the row, which is always there.
+ * @param {{hpMode: "down"|"up", visible: string[], noteNames: string[], combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function, onShowPlayer: Function, onRevealChange: Function, onEdit: Function}} handlers
+ */
+export function buildColumns({
+  hpMode = "down",
+  visible = DEFAULT_TRACKER_COLUMNS,
+  noteNames = DEFAULT_NOTE_NAMES,
+  combatants,
+  onReactionChange,
+  onDelete,
+  onShowCreature,
+  onShowPlayer,
+  onRevealChange,
+  onEdit = () => {},
+}) {
+  const anyLegendary = combatants.some((combatant) => legendaryActionsOf(combatant) > 0);
+  const chosen = new Set(visible);
+  const label = (id) => columnLabel(TRACKER_COLUMNS.find((column) => column.id === id), noteNames);
+
+  const all = [
     { field: "initiative", headerName: "Initiative", editable: true },
     { field: "name", headerName: "Name", width: 150, editable: true },
     { field: "ac", headerName: "AC", sortable: false, editable: true },
@@ -29,6 +47,22 @@ export function buildColumns({ hpMode = "down", combatants, onReactionChange, on
       valueGetter: ({ row }) => shownHp(row, hpMode),
       valueSetter: ({ value, row }) => ({ ...row, hpInput: value }),
       renderCell: ({ row }) => formatHp(row, hpMode),
+    },
+    {
+      field: "tempHp",
+      headerName: "Temp HP",
+      sortable: false,
+      editable: true,
+      valueGetter: ({ row }) => row.tempHp ?? 0,
+    },
+    {
+      // The damage a row has taken, typed as "+5" to add some, or "-3" to take some back; it needs the most hit points to be known.
+      field: "damageTaken",
+      headerName: "Damage taken",
+      sortable: false,
+      editable: true,
+      valueGetter: ({ row }) => damageTaken(row),
+      valueSetter: ({ value, row }) => ({ ...row, damageInput: value }),
     },
     {
       field: "revealed",
@@ -60,6 +94,27 @@ export function buildColumns({ hpMode = "down", combatants, onReactionChange, on
         />
       ),
     },
+    ...[0, 1, 2].map((index) => ({
+      field: `note${index + 1}`,
+      headerName: label(`note${index + 1}`),
+      sortable: false,
+      editable: true,
+      width: 180,
+      valueGetter: ({ row }) => row[`note${index + 1}`] ?? "",
+    })),
+    {
+      field: "edit",
+      sortable: false,
+      renderHeader: () => null,
+      width: 60,
+      renderCell: (params) => (
+        <Tooltip title={`Edit ${params.row.name}`}>
+          <IconButton size="small" aria-label={`Edit ${params.row.name}`} onClick={() => onEdit(params.row)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
     {
       field: "legendaryOptions",
       flex: 1,
@@ -88,6 +143,7 @@ export function buildColumns({ hpMode = "down", combatants, onReactionChange, on
       ),
     },
   ];
+  return all.filter((column) => column.field === "delete" || chosen.has(column.field));
 }
 
 /** Checkboxes for the legendary actions and resistances a creature has left. */

@@ -1,6 +1,8 @@
 // The initiative order as plain data. Every function returns a new array and never changes its input, so React
 // state updates stay predictable.
 
+import { MAX_NOTE_LENGTH, NOTE_FIELDS } from "./columnChoices";
+
 /**
  * The new HP after an edit: "+5" heals 5, "-7" deals 7 damage, anything else sets HP to that number.
  * @returns {number} NaN if the input isn't a number
@@ -41,30 +43,64 @@ export function formatHp(combatant, mode = "down") {
   return Number.isFinite(combatant.maxHp) && shown !== "" && shown != null ? `${shown}/${combatant.maxHp}` : shown;
 }
 
-const EDITED_IN_GRID = ["initiative", "name", "ac"];
+/** Whether the most hit points of the row are known: without them there is no damage taken to show. */
+export const knowsMaxHp = hasMaxHp;
+
+/** The damage a row has taken, or "" when its most hit points aren't known. */
+export const damageTaken = (combatant) => (hasMaxHp(combatant) ? combatant.maxHp - combatant.hp : "");
+
+/**
+ * What typing `input` in a cell that shows the hit points (see `shownHp`) does to a row. Damage, which is "-7" counting
+ * down or "+7" counting up (or in the damage taken column), uses up the row's temporary hit points before its own, as
+ * the rules say; a number typed to set it, or healing, leaves the temporary hit points alone.
+ * @returns {object} `hp`, and `tempHp` when some was used up; empty if the input isn't a number
+ */
+function hitPointChanges(row, input, mode) {
+  const text = String(input).trim();
+  const hp = hpFromShown(row, applyHpInput(shownHp(row, mode), text), mode);
+  if (Number.isNaN(hp)) {
+    return {};
+  }
+  const sign = mode === "up" ? "+" : "-";
+  const damage = Number.isFinite(row.hp) ? row.hp - hp : 0;
+  if (!text.startsWith(sign) || damage <= 0 || !(row.tempHp > 0)) {
+    return { hp };
+  }
+  const absorbed = Math.min(row.tempHp, damage);
+  return { hp: hp + absorbed, tempHp: row.tempHp - absorbed };
+}
+
+const NUMBER_FIELDS = ["initiative", "ac", "tempHp"];
+const TEXT_FIELDS = ["name", ...NOTE_FIELDS];
 
 /**
  * What an edit in the grid changes on a combatant. `newRow` is the row as the grid has it after the edit: the typed text
- * is in the field's place, and for HP in `hpInput` (see the grid's HP column). Text that isn't a number leaves the old
- * value; HP takes "+5" and "-7" on the number shown (see `shownHp`).
+ * is in the field's place, and for hit points in `hpInput`, or for the damage taken column in `damageInput` (see the
+ * grid's columns). Text that isn't a number leaves the old value; hit points take "+5" and "-7" on the number shown
+ * (see `shownHp`), and damage uses up temporary hit points first.
  * @returns {object} just the fields that changed
  */
 export function editedFields(newRow, oldRow, mode = "down") {
   const changes = {};
-  for (const field of EDITED_IN_GRID) {
+  for (const field of NUMBER_FIELDS) {
     if (newRow[field] === oldRow[field]) {
       continue;
     }
-    const value = field === "name" ? String(newRow[field]) : parseInt(newRow[field], 10);
+    const value = field === "tempHp" && newRow[field] === "" ? 0 : parseInt(newRow[field], 10);
     if (!Number.isNaN(value)) {
-      changes[field] = value;
+      changes[field] = field === "tempHp" ? Math.max(0, value) : value;
+    }
+  }
+  for (const field of TEXT_FIELDS) {
+    if (newRow[field] !== oldRow[field] && !(newRow[field] === "" && oldRow[field] === undefined)) {
+      changes[field] = String(newRow[field] ?? "").slice(0, field === "name" ? Infinity : MAX_NOTE_LENGTH);
     }
   }
   if (newRow.hpInput !== undefined) {
-    const hp = hpFromShown(oldRow, applyHpInput(shownHp(oldRow, mode), newRow.hpInput), mode);
-    if (!Number.isNaN(hp)) {
-      changes.hp = hp;
-    }
+    Object.assign(changes, hitPointChanges(oldRow, newRow.hpInput, mode));
+  }
+  if (newRow.damageInput !== undefined && hasMaxHp(oldRow)) {
+    Object.assign(changes, hitPointChanges(oldRow, newRow.damageInput, "up"));
   }
   return changes;
 }

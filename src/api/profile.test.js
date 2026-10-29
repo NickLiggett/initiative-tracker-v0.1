@@ -16,7 +16,7 @@ describe("settings", () => {
     await expect(getSettings()).resolves.toEqual({ mode: "dark", avatarVersion: null });
     await saveSettings({ mode: "light", primary: "#112233", secondary: "#445566", avatarVersion: 7, avatar: "ignored" });
 
-    expect(JSON.parse(call(fetchMock, 1).init.body)).toEqual({ mode: "light", primary: "#112233", secondary: "#445566" });
+    expect(JSON.parse(call(fetchMock, 1).init.body)).toEqual({ mode: "light", primary: "#112233", secondary: "#445566" }) // hpMode was not given;
   });
 });
 

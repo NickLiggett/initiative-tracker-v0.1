@@ -29,6 +29,7 @@ export default function GridFooter({ onAdd, onAddPlayers, onClear, onSort }) {
       name: form.name,
       ac: form.armorClass === "" ? "" : parseInt(form.armorClass, 10),
       hp: form.hitPoints === "" ? "" : parseInt(form.hitPoints, 10),
+      maxHp: form.hitPoints === "" ? undefined : parseInt(form.hitPoints, 10),
       reaction: false,
       type: form.type,
       creature: form.type === "Creature" ? form.creature : null,

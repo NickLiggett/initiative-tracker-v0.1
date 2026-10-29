@@ -10,10 +10,10 @@ export function getSettings({ signal } = {}) {
   return apiGet("/api/me/settings", undefined, { signal });
 }
 
-/** Replaces the user's settings (`mode`, `primary`, `secondary`). Resolves to what was kept. */
+/** Replaces the user's settings (`mode`, `primary`, `secondary`, `hpMode`). Resolves to what was kept. */
 export function saveSettings(settings) {
-  const { mode, primary, secondary } = settings;
-  return apiSend("PUT", "/api/me/settings", { mode, primary, secondary });
+  const { mode, primary, secondary, hpMode } = settings;
+  return apiSend("PUT", "/api/me/settings", { mode, primary, secondary, hpMode });
 }
 
 /** The state the user left their tracker in: an object, empty if they've never saved one. */

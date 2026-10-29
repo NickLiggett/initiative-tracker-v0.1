@@ -106,6 +106,15 @@ which ends the provider's session too.
   key and its stat block is looked up again on load; one that can't be found is mentioned, and the combatant is kept. If
   the saved tracker can't be loaded, nothing is saved over it. (The legendary action checkboxes are not part of what is
   saved yet.)
+- **Changing a row.** Right-click a row (or hold a finger on it) for **Edit** and **Delete**. Edit opens a form for
+  everything about the row: its name, type, initiative, AC, HP and maximum HP, the legendary actions and Legendary
+  Resistance uses it has (blank is its creature's own), and whether the players see its AC and HP. **Make it a
+  character** takes a character's name, AC and HP (and makes the row theirs) but keeps the row's initiative. Nothing
+  changes until Save.
+- **Counting HP.** HP shows as left/most (20/20). In **Settings > Tracker** you choose **Count down** (the default) or
+  **Count up**, where it starts at 0/20 and damage takes it up. Typing +5 or -7 in the HP column adds or takes away
+  that much of the number shown, whichever way it counts. A combatant added before the maximum was kept shows just
+  its number.
 - **Several trackers.** The button at the top of the grid (the tracker's name) opens **Trackers**: name the tracker in
   use, **Start new** (the one in use is put away under its name), or **Open** one put away (the one in use is put away
   instead), exactly as it was left, with its turn, hit points and who the players see. Switching saves first, and

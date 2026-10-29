@@ -1,12 +1,13 @@
 import { Box, Tab, Tabs, Typography } from "@mui/material";
 import AppearanceSettings from "./AppearanceSettings";
 import ProfileSettings from "./ProfileSettings";
+import TrackerSettings from "./TrackerSettings";
 
-export const SETTINGS_TABS = ["profile", "appearance"];
+export const SETTINGS_TABS = ["profile", "appearance", "tracker"];
 
 /**
- * The user's settings: their profile picture, and how the site looks.
- * @param {"profile"|"appearance"} tab which part is showing
+ * The user's settings: their profile picture, how the site looks, and how the initiative tracker counts hit points.
+ * @param {"profile"|"appearance"|"tracker"} tab which part is showing
  * @param {(tab: string) => void} onTabChange
  */
 export default function SettingsPage({ tab = "profile", onTabChange }) {
@@ -18,8 +19,9 @@ export default function SettingsPage({ tab = "profile", onTabChange }) {
       <Tabs value={tab} onChange={(event, next) => onTabChange(next)} aria-label="Settings sections" sx={{ mb: 3 }}>
         <Tab value="profile" label="Profile" />
         <Tab value="appearance" label="Appearance" />
+        <Tab value="tracker" label="Tracker" />
       </Tabs>
-      {tab === "appearance" ? <AppearanceSettings /> : <ProfileSettings />}
+      {tab === "appearance" ? <AppearanceSettings /> : tab === "tracker" ? <TrackerSettings /> : <ProfileSettings />}
     </Box>
   );
 }

@@ -193,6 +193,7 @@ describe("saving to the account", () => {
       mode: "dark",
       primary: "#2e7d32",
       secondary: "#8d6e63",
+      hpMode: "down",
     });
   });
 

@@ -58,7 +58,7 @@ describe("PlayerPicker", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add to initiative" }));
 
     expect(onAdd).toHaveBeenCalledWith([
-      { initiative: 17, name: "Thorin", ac: 18, hp: 52, reaction: false, type: "PC", creature: null, playerId: 1 },
+      { initiative: 17, name: "Thorin", ac: 18, hp: 52, maxHp: 52, reaction: false, type: "PC", creature: null, playerId: 1 },
       { initiative: 9, name: "Mira", ac: "", hp: "", reaction: false, type: "PC", creature: null, playerId: 2 },
     ]);
   });

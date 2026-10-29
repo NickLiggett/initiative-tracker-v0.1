@@ -183,6 +183,9 @@ describe("changing settings", () => {
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
       savedFilters: {},
+      font: "default",
+      textSize: "normal",
+      favoritePages: [],
     });
   });
 
@@ -376,6 +379,9 @@ describe("settings an earlier version kept only in this browser", () => {
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
       savedFilters: {},
+      font: "default",
+      textSize: "normal",
+      favoritePages: [],
     });
     expect(requests(fetchMock, "PUT /api/me/avatar")).toHaveLength(0);
     expect(probe()).toBe("dark|#2e7d32|#ab47bc|dev|none");

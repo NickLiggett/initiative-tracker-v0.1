@@ -163,7 +163,13 @@ export function SettingsProvider({ children }) {
 
   /** Back to the default colors and mode; the avatar picture stays. */
   const resetLook = useCallback(
-    () => update({ mode: DEFAULT_SETTINGS.mode, primary: DEFAULT_SETTINGS.primary, secondary: DEFAULT_SETTINGS.secondary }),
+    () => update({
+        mode: DEFAULT_SETTINGS.mode,
+        primary: DEFAULT_SETTINGS.primary,
+        secondary: DEFAULT_SETTINGS.secondary,
+        font: DEFAULT_SETTINGS.font,
+        textSize: DEFAULT_SETTINGS.textSize,
+      }),
     [update],
   );
 

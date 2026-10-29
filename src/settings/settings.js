@@ -4,6 +4,7 @@
 // username: it lets the right colors show at once, before the backend has answered, and keeps changes that couldn't
 // be sent. Only this file touches the browser's storage.
 
+import { Pages } from "../constants/pages";
 import { normalizeHex } from "./colors";
 import {
   DEFAULT_NOTE_NAMES,
@@ -19,6 +20,9 @@ export const DEFAULT_SETTINGS = {
   hpMode: "down", // how the initiative tracker counts hit points: "down" from the most, or "up" from none
   trackerColumns: DEFAULT_TRACKER_COLUMNS, // the columns the initiative tracker shows (see features/tracker/columnChoices.js)
   noteNames: DEFAULT_NOTE_NAMES, // what the tracker's three Notes columns are called; blank for the usual name
+  font: "default", // the typeface of the whole site: one of FONTS
+  textSize: "normal", // how big the text is: one of TEXT_SIZES
+  favoritePages: [], // the drawer's pages pinned to the top of it, in the order pinned
   savedFilters: {}, // the filters saved by name for each page that has them: { spells: [{ name, filters }] }
   avatarVersion: null, // when the avatar picture on the account was saved; null for none
 };
@@ -40,7 +44,31 @@ export const COLOR_PRESETS = [
 ];
 
 /** The settings that are kept as chosen, as opposed to `avatarVersion`, which the account works out. */
-export const CHOSEN = ["mode", "primary", "secondary", "hpMode", "trackerColumns", "noteNames", "savedFilters"];
+export const CHOSEN = ["mode", "primary", "secondary", "hpMode", "trackerColumns", "noteNames", "savedFilters", "font", "textSize", "favoritePages"];
+
+/** The typefaces to choose from. They are the ones every device has, so nothing is downloaded. `stack` is the CSS font-family. */
+export const FONTS = [
+  { value: "default", label: "Standard", stack: undefined },
+  { value: "sans", label: "Clean", stack: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+  { value: "serif", label: "Book", stack: 'Georgia, "Times New Roman", serif' },
+  { value: "readable", label: "Easy to read", stack: 'Verdana, Tahoma, "Segoe UI", sans-serif' },
+  { value: "mono", label: "Typewriter", stack: '"SFMono-Regular", Consolas, "Liberation Mono", monospace' },
+];
+
+/** How big the text can be; `size` is the base size in px (MUI's own is 14). */
+export const TEXT_SIZES = [
+  { value: "small", label: "Small", size: 12.5 },
+  { value: "normal", label: "Normal", size: 14 },
+  { value: "large", label: "Large", size: 16 },
+  { value: "larger", label: "Larger", size: 18 },
+];
+
+const PAGE_NAMES = new Set(Object.values(Pages));
+
+/** The pinned pages fit to use: only pages that exist, each once, in the order given. */
+export function sanitizeFavoritePages(raw) {
+  return Array.isArray(raw) ? [...new Set(raw.filter((page) => PAGE_NAMES.has(page)))] : [];
+}
 
 export const MAX_SAVED_FILTERS = 20; // for each page
 export const MAX_SAVED_FILTER_NAME_LENGTH = 40;
@@ -85,6 +113,9 @@ export function sanitizeSettings(raw) {
     trackerColumns: sanitizeColumns(settings.trackerColumns),
     noteNames: sanitizeNoteNames(settings.noteNames),
     savedFilters: sanitizeSavedFilters(settings.savedFilters),
+    font: FONTS.some(({ value }) => value === settings.font) ? settings.font : DEFAULT_SETTINGS.font,
+    textSize: TEXT_SIZES.some(({ value }) => value === settings.textSize) ? settings.textSize : DEFAULT_SETTINGS.textSize,
+    favoritePages: sanitizeFavoritePages(settings.favoritePages),
     avatarVersion: Number.isFinite(version) && version >= 0 ? Math.trunc(version) : null,
   };
 }

@@ -167,6 +167,28 @@ describe("your own colors", () => {
   });
 });
 
+describe("font and text size", () => {
+  it("picks a font and a text size, and keeps and sends them", async () => {
+    const fetchMock = await renderSettings();
+
+    fireEvent.click(screen.getByRole("button", { name: "Book" }));
+    fireEvent.click(screen.getByRole("button", { name: "Large" }));
+
+    expect(screen.getByRole("button", { name: "Book" })).toHaveAttribute("aria-pressed", "true");
+    expect(loadCachedSettings("dev")).toMatchObject({ font: "serif", textSize: "large" });
+    await waitFor(() => expect(sent(fetchMock, "PUT /api/me/settings")).toHaveLength(1), { timeout: 3000 });
+    expect(JSON.parse(sent(fetchMock, "PUT /api/me/settings")[0][1].body)).toMatchObject({ font: "serif", textSize: "large" });
+  });
+
+  it("goes back to the usual font and size with the colors", async () => {
+    await renderSettings({ font: "mono", textSize: "larger" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset to the defaults" }));
+
+    expect(loadCachedSettings("dev")).toMatchObject({ font: "default", textSize: "normal" });
+  });
+});
+
 describe("resetting", () => {
   it("goes back to the default colors and mode", async () => {
     await renderSettings({ mode: "dark", primary: "#5e35b1", secondary: "#00acc1" });
@@ -197,12 +219,15 @@ describe("saving to the account", () => {
       trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
       savedFilters: {},
+      font: "default",
+      textSize: "normal",
+      favoritePages: [],
     });
   });
 
   it("says it's saved to the account, until it can't be", async () => {
     await renderSettings({}, { "PUT /api/me/settings": () => new Response("{}", { status: 500 }) });
-    expect(screen.getByText("Your colors are saved to your account, so they follow you to other browsers.")).toBeInTheDocument();
+    expect(screen.getByText("Your choices here are saved to your account, so they follow you to other browsers.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Dark" }));
 

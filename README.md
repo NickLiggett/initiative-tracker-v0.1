@@ -354,6 +354,10 @@ Open it from the account menu (your picture at the top right) or the drawer.
   the browser, then sent to the backend (`/api/me/avatar`). People you share with see it next to your name.
 - **Appearance:** light, dark or match your device; six color themes, or any main and second color by chooser or hex
   code, with a warning when a color would be hard to see against the page. Changes apply as you make them.
+  Also a **font** (Standard, Clean, Book, Easy to read or Typewriter: ones every device has, so nothing is downloaded)
+  and a **text size** (Small to Larger), which change the whole site.
+- **Favorites:** the star beside a page in the drawer pins it to a **Favorites** group at the top of the drawer (it
+  stays in the full list too); the star again unpins it.
 - Both are saved to your account (`/api/me/settings`), so they follow you to other browsers. A copy in the browser
   shows the right colors before the backend has answered, and keeps changes that couldn't be sent. Settings an earlier
   version kept only in the browser move to the account the first time they are found there.

@@ -1,7 +1,7 @@
 import { Alert, Box, Button, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { normalizeHex } from "../../settings/colors";
-import { COLOR_PRESETS, MODES } from "../../settings/settings";
+import { COLOR_PRESETS, FONTS, MODES, TEXT_SIZES } from "../../settings/settings";
 import { useSettings } from "../../settings/SettingsContext";
 import ColorField from "./ColorField";
 
@@ -28,6 +28,44 @@ export default function AppearanceSettings() {
           onChange={(event, mode) => mode !== null && update({ mode })}
         >
           {MODES.map(({ value, label }) => (
+            <ToggleButton key={value} value={value} sx={{ textTransform: "none" }}>
+              {label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
+
+      <Box>
+        <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
+          Font
+        </Typography>
+        <ToggleButtonGroup
+          exclusive
+          aria-label="Font"
+          value={settings.font}
+          onChange={(event, font) => font !== null && update({ font })}
+          sx={{ flexWrap: "wrap", gap: 1 }}
+        >
+          {FONTS.map(({ value, label, stack }) => (
+            <ToggleButton key={value} value={value} sx={{ textTransform: "none", borderRadius: 1, border: 1, fontFamily: stack }}>
+              {label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
+
+      <Box>
+        <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
+          Text size
+        </Typography>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          aria-label="Text size"
+          value={settings.textSize}
+          onChange={(event, textSize) => textSize !== null && update({ textSize })}
+        >
+          {TEXT_SIZES.map(({ value, label }) => (
             <ToggleButton key={value} value={value} sx={{ textTransform: "none" }}>
               {label}
             </ToggleButton>
@@ -89,7 +127,7 @@ export default function AppearanceSettings() {
         </Alert>
       ) : (
         <Alert severity="info" role="note">
-          Your colors are saved to your account, so they follow you to other browsers.
+          Your choices here are saved to your account, so they follow you to other browsers.
         </Alert>
       )}
     </Box>

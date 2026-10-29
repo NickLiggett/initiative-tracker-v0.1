@@ -24,7 +24,7 @@ describe("sanitizeSettings", () => {
       primary: "#abcdef",
       secondary: "#112233",
       hpMode: "down",
-      trackerColumns: ["initiative", "name", "ac", "hp", "revealed", "reaction", "legendaryOptions"],
+      trackerColumns: ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"],
       noteNames: ["", "", ""],
       avatarVersion: 1759,
     });

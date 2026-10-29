@@ -95,9 +95,11 @@ which ends the provider's session too.
   armor class and hit points filled in, and a character already in the order can't be added twice. A character's row has the
   same document icon as a creature's, which opens their card as it is now (their level or notes may have changed). The
   tracker remembers which character a row is, not a copy of them.
-- **What the players see.** Each monster or other non-character row has an eye button (column **Players see**) that shows
-  its AC and HP to the players watching the fight, or hides them again; **Reveal all** and **Hide all** above the grid
-  do every one at once. Characters' AC and HP are always shown to their party. Nothing is revealed by default.
+- **What the players see.** Each monster or other non-character row has a small eye in its **Name**, **AC** and **HP**
+  cells that shows that one thing to the players watching the fight, or hides it again (a hidden name shows to them as
+  "Unknown creature", a hidden AC or HP as ?). The eye in a column's heading does it for every monster at once. **Reveal
+  all** and **Hide all** above the grid do the AC and HP of every one. The row editor has the same three switches.
+  Characters' names, AC and HP are always shown to their party. Names are shown and AC and HP hidden by default.
 - **Creatures** with legendary actions get checkboxes for their legendary actions per round and Legendary Resistance
   uses. The document icon opens the creature's stat block.
 - **Your tracker is kept on your account.** A moment after any change (adding, editing, sorting, stepping the turn,
@@ -274,7 +276,7 @@ never accept them.
 For the people in a DM's party: **Player View** in the drawer shows the initiative tracker of each DM whose party you
 have joined and whose fight one of your characters is in, one table for each DM. It is for watching only. The first row
 is whose turn it is ("Up now"), your own characters are marked "Yours", and it updates by itself every few seconds
-(not while the tab is hidden). A monster's AC and HP show as **?** until the DM reveals them (see the tracker above); the
+(not while the tab is hidden). A monster's AC and HP show as **?** until the DM reveals them, and its name as "Unknown creature" if the DM hides it (see the tracker above); the
 creature a row is, and the DM's notes, are never sent. If none of your characters is in a fight, it says so.
 A DM can have several trackers (see above), and your characters can be in more than one, across DMs or across one DM's
 groups. When they are, a **Tracker** list lets you pick which to watch: the DM's live one, or one they have put away

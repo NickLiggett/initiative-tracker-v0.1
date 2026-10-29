@@ -87,7 +87,7 @@ function FightTable({ tracker }) {
               <TableRow key={combatant.id ?? index} selected={index === 0} aria-current={index === 0 ? "true" : undefined}>
                 <TableCell>{shown(combatant.initiative)}</TableCell>
                 <TableCell>
-                  {combatant.name}
+                  {combatant.name ?? "Unknown creature"}
                   {index === 0 && <Chip size="small" color="primary" label="Up now" sx={{ ml: 1 }} />}
                   {combatant.mine && <Chip size="small" variant="outlined" label="Yours" sx={{ ml: 1 }} />}
                 </TableCell>

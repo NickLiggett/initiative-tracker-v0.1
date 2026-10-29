@@ -113,17 +113,18 @@ describe("editing a row", () => {
     expect(screen.getByRole("dialog", { name: "Edit Snarl" })).toBeInTheDocument();
   });
 
-  it("gives a row legendary actions and resistances, and shows its numbers to the players", async () => {
+  it("gives a row legendary actions and resistances, and shows or hides what the players see", async () => {
     const fetchMock = await renderTracker();
     const dialog = await openEditor("Goblin");
 
     fireEvent.change(dialog.getByLabelText("Legendary actions"), { target: { value: "3" } });
     fireEvent.change(dialog.getByLabelText("Legendary resistances"), { target: { value: "2" } });
-    fireEvent.click(dialog.getByRole("checkbox", { name: "Players see its AC and HP" }));
+    fireEvent.click(dialog.getByRole("checkbox", { name: "Players see its AC" }));
+    fireEvent.click(dialog.getByRole("checkbox", { name: "Players see its name" }));
     fireEvent.click(dialog.getByRole("button", { name: "Save" }));
 
     await savedAfterDelay(fetchMock);
-    expect(lastSaved(fetchMock)[0]).toMatchObject({ name: "Goblin", legendaryActions: 3, legendaryResistances: 2, revealed: true });
+    expect(lastSaved(fetchMock)[0]).toMatchObject({ name: "Goblin", legendaryActions: 3, legendaryResistances: 2, acRevealed: true, hpRevealed: false, nameHidden: true });
   });
 
   it("makes it a character: their name, AC and HP, with the row's own initiative", async () => {

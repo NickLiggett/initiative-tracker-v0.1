@@ -8,7 +8,6 @@ export const TRACKER_COLUMNS = [
   { id: "hp", label: "HP" },
   { id: "tempHp", label: "Temp HP" },
   { id: "damageTaken", label: "Damage taken" },
-  { id: "revealed", label: "Players see" },
   { id: "reaction", label: "Reaction" },
   { id: "legendaryOptions", label: "Legendary options" },
   { id: "note1", label: "Notes", note: 0 },
@@ -18,7 +17,7 @@ export const TRACKER_COLUMNS = [
 ];
 
 /** What the tracker shows until the user chooses. */
-export const DEFAULT_TRACKER_COLUMNS = ["initiative", "name", "ac", "hp", "revealed", "reaction", "legendaryOptions"];
+export const DEFAULT_TRACKER_COLUMNS = ["initiative", "name", "ac", "hp", "reaction", "legendaryOptions"];
 
 export const NOTE_FIELDS = TRACKER_COLUMNS.filter((column) => column.note !== undefined).map((column) => column.id);
 export const MAX_NOTE_NAME_LENGTH = 30;

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { stubApi } from "../../test/fakeApi";
 import PartyTrackerPage, { HIDDEN } from "./PartyTrackerPage";
 import { POLL_MS } from "./usePartyTrackers";
@@ -62,12 +62,33 @@ describe("PartyTrackerPage", () => {
     expect(await screen.findByText("Sign in to see your party's tracker.")).toBeInTheDocument();
   });
 
-  it("has one table for each DM", async () => {
-    stubApi({ "GET /api/party/trackers": [fight(wizard), { ...fight(wizard), dm: "other" }] });
+  it("lets the user choose which tracker to watch when their characters are in several", async () => {
+    stubApi({
+      "GET /api/party/trackers": [
+        { ...fight(wizard), name: "Tuesday group", live: true, trackerId: null },
+        { ...fight(goblin, wizard), dm: "other", name: "Saturday group", live: false, trackerId: 7 },
+      ],
+    });
     render(<PartyTrackerPage />);
 
     expect(await screen.findByRole("table", { name: "gm's turn order" })).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "other's turn order" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "gm's fight: Tuesday group" })).toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Tracker" }));
+    fireEvent.click(screen.getByRole("option", { name: "other: Saturday group (saved)" }));
+
     expect(screen.getByRole("table", { name: "other's turn order" })).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "gm's turn order" })).not.toBeInTheDocument();
+    expect(screen.getByText("Saved, not live")).toBeInTheDocument();
+  });
+
+  it("offers no choice when there is only one tracker", async () => {
+    stubApi({ "GET /api/party/trackers": [fight(wizard)] });
+    render(<PartyTrackerPage />);
+
+    expect(await screen.findByRole("table", { name: "gm's turn order" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Tracker" })).not.toBeInTheDocument();
   });
 
   it("asks again every few seconds, and shows what the DM revealed", async () => {

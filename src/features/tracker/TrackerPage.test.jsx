@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { stubApi } from "../../test/fakeApi";
 import { toSavedState } from "./trackerState";
 import TrackerPage from "./TrackerPage";
@@ -64,6 +64,99 @@ describe("TrackerPage", () => {
     expect(saved.find((combatant) => combatant.name === "Gribble").initiative).toBe(25);
   });
 
+  describe("trackers", () => {
+    /** A backend with the tracker in use and one put away, which swap places as the real one does. */
+    function stubTrackers() {
+      let active = { ...toSavedState([gribble], "Tuesday group") };
+      let shelved = [{ id: 7, name: "Saturday group", state: toSavedState([snarl], "Saturday group") }];
+      const fetchMock = stubApi({
+        "GET /api/me/tracker": () => active,
+        "PUT /api/me/tracker": (body) => {
+          active = body;
+          return body;
+        },
+        "GET /api/me/trackers": () =>
+          shelved.map(({ id, name, state }) => ({ id, name, updatedAt: "2026-10-20T12:00:00Z", combatants: state.combatants.length })),
+        "POST /api/me/trackers": (body) => {
+          shelved = [{ id: 8, name: active.name ?? "Untitled tracker", state: active }, ...shelved];
+          active = toSavedState([], body.name);
+          return active;
+        },
+        "POST /api/me/trackers/7/open": () => {
+          const opened = shelved.find((one) => one.id === 7);
+          shelved = [{ id: 9, name: active.name ?? "Untitled tracker", state: active }, ...shelved.filter((one) => one.id !== 7)];
+          active = opened.state;
+          return active;
+        },
+      });
+      return { fetchMock, active: () => active, shelved: () => shelved };
+    }
+
+    it("names the tracker in use, and lists the ones put away", async () => {
+      stubTrackers();
+      render(<TrackerPage />);
+      await screen.findByText("Gribble");
+
+      fireEvent.click(screen.getByRole("button", { name: "Trackers" }));
+
+      const dialog = within(await screen.findByRole("dialog", { name: "Trackers" }));
+      expect(dialog.getByLabelText("This tracker's name")).toHaveValue("Tuesday group");
+      expect(await dialog.findByText("Saturday group")).toBeInTheDocument();
+      expect(dialog.getByText(/1 combatant/)).toBeInTheDocument();
+    });
+
+    it("brings a saved tracker back, and puts the one in use away", async () => {
+      const backend = stubTrackers();
+      render(<TrackerPage />);
+      await screen.findByText("Gribble");
+      fireEvent.click(screen.getByRole("button", { name: "Trackers" }));
+      const dialog = within(await screen.findByRole("dialog", { name: "Trackers" }));
+
+      fireEvent.click(await dialog.findByRole("button", { name: "Open" }));
+
+      expect(await screen.findByText("Snarl")).toBeInTheDocument();
+      expect(screen.queryByText("Gribble")).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(screen.getByRole("button", { name: "Trackers" })).toHaveTextContent("Saturday group");
+      expect(backend.shelved().map((one) => one.name)).toContain("Tuesday group");
+    });
+
+    it("starts a new tracker with a name", async () => {
+      const backend = stubTrackers();
+      render(<TrackerPage />);
+      await screen.findByText("Gribble");
+      fireEvent.click(screen.getByRole("button", { name: "Trackers" }));
+      const dialog = within(await screen.findByRole("dialog", { name: "Trackers" }));
+
+      fireEvent.change(dialog.getByLabelText("New tracker's name"), { target: { value: "Friday one-shot" } });
+      fireEvent.click(dialog.getByRole("button", { name: "Start new" }));
+
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(screen.getByRole("button", { name: "Trackers" })).toHaveTextContent("Friday one-shot");
+      expect(screen.queryByText("Gribble")).not.toBeInTheDocument();
+      expect(screen.getByText("Add a character")).toBeInTheDocument();
+      expect(backend.shelved()[0].name).toBe("Tuesday group");
+    });
+
+    it("saves what was changed before putting the tracker away", async () => {
+      const backend = stubTrackers();
+      render(<TrackerPage />);
+      await screen.findByText("Gribble");
+      fireEvent.click(screen.getByRole("button", { name: "Trackers" }));
+      const dialog = within(await screen.findByRole("dialog", { name: "Trackers" }));
+      fireEvent.change(dialog.getByLabelText("This tracker's name"), { target: { value: "Tuesday, renamed" } }); // not saved yet
+
+      fireEvent.click(await dialog.findByRole("button", { name: "Open" }));
+
+      await screen.findByText("Snarl");
+      const putAt = backend.fetchMock.mock.calls.findIndex(([, init = {}]) => init.method === "PUT");
+      const openAt = backend.fetchMock.mock.calls.findIndex(([url]) => url.endsWith("/open"));
+      expect(putAt).toBeGreaterThan(-1);
+      expect(putAt).toBeLessThan(openAt);
+      expect(backend.shelved().map((one) => one.name)).toContain("Tuesday, renamed");
+    });
+  });
+
   it("clearing the tracker is saved too", async () => {
     const fetchMock = stubApi({
       "GET /api/me/tracker": toSavedState([gribble]),
@@ -73,9 +166,27 @@ describe("TrackerPage", () => {
     await screen.findByText("Gribble");
 
     fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Clear" }));
 
     await waitFor(() => expect(puts(fetchMock)).toHaveLength(1), { timeout: 3000 });
     expect(JSON.parse(puts(fetchMock)[0][1].body)).toEqual({ version: 1, combatants: [] });
+  });
+
+  it("keeps everyone when the user changes their mind about clearing", async () => {
+    const fetchMock = stubApi({
+      "GET /api/me/tracker": toSavedState([gribble]),
+      "PUT /api/me/tracker": (body) => body,
+    });
+    render(<TrackerPage />);
+    await screen.findByText("Gribble");
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Clear the tracker?");
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByText("Gribble")).toBeInTheDocument();
+    expect(puts(fetchMock)).toHaveLength(0);
   });
 
   it("offers to try again when a save didn't work", async () => {

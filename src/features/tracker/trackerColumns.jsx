@@ -1,20 +1,35 @@
 import { Checkbox, IconButton, Tooltip, Typography } from "@mui/material";
 import { Clear as ClearIcon, Article as ArticleIcon, Visibility, VisibilityOff } from "@mui/icons-material";
 import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatures/creatureFormat";
-import { isCharacter } from "./combatants";
+import { formatHp, isCharacter, shownHp } from "./combatants";
+
+/** How many legendary actions a row has: what was set for it, otherwise its creature's. */
+export const legendaryActionsOf = (combatant) => combatant.legendaryActions ?? legendaryActionsPerRound(combatant.creature);
+
+/** How many Legendary Resistance uses a row has: what was set for it, otherwise its creature's. */
+export const legendaryResistancesOf = (combatant) => combatant.legendaryResistances ?? legendaryResistancesPerDay(combatant.creature);
 
 /**
  * The initiative grid's columns.
- * @param {{combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function, onShowPlayer: Function, onRevealChange: Function}} handlers
+ * @param {{hpMode: "down"|"up", combatants: object[], onReactionChange: Function, onDelete: Function, onShowCreature: Function, onShowPlayer: Function, onRevealChange: Function}} handlers
  */
-export function buildColumns({ combatants, onReactionChange, onDelete, onShowCreature, onShowPlayer, onRevealChange }) {
-  const anyLegendary = combatants.some((combatant) => legendaryActionsPerRound(combatant.creature) > 0);
+export function buildColumns({ hpMode = "down", combatants, onReactionChange, onDelete, onShowCreature, onShowPlayer, onRevealChange }) {
+  const anyLegendary = combatants.some((combatant) => legendaryActionsOf(combatant) > 0);
 
   return [
     { field: "initiative", headerName: "Initiative", editable: true },
     { field: "name", headerName: "Name", width: 150, editable: true },
     { field: "ac", headerName: "AC", sortable: false, editable: true },
-    { field: "hp", headerName: "HP", sortable: false, editable: true },
+    {
+      // Edited as the number counted (see shownHp); the typed text goes to `hpInput`, which the page turns into hit points.
+      field: "hp",
+      headerName: "HP",
+      sortable: false,
+      editable: true,
+      valueGetter: ({ row }) => shownHp(row, hpMode),
+      valueSetter: ({ value, row }) => ({ ...row, hpInput: value }),
+      renderCell: ({ row }) => formatHp(row, hpMode),
+    },
     {
       field: "revealed",
       headerName: "Players see",
@@ -50,7 +65,7 @@ export function buildColumns({ combatants, onReactionChange, onDelete, onShowCre
       flex: 1,
       sortable: false,
       renderHeader: () => (anyLegendary ? "Legendary Options" : null),
-      renderCell: (params) => <LegendaryOptions creature={params.row.creature} />,
+      renderCell: (params) => <LegendaryOptions combatant={params.row} />,
     },
     {
       field: "delete",
@@ -76,12 +91,12 @@ export function buildColumns({ combatants, onReactionChange, onDelete, onShowCre
 }
 
 /** Checkboxes for the legendary actions and resistances a creature has left. */
-function LegendaryOptions({ creature }) {
-  const actions = legendaryActionsPerRound(creature);
+function LegendaryOptions({ combatant }) {
+  const actions = legendaryActionsOf(combatant);
   if (actions === 0) {
     return null;
   }
-  const resistances = legendaryResistancesPerDay(creature);
+  const resistances = legendaryResistancesOf(combatant);
   return (
     <div>
       <div style={{ display: "flex" }}>

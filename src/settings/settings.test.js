@@ -23,6 +23,7 @@ describe("sanitizeSettings", () => {
       mode: "dark",
       primary: "#abcdef",
       secondary: "#112233",
+      hpMode: "down",
       avatarVersion: 1759,
     });
   });

@@ -10,10 +10,10 @@ export function getSettings({ signal } = {}) {
   return apiGet("/api/me/settings", undefined, { signal });
 }
 
-/** Replaces the user's settings (`mode`, `primary`, `secondary`). Resolves to what was kept. */
+/** Replaces the user's settings (`mode`, `primary`, `secondary`, `hpMode`). Resolves to what was kept. */
 export function saveSettings(settings) {
-  const { mode, primary, secondary } = settings;
-  return apiSend("PUT", "/api/me/settings", { mode, primary, secondary });
+  const { mode, primary, secondary, hpMode } = settings;
+  return apiSend("PUT", "/api/me/settings", { mode, primary, secondary, hpMode });
 }
 
 /** The state the user left their tracker in: an object, empty if they've never saved one. */
@@ -24,6 +24,30 @@ export function getTracker({ signal } = {}) {
 /** Keeps the state of the user's tracker (any JSON object up to 256 KB). */
 export function saveTracker(state) {
   return apiSend("PUT", "/api/me/tracker", state);
+}
+
+/**
+ * The trackers the user has put away to come back to, newest first: the tracker being used (see `getTracker`) is not
+ * among them.
+ * @returns {Promise<{id: number, name: string, updatedAt: string, combatants: number}[]>}
+ */
+export function listTrackers({ signal } = {}) {
+  return apiGet("/api/me/trackers", undefined, { signal });
+}
+
+/** Puts the tracker in use away and starts an empty one with this name. Resolves to the new tracker's state. */
+export function createTracker(name) {
+  return apiSend("POST", "/api/me/trackers", { name });
+}
+
+/** Puts the tracker in use away and brings back a saved one. Resolves to that tracker's state. */
+export function openTracker(id) {
+  return apiSend("POST", `/api/me/trackers/${id}/open`);
+}
+
+/** Deletes a saved tracker. */
+export function deleteTracker(id) {
+  return apiSend("DELETE", `/api/me/trackers/${id}`);
 }
 
 /** The encounters the user saved on the Encounters page: an object, empty if they've never saved one. */

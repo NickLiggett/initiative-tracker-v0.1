@@ -34,6 +34,7 @@ export default function CreaturesPage() {
   return (
     <ResourcePage
       noun="creature"
+      description="Creatures are monsters and NPCs, with full stat blocks. Add one to the initiative tracker, or make your own homebrew creature to use in encounters."
       emptyText="Search for a creature to see its stat block."
       renderSearch={(props) => <CreatureSearch {...props} />}
       renderResults={({ onOpen }) => (

@@ -21,6 +21,7 @@ export default function ClassesPage() {
   return (
     <ResourcePage
       noun="class"
+      description="Classes are what a character does: hit dice, proficiencies, and the features gained at each level, with their subclasses."
       emptyText="Search for a class or subclass to see its level table and features."
       renderSearch={(props) => <ResourceSearch noun="class" plural="classes" search={search} secondary={describeResult} {...props} />}
       filters={<ClassFilters filters={filters} onChange={setFilters} />}

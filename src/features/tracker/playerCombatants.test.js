@@ -10,6 +10,7 @@ describe("playerCombatant", () => {
       name: "Thorin",
       ac: 18,
       hp: 52,
+      maxHp: 52,
       reaction: false,
       type: "PC",
       creature: null,

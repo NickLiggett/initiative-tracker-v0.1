@@ -22,6 +22,7 @@ export default function FeatsPage() {
   return (
     <ResourcePage
       noun="feat"
+      description="Feats are special abilities a character can take, often in place of an ability score increase, with the prerequisites for each."
       emptyText="Search for a feat to see what it does."
       renderSearch={(props) => <ResourceSearch noun="feat" search={search} secondary={describeResult} {...props} />}
       filters={<FeatFilters filters={filters} onChange={setFilters} />}

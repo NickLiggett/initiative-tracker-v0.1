@@ -26,9 +26,11 @@ import { parseInitiative, playerCombatant, rollInitiative } from "./playerCombat
  * @param {Set<number>} inFight the ids of the characters already in the order
  * @param {(combatants: object[]) => void} onAdd the combatants to add (without ids)
  * @param {() => void} onClose
+ * @param {(player: object) => void} [onChoose] with it, the picker chooses just one character, without rolling or adding
+ *   (to give an existing row their stats): each character has a Choose button, and `onAdd` isn't used
  * @param {() => number} [random] the dice, for tests
  */
-export default function PlayerPicker({ open, inFight, onAdd, onClose, random = Math.random }) {
+export default function PlayerPicker({ open, inFight, onAdd, onClose, onChoose, random = Math.random }) {
   const [players, setPlayers] = useState(null); // { mine, party }; null until loaded
   const [loadError, setLoadError] = useState(null);
   const [chosen, setChosen] = useState({}); // character id -> the initiative typed, for those ticked
@@ -81,12 +83,14 @@ export default function PlayerPicker({ open, inFight, onAdd, onClose, random = M
     const bad = tried && on && parseInitiative(chosen[player.id]) === null;
     return (
       <Box component="li" key={player.id} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
-        <Checkbox
-          checked={on}
-          disabled={here}
-          onChange={() => toggle(player)}
-          inputProps={{ "aria-label": `Add ${player.name}` }}
-        />
+        {!onChoose && (
+          <Checkbox
+            checked={on}
+            disabled={here}
+            onChange={() => toggle(player)}
+            inputProps={{ "aria-label": `Add ${player.name}` }}
+          />
+        )}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography sx={{ overflowWrap: "anywhere" }}>{player.name}</Typography>
           <Typography variant="caption" color="text.secondary">
@@ -102,6 +106,11 @@ export default function PlayerPicker({ open, inFight, onAdd, onClose, random = M
                   .join(" · ")}
           </Typography>
         </Box>
+        {onChoose && (
+          <Button size="small" disabled={here} aria-label={`Choose ${player.name}`} onClick={() => onChoose(player)}>
+            Choose
+          </Button>
+        )}
         {on && (
           <>
             <TextField
@@ -137,7 +146,7 @@ export default function PlayerPicker({ open, inFight, onAdd, onClose, random = M
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" aria-labelledby="player-picker-title">
-      <DialogTitle id="player-picker-title">Add characters to initiative</DialogTitle>
+      <DialogTitle id="player-picker-title">{onChoose ? "Choose a character" : "Add characters to initiative"}</DialogTitle>
       <DialogContent>
         {loadError && <Alert severity="error">{loadError}</Alert>}
         {!players && !loadError && <CircularProgress aria-label="Loading" />}
@@ -156,14 +165,18 @@ export default function PlayerPicker({ open, inFight, onAdd, onClose, random = M
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={rollAll} disabled={ticked.length === 0}>
-          Roll for all ticked
-        </Button>
+        {!onChoose && (
+          <Button onClick={rollAll} disabled={ticked.length === 0}>
+            Roll for all ticked
+          </Button>
+        )}
         <Box sx={{ flex: 1 }} />
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={add} disabled={!players || all.length === 0}>
-          Add to initiative
-        </Button>
+        {!onChoose && (
+          <Button variant="contained" onClick={add} disabled={!players || all.length === 0}>
+            Add to initiative
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

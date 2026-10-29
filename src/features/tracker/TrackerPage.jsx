@@ -1,16 +1,20 @@
 import { useRef, useState } from "react";
+import { Menu, MenuItem } from "@mui/material";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
 import PlayerPicker from "./PlayerPicker";
 import PlayerSheetDialog from "./PlayerSheetDialog";
+import RowEditDialog from "./RowEditDialog";
+import TrackersDialog from "./TrackersDialog";
+import { useSettings } from "../../settings/SettingsContext";
 import { playerIdsIn } from "./playerCombatants";
 import { buildColumns } from "./trackerColumns";
 import useSavedTracker from "./useSavedTracker";
 import useNextTurnShortcut from "./useNextTurnShortcut";
 import {
-  applyHpInput,
+  editedFields,
   nextTurn,
   previousTurn,
   removeCombatant,
@@ -19,19 +23,26 @@ import {
   updateCombatant,
 } from "./combatants";
 
-const EDITABLE_FIELDS = ["initiative", "name", "ac", "hp"];
+/** How long a finger is held on a row to open its menu, as a right-click does with a mouse. */
+export const LONG_PRESS_MS = 500;
 
 /** The initiative tracker: the turn order as an editable grid, with a form to add combatants. */
 export default function TrackerPage() {
-  const { combatants, setCombatants, nextId, status, notice, retry } = useSavedTracker();
+  const { combatants, setCombatants, name, setName, switchTracker, nextId, status, notice, retry } = useSavedTracker();
   const [shownCreature, setShownCreature] = useState(null);
   const [shownPlayer, setShownPlayer] = useState(null); // the combatant whose character is shown
   const [picking, setPicking] = useState(false);
+  const [showingTrackers, setShowingTrackers] = useState(false);
+  const [rowMenu, setRowMenu] = useState(null); // { id, top, left } of the menu on a row
+  const [editing, setEditing] = useState(null); // the combatant being edited
+  const pressTimer = useRef(null);
+  const { settings } = useSettings();
   const gridRef = useRef(null);
   const apiRef = useGridApiRef();
   useNextTurnShortcut(() => setCombatants(nextTurn));
 
   const columns = buildColumns({
+    hpMode: settings.hpMode,
     combatants,
     onReactionChange: (id, reaction) => setCombatants((current) => updateCombatant(current, id, { reaction })),
     onDelete: (id) => setCombatants((current) => removeCombatant(current, id)),
@@ -71,27 +82,31 @@ export default function TrackerPage() {
    * of the edit, so it also happens when focus leaves the cell (clicking Next turn), and not when Escape cancels it.
    */
   const processRowUpdate = (newRow, oldRow) => {
-    const changes = {};
-    for (const field of EDITABLE_FIELDS) {
-      if (newRow[field] === oldRow[field]) {
-        continue;
-      }
-      const input = newRow[field];
-      let value;
-      if (field === "name") {
-        value = String(input);
-      } else if (field === "hp") {
-        value = applyHpInput(oldRow.hp, input);
-      } else {
-        value = parseInt(input, 10);
-      }
-      if (!Number.isNaN(value)) {
-        changes[field] = value; // an input that isn't a number keeps the old value
-      }
-    }
+    const changes = editedFields(newRow, oldRow, settings.hpMode);
     setCombatants((current) => updateCombatant(current, oldRow.id, changes));
     return { ...oldRow, ...changes };
   };
+
+  /** Opens the menu of the row under a right-click, or a finger held down on it. */
+  const openRowMenu = (id, left, top) => setRowMenu({ id, left, top });
+
+  const rowProps = {
+    onContextMenu: (event) => {
+      event.preventDefault();
+      openRowMenu(Number(event.currentTarget.dataset.id), event.clientX, event.clientY);
+    },
+    onTouchStart: (event) => {
+      const row = event.currentTarget;
+      const { clientX, clientY } = event.touches[0];
+      clearTimeout(pressTimer.current);
+      pressTimer.current = setTimeout(() => openRowMenu(Number(row.dataset.id), clientX, clientY), LONG_PRESS_MS);
+    },
+    // moving the finger is scrolling, and lifting it is a tap: neither is a long press
+    onTouchMove: () => clearTimeout(pressTimer.current),
+    onTouchEnd: () => clearTimeout(pressTimer.current),
+    onTouchCancel: () => clearTimeout(pressTimer.current),
+  };
+  const menuRow = rowMenu && combatants.find((combatant) => combatant.id === rowMenu.id);
 
   /** Selects the text of the cell being edited, so typing replaces it. */
   const selectEditedInput = () => {
@@ -112,11 +127,14 @@ export default function TrackerPage() {
         loading={status === "loading"}
         slots={{ toolbar: GridToolbar, footer: GridFooter }}
         slotProps={{
+          row: rowProps,
           toolbar: {
             onPrevious: committing(() => setCombatants(previousTurn)),
             onNext: committing(() => setCombatants(nextTurn)),
             onRevealAll: committing(() => setCombatants((current) => setAllRevealed(current, true))),
             onHideAll: committing(() => setCombatants((current) => setAllRevealed(current, false))),
+            trackerName: name,
+            onOpenTrackers: committing(() => setShowingTrackers(true)),
             saveStatus: status,
             notice,
             onRetry: retry,
@@ -133,6 +151,47 @@ export default function TrackerPage() {
         processRowUpdate={processRowUpdate}
         disableColumnMenu
         sx={{ border: "1px solid" }}
+      />
+      <Menu
+        open={Boolean(menuRow)}
+        onClose={() => setRowMenu(null)}
+        anchorReference="anchorPosition"
+        anchorPosition={rowMenu ? { top: rowMenu.top, left: rowMenu.left } : undefined}
+      >
+        <MenuItem
+          onClick={() => {
+            setEditing(menuRow);
+            setRowMenu(null);
+          }}
+        >
+          Edit
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCombatants((current) => removeCombatant(current, menuRow.id));
+            setRowMenu(null);
+          }}
+        >
+          Delete
+        </MenuItem>
+      </Menu>
+      {editing && (
+        <RowEditDialog
+          combatant={editing}
+          inFight={playerIdsIn(combatants)}
+          onSave={(changes) => {
+            setCombatants((current) => updateCombatant(current, editing.id, changes));
+            setEditing(null);
+          }}
+          onClose={() => setEditing(null)}
+        />
+      )}
+      <TrackersDialog
+        open={showingTrackers}
+        name={name}
+        onRename={setName}
+        onSwitch={switchTracker}
+        onClose={() => setShowingTrackers(false)}
       />
       <PlayerPicker open={picking} inFight={playerIdsIn(combatants)} onAdd={addPlayers} onClose={() => setPicking(false)} />
       {shownPlayer && (

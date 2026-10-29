@@ -18,6 +18,7 @@ export function monsterCombatants(monsters, { separately = false, random = Math.
       name: count > 1 ? `${creature.name} ${index + 1}` : creature.name,
       ac: creature.armorClass ?? "",
       hp: creature.hitPoints ?? "",
+      maxHp: creature.hitPoints ?? undefined,
       reaction: false,
       type: "Creature",
       creature,

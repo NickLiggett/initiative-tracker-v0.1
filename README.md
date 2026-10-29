@@ -106,6 +106,20 @@ which ends the provider's session too.
   key and its stat block is looked up again on load; one that can't be found is mentioned, and the combatant is kept. If
   the saved tracker can't be loaded, nothing is saved over it. (The legendary action checkboxes are not part of what is
   saved yet.)
+- **Changing a row.** Right-click a row (or hold a finger on it) for **Edit** and **Delete**. Edit opens a form for
+  everything about the row: its name, type, initiative, AC, HP and maximum HP, the legendary actions and Legendary
+  Resistance uses it has (blank is its creature's own), and whether the players see its AC and HP. **Make it a
+  character** takes a character's name, AC and HP (and makes the row theirs) but keeps the row's initiative. Nothing
+  changes until Save.
+- **Counting HP.** HP shows as left/most (20/20). In **Settings > Tracker** you choose **Count down** (the default) or
+  **Count up**, where it starts at 0/20 and damage takes it up. Typing +5 or -7 in the HP column adds or takes away
+  that much of the number shown, whichever way it counts. A combatant added before the maximum was kept shows just
+  its number.
+- **Several trackers.** The button at the top of the grid (the tracker's name) opens **Trackers**: name the tracker in
+  use, **Start new** (the one in use is put away under its name), or **Open** one put away (the one in use is put away
+  instead), exactly as it was left, with its turn, hit points and who the players see. Switching saves first, and
+  stops if it couldn't. Saved trackers are on the account (`/api/me/trackers`), up to 50, and can be deleted. They are
+  separate from **Encounters**, which are recipes (which creatures and characters) rather than a fight in progress.
 
 ### Creatures
 
@@ -248,13 +262,16 @@ once. An invitation is for that one address, not a link to pass around, and expi
 backend with invitations and sign-in (`email_verified` in the token), so the `dev` profile can send invitations but
 never accept them.
 
-### Party Tracker
+### Player View
 
-For the people in a DM's party: **Party Tracker** in the drawer shows the initiative tracker of each DM whose party you
+For the people in a DM's party: **Player View** in the drawer shows the initiative tracker of each DM whose party you
 have joined and whose fight one of your characters is in, one table for each DM. It is for watching only. The first row
 is whose turn it is ("Up now"), your own characters are marked "Yours", and it updates by itself every few seconds
 (not while the tab is hidden). A monster's AC and HP show as **?** until the DM reveals them (see the tracker above); the
 creature a row is, and the DM's notes, are never sent. If none of your characters is in a fight, it says so.
+A DM can have several trackers (see above), and your characters can be in more than one, across DMs or across one DM's
+groups. When they are, a **Tracker** list lets you pick which to watch: the DM's live one, or one they have put away
+(marked "Saved, not live", and it doesn't change).
 
 ### Characters
 

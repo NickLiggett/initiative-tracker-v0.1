@@ -7,6 +7,7 @@ export function playerCombatant(player, initiative) {
     name: player.name,
     ac: player.armorClass ?? "",
     hp: player.hitPoints ?? "",
+    maxHp: player.hitPoints ?? undefined,
     reaction: false,
     type: "PC",
     creature: null,

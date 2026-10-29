@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = {
   mode: "light",
   primary: "#1976d2",
   secondary: "#ab47bc", // MUI purple 400: clear enough to see against both the light and the dark page
+  hpMode: "down", // how the initiative tracker counts hit points: "down" from the most, or "up" from none
   avatarVersion: null, // when the avatar picture on the account was saved; null for none
 };
 
@@ -30,9 +31,9 @@ export const COLOR_PRESETS = [
 ];
 
 /** The settings that are kept as chosen, as opposed to `avatarVersion`, which the account works out. */
-export const CHOSEN = ["mode", "primary", "secondary"];
+export const CHOSEN = ["mode", "primary", "secondary", "hpMode"];
 
-/** Whether the colors and mode are the defaults. */
+/** Whether the colors, mode and the rest of what is chosen are the defaults. */
 export function isDefaultLook(settings) {
   return CHOSEN.every((name) => settings[name] === DEFAULT_SETTINGS[name]);
 }
@@ -45,6 +46,7 @@ export function sanitizeSettings(raw) {
     mode: MODES.some(({ value }) => value === settings.mode) ? settings.mode : DEFAULT_SETTINGS.mode,
     primary: normalizeHex(settings.primary) ?? DEFAULT_SETTINGS.primary,
     secondary: normalizeHex(settings.secondary) ?? DEFAULT_SETTINGS.secondary,
+    hpMode: settings.hpMode === "up" ? "up" : DEFAULT_SETTINGS.hpMode,
     avatarVersion: Number.isFinite(version) && version >= 0 ? Math.trunc(version) : null,
   };
 }

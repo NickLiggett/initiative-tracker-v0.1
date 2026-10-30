@@ -9,9 +9,12 @@ export const SYNC_DELAY_MS = 800;
 /** How often the characters in the order are looked at, for changes made on their sheets, while the page is in view. */
 export const LOOK_MS = 10000;
 
+/** The conditions of a list, as one text to compare: the same ones in any order are the same. */
+export const conditionsKey = (conditions) => [...(Array.isArray(conditions) ? conditions : [])].sort().join(",");
+
 /**
- * The changes to send for a row whose hit points or temporary hit points moved, or null if neither did. Hit points are
- * kept from 0 to the maximum, which is all a character can have.
+ * The changes to send for a row whose hit points, temporary hit points or conditions moved, or null if none did. Hit
+ * points are kept from 0 to the maximum, which is all a character can have.
  */
 export function hpChanges(combatant, known) {
   const changes = {};
@@ -22,6 +25,9 @@ export function hpChanges(combatant, known) {
   const tempHp = Number.isFinite(combatant.tempHp) ? Math.max(0, combatant.tempHp) : 0;
   if (tempHp !== known.tempHp) {
     changes.tempHp = tempHp;
+  }
+  if (conditionsKey(combatant.conditions) !== (known.conditions ?? "")) {
+    changes.conditions = [...(combatant.conditions ?? [])];
   }
   return Object.keys(changes).length ? changes : null;
 }
@@ -46,11 +52,14 @@ export function remoteChanges(combatant, known, player) {
   if (remoteTemp !== known.tempHp && rowTemp === known.tempHp) {
     changes.tempHp = remoteTemp;
   }
+  if (Array.isArray(vitals.conditions) && conditionsKey(vitals.conditions) !== (known.conditions ?? "") && conditionsKey(combatant.conditions) === (known.conditions ?? "")) {
+    changes.conditions = [...vitals.conditions];
+  }
   return Object.keys(changes).length ? changes : null;
 }
 
 /**
- * Keeps the character's own hit points and the tracker's in step, both ways.
+ * Keeps the character's own hit points, temporary hit points and conditions and the tracker's in step, both ways.
  *
  * To the character: when the hit points or temporary hit points of a row that is a character change, a moment later the
  * character is told. Rows are only written when they change after the tracker has loaded, never as it loads. A write that
@@ -97,7 +106,7 @@ export default function useCharacterHpSync(
       present.add(combatant.id);
       const seen = known.current.get(combatant.id);
       if (!seen) {
-        known.current.set(combatant.id, { hp: Number.isFinite(combatant.hp) ? combatant.hp : null, tempHp: combatant.tempHp > 0 ? combatant.tempHp : 0 });
+        known.current.set(combatant.id, { hp: Number.isFinite(combatant.hp) ? combatant.hp : null, tempHp: combatant.tempHp > 0 ? combatant.tempHp : 0, conditions: conditionsKey(combatant.conditions) });
         continue;
       }
       const changes = hpChanges(combatant, seen);
@@ -110,7 +119,7 @@ export default function useCharacterHpSync(
         combatant.id,
         setTimeout(() => {
           timers.current.delete(combatant.id);
-          known.current.set(combatant.id, { hp: changes.currentHp ?? seen.hp, tempHp: changes.tempHp ?? seen.tempHp });
+          known.current.set(combatant.id, { hp: changes.currentHp ?? seen.hp, tempHp: changes.tempHp ?? seen.tempHp, conditions: changes.conditions ? conditionsKey(changes.conditions) : seen.conditions });
           inFlight.current.add(combatant.id);
           Promise.resolve(send(combatant.playerId, changes))
             .catch(() => {})
@@ -156,7 +165,7 @@ export default function useCharacterHpSync(
           }
           const changes = remoteChanges(row, seen, players.get(row.playerId));
           if (changes) {
-            known.current.set(row.id, { hp: changes.hp ?? seen.hp, tempHp: changes.tempHp ?? seen.tempHp });
+            known.current.set(row.id, { hp: changes.hp ?? seen.hp, tempHp: changes.tempHp ?? seen.tempHp, conditions: changes.conditions ? conditionsKey(changes.conditions) : seen.conditions });
             updates.push([row.id, changes]);
           }
         }

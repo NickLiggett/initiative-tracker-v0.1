@@ -73,3 +73,30 @@ describe("hiding a field from the players", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
+
+describe("the conditions column", () => {
+  const goblin = { id: 3, name: "Goblin", type: "Creature", ac: 15, hp: 7, conditions: ["Prone", "Poisoned"] };
+
+  it("shows a row's conditions as chips, and opens the choice when it is clicked", () => {
+    const onEditConditions = vi.fn();
+    const columns = buildColumns(handlers({ onEditConditions, visible: ["initiative", "name", "conditions"] }));
+
+    render(cell(columns, "conditions", goblin));
+    fireEvent.click(screen.getByRole("button", { name: "Conditions of Goblin: Prone, Poisoned" }));
+
+    expect(screen.getByText("Prone")).toBeInTheDocument();
+    expect(screen.getByText("Poisoned")).toBeInTheDocument();
+    expect(onEditConditions).toHaveBeenCalledWith(goblin);
+  });
+
+  it("says none for a row with no conditions, and still opens the choice", () => {
+    const onEditConditions = vi.fn();
+    const columns = buildColumns(handlers({ onEditConditions, visible: ["initiative", "name", "conditions"] }));
+
+    render(cell(columns, "conditions", { ...goblin, conditions: undefined }));
+    fireEvent.click(screen.getByRole("button", { name: "Conditions of Goblin: none" }));
+
+    expect(screen.getByText("None")).toBeInTheDocument();
+    expect(onEditConditions).toHaveBeenCalled();
+  });
+});

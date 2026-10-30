@@ -9,6 +9,7 @@ export const TRACKER_COLUMNS = [
   { id: "tempHp", label: "Temp HP" },
   { id: "damageTaken", label: "Damage taken" },
   { id: "reaction", label: "Reaction" },
+  { id: "conditions", label: "Conditions" },
   { id: "legendaryOptions", label: "Legendary options" },
   { id: "note1", label: "Notes", note: 0 },
   { id: "note2", label: "Notes 2", note: 1 },

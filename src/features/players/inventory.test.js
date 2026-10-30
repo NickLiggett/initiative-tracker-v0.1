@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { inventoryProblems, newLine, summarize, toInventoryDraft, toInventoryRequest } from "./inventory";
 
 const stored = {
+  platinum: 2,
   gold: 15,
   silver: 0,
   copper: 7,
@@ -15,9 +16,10 @@ describe("toInventoryDraft and toInventoryRequest", () => {
   it("keep what was stored, as text while editing", () => {
     const draft = toInventoryDraft(stored);
 
-    expect(draft).toMatchObject({ gold: "15", silver: "0", copper: "7" });
+    expect(draft).toMatchObject({ platinum: "2", gold: "15", silver: "0", copper: "7" });
     expect(draft.items[0]).toMatchObject({ itemKey: "srd_rope", quantity: "2", notes: "" });
     expect(toInventoryRequest(draft)).toEqual({
+      platinum: 2,
       gold: 15,
       silver: 0,
       copper: 7,
@@ -50,6 +52,7 @@ describe("inventoryProblems", () => {
   });
 
   it("keeps coins to whole numbers, 0 or more", () => {
+    expect(inventoryProblems({ ...ok(), platinum: "x" })).toEqual(["Platinum must be 0 to 9999999."]);
     expect(inventoryProblems({ ...ok(), gold: "-1" })).toEqual(["Gold must be 0 to 9999999."]);
     expect(inventoryProblems({ ...ok(), silver: "" })).toEqual(["Silver must be 0 to 9999999."]);
     expect(inventoryProblems({ ...ok(), copper: "2.5" })).toEqual(["Copper must be 0 to 9999999."]);

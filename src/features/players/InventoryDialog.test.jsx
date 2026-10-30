@@ -7,6 +7,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 const player = { id: 7, name: "Thorin" };
 const bag = {
+  platinum: 2,
   gold: 15,
   silver: 3,
   copper: 7,
@@ -35,6 +36,7 @@ describe("the inventory dialog", () => {
   it("shows the coins and the lines the backend has", async () => {
     await open();
 
+    expect(field("Platinum (pp)")).toHaveValue("2");
     expect(field("Gold (gp)")).toHaveValue("15");
     expect(field("Silver (sp)")).toHaveValue("3");
     expect(field("Copper (cp)")).toHaveValue("7");
@@ -46,6 +48,7 @@ describe("the inventory dialog", () => {
   it("saves changed coins, a changed quantity and a line typed by hand", async () => {
     const { fetchMock, onClose } = await open();
 
+    type("Platinum (pp)", "5");
     type("Gold (gp)", "20");
     type("Quantity of line 1", "3");
     type("Add an item", "Grandfather's locket");
@@ -56,6 +59,7 @@ describe("the inventory dialog", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(bodiesSentTo(fetchMock, "PUT /api/players/7/inventory")).toEqual([
       {
+        platinum: 5,
         gold: 20,
         silver: 3,
         copper: 7,

@@ -13,6 +13,7 @@ let lastId = 0;
 const lineId = () => ++lastId;
 
 export const COINS = [
+  { field: "platinum", label: "Platinum (pp)" },
   { field: "gold", label: "Gold (gp)" },
   { field: "silver", label: "Silver (sp)" },
   { field: "copper", label: "Copper (cp)" },
@@ -36,6 +37,7 @@ export function newLine(item) {
 /** The draft for what the backend gave. */
 export function toInventoryDraft(inventory) {
   return {
+    platinum: String(inventory.platinum ?? 0),
     gold: String(inventory.gold ?? 0),
     silver: String(inventory.silver ?? 0),
     copper: String(inventory.copper ?? 0),
@@ -86,6 +88,7 @@ export function inventoryProblems(draft) {
 /** The body to send the backend. Call it only when `inventoryProblems` is empty. */
 export function toInventoryRequest(draft) {
   return {
+    platinum: whole(draft.platinum),
     gold: whole(draft.gold),
     silver: whole(draft.silver),
     copper: whole(draft.copper),

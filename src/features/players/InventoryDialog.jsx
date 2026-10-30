@@ -138,7 +138,7 @@ export default function InventoryDialog({ player, readOnly = false, onClose }) {
         {!draft && !loadError && <CircularProgress aria-label="Loading" />}
         {draft && (
           <>
-            <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(3, minmax(0, 1fr))", pt: 1 }}>
+            <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", pt: 1 }}>
               {COINS.map(({ field, label }) => (
                 <TextField
                   key={field}

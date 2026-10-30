@@ -81,6 +81,75 @@ describe("the sheet editor", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
   });
 
+  it("types the spell slots, pact slots and hit dice, and the casting ability", async () => {
+    const { fetchMock, onSaved } = open();
+
+    fireEvent.change(screen.getByLabelText("Level 1 slots"), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText("Pact slots"), { target: { value: "2" } });
+    fireEvent.change(screen.getByLabelText("Pact slot level"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add hit dice" }));
+    fireEvent.mouseDown(screen.getByLabelText("Size of hit dice 1"));
+    fireEvent.click(await screen.findByRole("option", { name: "d10" }));
+    fireEvent.change(screen.getByLabelText("How many hit dice 1"), { target: { value: "13" } });
+    fireEvent.mouseDown(screen.getByLabelText("Spellcasting ability"));
+    fireEvent.click(await screen.findByRole("option", { name: "Wisdom" }));
+    save();
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    const sent = bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet;
+    expect(sent).toMatchObject({
+      spellcasting: { ability: "wis" },
+      slots: { 1: { max: 4, used: 0 } },
+      pact: { max: 2, used: 0, level: 2 },
+      hitDice: [{ die: "d10", max: 13, used: 0 }],
+    });
+  });
+
+  it("adds a spell found in the lists with what it says about itself, and one typed by hand", async () => {
+    const fireball = { key: "srd_fireball", name: "Fireball", level: 3, school: { name: "Evocation" }, castingTime: "action", range: 150, rangeUnit: "ft", duration: "instantaneous", document: { displayName: "SRD" } };
+    const fetchMock = stubApi({
+      "PUT /api/players/7/sheet": (body) => ({ ...player, version: 4, sheet: body.sheet }),
+      "GET /api/spells": { content: [fireball], page: { number: 0, size: 15, totalElements: 1, totalPages: 1 } },
+      "GET /api/documents": { content: [] },
+    });
+    const onSaved = vi.fn();
+    render(<SheetEditor player={player} onSaved={onSaved} onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText("Add a spell"), { target: { value: "fireb" } });
+    fireEvent.click(await screen.findByRole("option", { name: /Fireball/ }));
+    fireEvent.change(screen.getByLabelText("Add a spell"), { target: { value: "Homebrew Hex" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add as written" }));
+    save();
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    const spells = bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet.spells;
+    expect(spells[0]).toMatchObject({ name: "Fireball", key: "srd_fireball", level: 3, school: "Evocation", castingTime: "1 action", range: "150 feet", source: "SRD" });
+    expect(spells[1]).toEqual({ name: "Homebrew Hex", level: 1 });
+  });
+
+  it("adds an adjustment to a saving throw with a note, and sends it", async () => {
+    const { fetchMock, onSaved } = open();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add an adjustment" }));
+    fireEvent.mouseDown(screen.getByLabelText("Adjusts, 1"));
+    fireEvent.click(await screen.findByRole("option", { name: "Saving throws: Dexterity saving throw" }));
+    fireEvent.change(screen.getByLabelText("Bonus, 1"), { target: { value: "+1" } });
+    fireEvent.change(screen.getByLabelText("Note, 1"), { target: { value: "Cloak of Protection" } });
+    save();
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet.adjustments).toEqual({ "save.dex": { bonus: 1, note: "Cloak of Protection" } });
+  });
+
+  it("will not save an adjustment with nothing chosen", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Add an adjustment" }));
+    fireEvent.change(screen.getByLabelText("Bonus, 1"), { target: { value: "2" } });
+
+    expect(screen.getByText("Choose what each adjustment is for, or remove it.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
   it("marks a skill as proficient or expertise", async () => {
     const { fetchMock, onSaved } = open();
 
@@ -150,6 +219,15 @@ describe("the sheet's fields", () => {
     expect(screen.getByRole("list", { name: "Resistances" })).toHaveTextContent("necrotic");
     expect(screen.getByText("Alignment: Chaotic Good")).toBeInTheDocument();
     expect(screen.getByText("Long ago...")).toBeInTheDocument();
+  });
+
+  it("includes what was adjusted by hand in the number, and says so beside it", () => {
+    render(<SheetFields sheet={{ ...sheet, adjustments: { "save.dex": { bonus: 1, note: "Cloak of Protection" }, "skill.religion": { note: "Advantage" } } }} level={14} />);
+
+    const saves = within(screen.getByRole("region", { name: "Saving throws" }));
+    expect(saves.getByText("Dexterity").closest("div")).toHaveTextContent("+11");
+    expect(saves.getByLabelText("Adjusted: +1 Cloak of Protection")).toBeInTheDocument();
+    expect(screen.getByLabelText("Adjusted: Advantage")).toBeInTheDocument();
   });
 
   it("shows nothing for a sheet that is empty", () => {

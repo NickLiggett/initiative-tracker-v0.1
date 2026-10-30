@@ -119,6 +119,50 @@ describe("the character sheet", () => {
     expect(screen.getByRole("button", { name: "Take back a use of Blood Maledict" })).toHaveAttribute("aria-disabled", "true");
   });
 
+  it("shows spell slots, pact slots and hit dice, spends them with a tap and refills them on a rest", async () => {
+    const withCasting = {
+      ...thorin,
+      level: 14,
+      version: 2,
+      sheet: {
+        abilities: { wis: 16 },
+        spellcasting: { ability: "wis" },
+        slots: { 1: { max: 2, used: 0 } },
+        pact: { max: 2, used: 0, level: 2 },
+        hitDice: [{ die: "d10", max: 4, used: 0 }],
+        spells: [{ name: "Misty Step", level: 2, school: "Conjuration", prepared: false }, { name: "Light", level: 0 }],
+      },
+    };
+    let saved = withCasting;
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...saved, version: saved.version + 1, sheet: body.sheet }),
+    });
+    render(<SheetPage playerId={7} />);
+
+    expect(await screen.findByText("Wisdom: spell save DC 16, spell attack +8")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "2nd level" })).toHaveTextContent("Misty Step");
+    expect(screen.getByRole("region", { name: "Cantrip" })).toHaveTextContent("Light");
+    expect(screen.getByRole("button", { name: "Short rest" })).toBeDisabled(); // nothing spent yet
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Spend Level 1 slot" })[0]);
+    await waitFor(() => expect(screen.getByText("1 of 2")).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole("button", { name: "Spend Pact slot" })[0]);
+    await waitFor(() => expect(screen.getAllByText("1 of 2")).toHaveLength(2));
+    fireEvent.click(screen.getAllByRole("button", { name: "Spend d10 hit dice" })[0]);
+    await waitFor(() => expect(screen.getByText("3 of 4")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Prepare Misty Step" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Unprepare Misty Step" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Short rest" })); // only the pact slots come back
+    await waitFor(() => expect(saved.sheet.pact.used).toBe(0));
+    expect(saved.sheet.slots[1].used).toBe(1);
+    fireEvent.click(screen.getByRole("button", { name: "Long rest" }));
+    await waitFor(() => expect(saved.sheet.slots[1].used).toBe(0));
+    expect(saved.sheet.hitDice[0].used).toBe(0); // half of 4 is 2 and only 1 was spent
+    expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet").map((sent) => sent.version)).toEqual([2, 3, 4, 5, 6, 7]);
+  });
+
   it("says why when it can't be opened", async () => {
     stubApi({ "GET /api/players/7": new Response(JSON.stringify({ detail: "No player 7" }), { status: 404 }) });
     render(<SheetPage playerId={7} />);

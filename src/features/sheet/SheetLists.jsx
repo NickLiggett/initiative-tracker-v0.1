@@ -1,15 +1,14 @@
-import { Box, Button, Chip, Paper, Typography } from "@mui/material";
-import { RESTS, restWouldHelp, spendUse, takeRest, usesLeft } from "./sheetEntries";
+import { Box, Chip, Paper, Typography } from "@mui/material";
+import { spendUse, usesLeft } from "./sheetEntries";
 
 /** A titled box of the sheet. */
-function Section({ title, actions, children }) {
+function Section({ title, children }) {
   return (
     <Paper variant="outlined" component="section" aria-label={title} sx={{ p: 2, display: "grid", gap: 1.5, alignContent: "start" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
         <Typography variant="subtitle2" component="h2" sx={{ flex: 1 }}>
           {title}
         </Typography>
-        {actions}
       </Box>
       {children}
     </Paper>
@@ -53,7 +52,6 @@ export default function SheetLists({ sheet, onChange }) {
   if (!attacks.length && !features.length) {
     return null;
   }
-  const limited = features.some((feature) => feature.uses);
 
   return (
     <>
@@ -83,18 +81,7 @@ export default function SheetLists({ sheet, onChange }) {
       )}
 
       {features.length > 0 && (
-        <Section
-          title="Features and traits"
-          actions={
-            limited &&
-            onChange &&
-            RESTS.map(({ key, label }) => (
-              <Button key={key} size="small" variant="outlined" disabled={!restWouldHelp(sheet, key)} onClick={() => onChange(takeRest(sheet, key))}>
-                {label}
-              </Button>
-            ))
-          }
-        >
+        <Section title="Features and traits">
           {features.map((feature, index) => (
             <Box key={index} sx={{ display: "grid", gap: 0.5 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>

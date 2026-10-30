@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { Autocomplete, Box, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, IconButton, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Add, Close } from "@mui/icons-material";
 import { createPlayer, updatePlayer } from "../../api/players";
 import { listClasses, listSpecies } from "../../api/reference";
 import EditorShell from "../../components/resource/EditorShell";
 import FormSection from "../../components/resource/FormSection";
+import { useSettings } from "../../settings/SettingsContext";
 import { sharingErrorMessage } from "../sharing/sharing";
 import PlayerCard from "./PlayerCard";
-import { EMPTY_DRAFT, draftProblems, previewOf, toDraft, toRequest } from "./playerDraft";
+import { EMPTY_DRAFT, draftProblems, previewOf, toDraft, toRequest, totalLevel } from "./playerDraft";
 import { RULESETS, optionNamed, optionsFor } from "./players";
 
 /**
- * Makes a new character or changes one. Class and species are offered for the chosen rules, and anything else
- * can be typed. Someone who only plays the character can change its numbers and notes, and nothing else.
+ * Makes a new character or changes one. A character can have several classes, each with its own level. Classes and
+ * species are offered from every source the user can see, those of the chosen rules first, and anything else can be
+ * typed. Someone who only plays the character can change its levels, numbers and notes, and nothing else.
  *
  * @param {?object} player the one to change, or null for a new one
  * @param {object} [start] the draft to begin with, for a copy; otherwise empty, or the character's
@@ -24,6 +27,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
   const [species, setSpecies] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const { username } = useSettings();
 
   const limited = Boolean(player) && player.role !== "OWNER"; // only plays it
   const classOptions = useMemo(() => optionsFor(classes, draft.ruleset), [classes, draft.ruleset]);
@@ -44,10 +48,15 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
   /** Typing or picking a name forgets the key it had; the key is found again when saving (see `save`). */
   const changeName = (nameField, keyField) => (value) => change({ [nameField]: value, [keyField]: null });
 
+  const changeClass = (index, changes) =>
+    setDraft((current) => ({ ...current, classes: current.classes.map((row, at) => (at === index ? { ...row, ...changes } : row)) }));
+  const addClass = () => change({ classes: [...draft.classes, { key: null, name: "", level: "1" }] });
+  const removeClass = (index) => change({ classes: draft.classes.filter((row, at) => at !== index) });
+
   const changeRuleset = (ruleset) => {
     if (ruleset && ruleset !== draft.ruleset) {
       // The same name can be another resource under other rules (the 2024 Fighter), so the keys are found again.
-      change({ ruleset, classKey: null, speciesKey: null });
+      change({ ruleset, classes: draft.classes.map((row) => ({ ...row, key: null })), speciesKey: null });
     }
   };
 
@@ -59,7 +68,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
       // (looked up now, so that it doesn't matter whether the lists had loaded when the name was typed).
       const request = toRequest({
         ...draft,
-        classKey: draft.classKey ?? optionNamed(classOptions, draft.className)?.key ?? null,
+        classes: draft.classes.map((row) => ({ ...row, key: row.key ?? optionNamed(classOptions, row.name)?.key ?? null })),
         speciesKey: draft.speciesKey ?? optionNamed(speciesOptions, draft.speciesName)?.key ?? null,
       });
       onSaved(player ? await updatePlayer(player.id, request) : await createPlayer(request));
@@ -69,17 +78,29 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
     }
   };
 
-  const nameFields = (nameField, keyField, options, label) => (
+  /** A name to type or pick from `options` (grouped by where they come from); `onName` is told what it is now. */
+  const nameField = (label, value, onName, options) => (
     <Autocomplete
       freeSolo
       size="small"
       disabled={limited}
-      options={options.map((option) => option.name)}
-      inputValue={draft[nameField]}
-      onInputChange={(event, value) => value !== draft[nameField] && changeName(nameField, keyField)(value)}
+      options={options}
+      groupBy={(option) => option.group}
+      getOptionLabel={(option) => (typeof option === "string" ? option : option.name)}
+      renderOption={(props, option) => (
+        <li {...props} key={option.key}>
+          {option.name}
+        </li>
+      )}
+      inputValue={value}
+      onInputChange={(event, next) => next !== value && onName(next)}
       renderInput={(params) => <TextField {...params} label={label} />}
+      sx={{ flex: 1 }}
     />
   );
+
+  const several = draft.classes.length > 1;
+  const total = totalLevel(draft);
 
   return (
     <EditorShell
@@ -117,13 +138,44 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
                 ))}
               </ToggleButtonGroup>
             </Box>
-            {nameFields("className", "classKey", classOptions, "Class")}
-            {nameFields("speciesName", "speciesKey", speciesOptions, "Species")}
+            {nameField("Species", draft.speciesName, changeName("speciesName", "speciesKey"), speciesOptions)}
+          </FormSection>
+
+          <FormSection title="Class and level">
+            {draft.classes.map((row, index) => (
+              <Box key={index} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                {nameField(index === 0 ? "Class" : `Class ${index + 1}`, row.name, (name) => changeClass(index, { name, key: null }), classOptions)}
+                <TextField
+                  size="small"
+                  label={index === 0 ? "Level" : `Level ${index + 1}`}
+                  value={row.level}
+                  onChange={(event) => changeClass(index, { level: event.target.value })}
+                  inputProps={{ inputMode: "numeric" }}
+                  sx={{ width: 90 }}
+                />
+                {several && !limited && (
+                  <IconButton aria-label={`Remove class ${index + 1}`} size="small" onClick={() => removeClass(index)} sx={{ mt: 0.5 }}>
+                    <Close fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+            {!limited && (
+              <Box>
+                <Button size="small" startIcon={<Add />} onClick={addClass}>
+                  Add a class
+                </Button>
+              </Box>
+            )}
+            {several && !Number.isNaN(total) && (
+              <Typography variant="body2" color="text.secondary">
+                Level {total} in all.
+              </Typography>
+            )}
           </FormSection>
 
           <FormSection title="Numbers">
             <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))" }}>
-              <TextField size="small" label="Level" value={draft.level} onChange={text("level")} inputProps={{ inputMode: "numeric" }} />
               <TextField size="small" label="Armor class" value={draft.armorClass} onChange={text("armorClass")} inputProps={{ inputMode: "numeric" }} />
               <TextField size="small" label="Hit points" value={draft.hitPoints} onChange={text("hitPoints")} inputProps={{ inputMode: "numeric" }} />
               <TextField size="small" label="Initiative bonus" value={draft.initiativeBonus} onChange={text("initiativeBonus")} inputProps={{ inputMode: "numeric" }} />
@@ -140,6 +192,13 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
               onChange={text("playedBy")}
               helperText="Optional. The person who plays this character needs to have signed in to the app once. They'll see it and can keep its numbers up to date."
             />
+            {username && !limited && draft.playedBy.trim().replace(/^@+/, "").toLowerCase() !== username && (
+              <Box>
+                <Button size="small" onClick={() => change({ playedBy: username })}>
+                  I play this character
+                </Button>
+              </Box>
+            )}
           </FormSection>
         </Box>
       }

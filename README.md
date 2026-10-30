@@ -303,10 +303,14 @@ Your characters, kept on your account. Each card shows the character's name, lev
 they use (**2014** or **2024**), armor class, hit points, initiative bonus, notes, and who made or plays them.
 
 - **New character** opens the editor with a live preview. Choose the rules first: the class and species lists then offer
-  that rule set's (the 2024 Fighter and the 2014 Fighter are different entries). Anything not in the list can be typed.
-- **Played by** names a friend with an account. They see the character on their own Characters page (marked "You play this
-  one") and can keep its level, armor class, hit points, initiative bonus and notes up to date; the name, rules, class,
-  species and who plays it stay with whoever made it. The friend needs to have signed in once.
+  that rule set's first, then the other rule set's, then everything else you can see (homebrew, other game systems), in
+  groups (the 2024 Fighter and the 2014 Fighter are different entries). Anything not in the list can be typed.
+- **Multiclassing.** **Add a class** gives the character another class with its own level. The character's level is the
+  levels added up (20 at most), and the card reads "Level 5 Fighter 3 / Wizard 2".
+- **Played by** names a friend with an account, or you: **I play this character** fills in your own username. They see the
+  character on their own Characters page (marked "You play this one") and can keep its levels, armor class, hit points,
+  initiative bonus and notes up to date; the name, rules, which classes, species and who plays it stay with whoever made
+  it. The friend needs to have signed in once.
 - **Duplicate** starts a new character like an existing one, named "(copy)" and played by nobody. **Delete** is only for
   the character's maker.
 

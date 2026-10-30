@@ -42,19 +42,29 @@ export async function listWeaponProperties({ signal } = {}) {
   return page.content;
 }
 
+/** Every one in a collection, by name, fetched a page at a time so that no one request is big. */
+async function listAll(path, filters, signal) {
+  const items = [];
+  for (let page = 0; ; page++) {
+    const result = await apiGet(path, { ...filters, page, pageSize: 100, sort: "name" }, { signal });
+    items.push(...result.content);
+    if (page + 1 >= (result.page?.totalPages ?? 1)) {
+      return items;
+    }
+  }
+}
+
 /**
  * The base classes (Fighter, Wizard, ...) of every rule set, by name; subclasses are left out. Each says which game
  * system it belongs to in `document.gamesystem.key`. @returns {Promise<object[]>}
  */
-export async function listClasses({ signal } = {}) {
-  const page = await apiGet("/api/classes", { subclass: false, pageSize: 500, sort: "name" }, { signal });
-  return page.content;
+export function listClasses({ signal } = {}) {
+  return listAll("/api/classes", { subclass: false }, signal);
 }
 
-/** The species (Dwarf, Hill Dwarf, ...) of every rule set, by name. @returns {Promise<object[]>} */
-export async function listSpecies({ signal } = {}) {
-  const page = await apiGet("/api/species", { pageSize: 500, sort: "name" }, { signal });
-  return page.content;
+/** The species (Dwarf, Hill Dwarf, ...) of every rule set and source the user can see, by name. @returns {Promise<object[]>} */
+export function listSpecies({ signal } = {}) {
+  return listAll("/api/species", {}, signal);
 }
 
 /** The schools of magic (Abjuration, Conjuration, ...), by name. @returns {Promise<object[]>} */

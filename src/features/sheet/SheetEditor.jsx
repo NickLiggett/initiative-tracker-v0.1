@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { saveSheet } from "../../api/players";
+import { MAX_USES, RESTS } from "./sheetEntries";
 import {
   ABILITIES,
   DEFENSE_LISTS,
@@ -66,6 +67,10 @@ export default function SheetEditor({ player, onSaved, onClose }) {
   const problems = sheetProblems(draft);
 
   const set = (group, key, value) => setDraft((current) => ({ ...current, [group]: { ...current[group], [key]: value } }));
+  const setRow = (list, index, field, value) =>
+    setDraft((current) => ({ ...current, [list]: current[list].map((row, at) => (at === index ? { ...row, [field]: value } : row)) }));
+  const addRow = (list, row) => setDraft((current) => ({ ...current, [list]: [...current[list], row] }));
+  const removeRow = (list, index) => setDraft((current) => ({ ...current, [list]: current[list].filter((row, at) => at !== index) }));
   const setSave = (key, on) =>
     setDraft((current) => ({ ...current, saves: on ? [...current.saves, key] : current.saves.filter((one) => one !== key) }));
 
@@ -154,6 +159,43 @@ export default function SheetEditor({ player, onSaved, onClose }) {
             onChange={(event) => setDraft((current) => ({ ...current, senses: event.target.value }))}
             helperText="One a line, such as Darkvision 120 ft."
           />
+        </Group>
+
+        <Group title="Attacks" hint="Written as on the sheet: +9 to hit, 1d8+5 slashing.">
+          {draft.attacks.map((row, index) => (
+            <Box key={index} sx={{ display: "grid", gap: 1, gridTemplateColumns: "2fr 1fr 2fr 2fr auto", alignItems: "start" }}>
+              {[["name", "Name"], ["bonus", "Hit"], ["damage", "Damage"], ["notes", "Notes"]].map(([field, label]) => (
+                <TextField key={field} size="small" label={`${label} of attack ${index + 1}`} value={row[field]} onChange={(event) => setRow("attacks", index, field, event.target.value)} />
+              ))}
+              <Button color="error" aria-label={`Remove attack ${index + 1}`} onClick={() => removeRow("attacks", index)}>Remove</Button>
+            </Box>
+          ))}
+          <Box>
+            <Button onClick={() => addRow("attacks", { name: "", bonus: "", damage: "", notes: "" })}>Add an attack</Button>
+          </Box>
+        </Group>
+
+        <Group title="Features and traits" hint="Class features, species traits and feats. Give the uses a feature has, and when they come back.">
+          {draft.features.map((row, index) => (
+            <Box key={index} sx={{ display: "grid", gap: 1, p: 1.5, border: 1, borderColor: "divider", borderRadius: 1 }}>
+              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "2fr 1fr 90px 1fr auto", alignItems: "start" }}>
+                <TextField size="small" label={`Name of feature ${index + 1}`} value={row.name} onChange={(event) => setRow("features", index, "name", event.target.value)} />
+                <TextField size="small" label={`Source of feature ${index + 1}`} value={row.source} onChange={(event) => setRow("features", index, "source", event.target.value)} />
+                <TextField size="small" label={`Uses of feature ${index + 1}`} value={row.max} onChange={(event) => setRow("features", index, "max", event.target.value)} helperText={`1 to ${MAX_USES}`} />
+                <TextField select size="small" label={`Comes back on, feature ${index + 1}`} value={row.per} onChange={(event) => setRow("features", index, "per", event.target.value)}>
+                  <MenuItem value="">Not limited</MenuItem>
+                  {RESTS.map(({ key, label }) => (
+                    <MenuItem key={key} value={key}>{label}</MenuItem>
+                  ))}
+                </TextField>
+                <Button color="error" aria-label={`Remove feature ${index + 1}`} onClick={() => removeRow("features", index)}>Remove</Button>
+              </Box>
+              <TextField size="small" multiline minRows={2} label={`Description of feature ${index + 1}`} value={row.description} onChange={(event) => setRow("features", index, "description", event.target.value)} />
+            </Box>
+          ))}
+          <Box>
+            <Button onClick={() => addRow("features", { name: "", source: "", description: "", max: "", per: "", used: "0" })}>Add a feature</Button>
+          </Box>
         </Group>
 
         <Group title="Defenses">

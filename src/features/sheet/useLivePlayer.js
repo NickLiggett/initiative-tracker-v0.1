@@ -9,7 +9,7 @@ export const POLL_MS = 10000;
  * A character kept as they are now: loaded when asked for, and loaded again when the tab comes back into view, when
  * another tab of this browser changes them, and every ten seconds while the tab is in view.
  *
- * @returns {{player: ?object, error: ?string, setPlayer: Function}} `error` is set only if there is nothing to show; a
+ * @returns {{player: ?object, error: ?string, setPlayer: Function, reload: Function}} `error` is set only if there is nothing to show; a
  *   failed look afterwards keeps the last good one
  */
 export default function useLivePlayer(id, { pollMs = POLL_MS } = {}) {
@@ -58,5 +58,5 @@ export default function useLivePlayer(id, { pollMs = POLL_MS } = {}) {
     };
   }, [id, look, pollMs]);
 
-  return { player, error, setPlayer };
+  return { player, error, setPlayer, reload: look };
 }

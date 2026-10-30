@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, Chip, CircularProgress, FormControlLabel, MenuItem, Paper, Switch, TextField, Typography } from "@mui/material";
 import { EditNote, Inventory2, Refresh } from "@mui/icons-material";
-import { updateVitals } from "../../api/players";
+import { saveSheet, updateVitals } from "../../api/players";
 import HpBar from "../players/HpBar";
 import InventoryDialog from "../players/InventoryDialog";
 import { describePlayer, formatBonus, rulesetLabel } from "../players/players";
@@ -53,7 +53,7 @@ function Pips({ label, value, onChange }) {
  * @param {number} playerId
  */
 export default function SheetPage({ playerId }) {
-  const { player, error, setPlayer } = useLivePlayer(playerId);
+  const { player, error, setPlayer, reload } = useLivePlayer(playerId);
   const [amount, setAmount] = useState("");
   const [problem, setProblem] = useState(null);
   const [showInventory, setShowInventory] = useState(false);
@@ -96,6 +96,16 @@ export default function SheetPage({ playerId }) {
       change({ currentHp: Math.min(max ?? Infinity, vitals.currentHp + points) });
     }
     setAmount("");
+  };
+  /** Saves the sheet as it would be after a use is spent or a rest taken; if someone saved in between, shows theirs instead. */
+  const changeSheet = async (sheet) => {
+    setProblem(null);
+    try {
+      setPlayer(await saveSheet(playerId, { version: player.version, sheet }));
+    } catch (e) {
+      setProblem(e.status === 409 ? "This sheet was just changed somewhere else. It has been reloaded; try that again." : e.message || "Couldn't save that.");
+      reload();
+    }
   };
   const toggleCondition = (condition) =>
     change({ conditions: vitals.conditions.includes(condition) ? vitals.conditions.filter((one) => one !== condition) : [...vitals.conditions, condition] });
@@ -198,7 +208,7 @@ export default function SheetPage({ playerId }) {
         </Box>
       </Paper>
 
-      <SheetFields sheet={player.sheet ?? {}} level={player.level} />
+      <SheetFields sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
 
       {player.notes && (
         <Paper variant="outlined" component="section" aria-label="Notes" sx={{ p: 2 }}>

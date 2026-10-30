@@ -16,6 +16,7 @@ import {
   skillBonus,
   skillLevel,
 } from "./sheetModel";
+import SheetLists from "./SheetLists";
 
 const dash = (value) => (value === null || value === undefined ? "—" : value);
 
@@ -85,8 +86,10 @@ function Tags({ label, items }) {
  *
  * @param {object} sheet the character's `sheet`
  * @param {number} level the character's level, for the proficiency bonus
+ * @param {(sheet: object) => void} [onChange] given the sheet as it would be after a use is spent or a rest taken, to save;
+ *   without it the uses are only shown
  */
-export default function SheetFields({ sheet, level }) {
+export default function SheetFields({ sheet, level, onChange }) {
   const filled = ABILITIES.some(({ key }) => abilityModifier(sheet, key) !== null);
   const speed = sheet.speed ?? {};
   const speedText = [speed.walk !== undefined ? `Walking ${speed.walk} ft.` : null, speed.other].filter(Boolean).join(" · ");
@@ -157,6 +160,8 @@ export default function SheetFields({ sheet, level }) {
           <Tags label="Senses" items={sheet.senses} />
         </Section>
       )}
+
+      <SheetLists sheet={sheet} onChange={onChange} />
 
       {defenses.length > 0 && (
         <Section title="Defenses">

@@ -49,6 +49,38 @@ describe("the sheet editor", () => {
     ]);
   });
 
+  it("adds an attack and a limited feature, and sends them", async () => {
+    const { fetchMock, onSaved } = open();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add an attack" }));
+    fireEvent.change(screen.getByLabelText("Hit of attack 2"), { target: { value: "+9" } });
+    fireEvent.change(screen.getByLabelText("Name of attack 2"), { target: { value: "Dagger" } });
+    fireEvent.change(screen.getByLabelText("Damage of attack 2"), { target: { value: "1d4+5 piercing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add a feature" }));
+    fireEvent.change(screen.getByLabelText("Name of feature 1"), { target: { value: "Blood Maledict" } });
+    fireEvent.change(screen.getByLabelText("Uses of feature 1"), { target: { value: "2" } });
+    fireEvent.mouseDown(screen.getByLabelText("Comes back on, feature 1"));
+    fireEvent.click(await screen.findByRole("option", { name: "Short rest" }));
+    save();
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    const sent = bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet;
+    expect(sent.attacks).toEqual([{ name: "Longsword" }, { name: "Dagger", bonus: "+9", damage: "1d4+5 piercing" }]);
+    expect(sent.features).toEqual([{ name: "Blood Maledict", uses: { max: 2, used: 0, per: "short" } }]);
+  });
+
+  it("removes a row, and will not save one with no name", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Add an attack" }));
+    fireEvent.change(screen.getByLabelText("Hit of attack 2"), { target: { value: "+9" } }); // the sheet has one already
+
+    expect(screen.getByText("Give each attack a name, or remove it.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Remove attack 2" }));
+    expect(screen.queryByLabelText("Name of attack 2")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
   it("marks a skill as proficient or expertise", async () => {
     const { fetchMock, onSaved } = open();
 

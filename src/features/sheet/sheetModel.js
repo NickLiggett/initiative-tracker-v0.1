@@ -8,8 +8,11 @@
 //   senses       ["Darkvision 120 ft."]
 //   defenses     {resistances, immunities, vulnerabilities}: lists of text
 //   training     {armor, weapons, tools, languages}: lists of text
+//   attacks      [{name, bonus, damage, notes}] and features [{name, source, description, uses}]: see sheetEntries.js
 //   personal     {gender, age, size, height, weight, alignment, faith, skin, eyes, hair, appearance, allies, traits,
 //                ideals, bonds, flaws, backstory}: text
+
+import { attackDrafts, attacksToSheet, featureDrafts, featuresToSheet, listProblems } from "./sheetEntries";
 
 export const ABILITIES = [
   { key: "str", label: "Strength" },
@@ -152,6 +155,8 @@ export function toSheetDraft(sheet = {}) {
     defenses: Object.fromEntries(DEFENSE_LISTS.map(({ key }) => [key, lines(sheet?.defenses?.[key])])),
     training: Object.fromEntries(TRAINING_LISTS.map(({ key }) => [key, lines(sheet?.training?.[key])])),
     personal: Object.fromEntries([...PERSONAL_LINES, ...PERSONAL_TEXTS].map(({ key }) => [key, text("personal", key)])),
+    attacks: attackDrafts(sheet?.attacks),
+    features: featureDrafts(sheet?.features),
   };
 }
 
@@ -169,7 +174,7 @@ export function sheetProblems(draft) {
   if (String(draft.speed.walk).trim() !== "" && !(wholeNumber(draft.speed.walk) <= 999)) {
     problems.push("Walking speed must be 0 to 999 feet, or left empty.");
   }
-  return problems;
+  return [...problems, ...listProblems(draft)];
 }
 
 const entries = (text) =>
@@ -179,7 +184,7 @@ const entries = (text) =>
     .filter(Boolean);
 
 /** The parts of the sheet the editor shows, which it replaces; anything else on the sheet (added later) is kept as it was. */
-const EDITED = ["abilities", "saves", "skills", "speed", "senses", "defenses", "training", "personal"];
+const EDITED = ["abilities", "saves", "skills", "speed", "senses", "defenses", "training", "personal", "attacks", "features"];
 
 /**
  * The sheet to send the backend for a draft, from the sheet it was opened from. Call it only when `sheetProblems` is
@@ -220,6 +225,14 @@ export function toSheet(draft, existing = {}) {
   const personal = Object.fromEntries(Object.entries(draft.personal).filter(([, text]) => text.trim()).map(([key, text]) => [key, text.trim()]));
   if (Object.keys(personal).length) {
     sheet.personal = personal;
+  }
+  const attacks = attacksToSheet(draft.attacks);
+  if (attacks.length) {
+    sheet.attacks = attacks;
+  }
+  const features = featuresToSheet(draft.features);
+  if (features.length) {
+    sheet.features = features;
   }
   return sheet;
 }

@@ -9,6 +9,7 @@
 //                 `key` is only there for a spell picked from the lists; a spell typed by hand has what was written
 
 import { castingTimeWithCondition, durationText, rangeText } from "../spells/spellFormat";
+import { adjustmentBonus } from "./sheetAdjust";
 import { abilityModifier, proficiencyBonus } from "./sheetModel";
 
 export const SLOT_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -31,13 +32,14 @@ const filled = (value) => String(value).trim() !== "";
 export function spellSaveDc(sheet, level) {
   const ability = sheet?.spellcasting?.ability;
   const modifier = ability ? abilityModifier(sheet, ability) : null;
-  return modifier === null ? null : 8 + proficiencyBonus(level) + modifier;
+  return modifier === null ? null : 8 + proficiencyBonus(level) + modifier + adjustmentBonus(sheet, "spell.dc");
 }
 
 /** The proficiency bonus plus the casting ability's modifier, or null as for the DC. */
 export function spellAttackBonus(sheet, level) {
-  const dc = spellSaveDc(sheet, level);
-  return dc === null ? null : dc - 8;
+  const ability = sheet?.spellcasting?.ability;
+  const modifier = ability ? abilityModifier(sheet, ability) : null;
+  return modifier === null ? null : proficiencyBonus(level) + modifier + adjustmentBonus(sheet, "spell.attack");
 }
 
 // ---- the editor's drafts ----

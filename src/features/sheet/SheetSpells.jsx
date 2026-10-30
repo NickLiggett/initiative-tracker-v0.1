@@ -2,6 +2,7 @@ import { Box, Button, Chip, Paper, Typography } from "@mui/material";
 import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
 import { levelName } from "../spells/spellFormat";
 import { RESTS, hasRestables, restWouldHelp, takeRest } from "./sheetRests";
+import { adjustmentText } from "./sheetAdjust";
 import { SLOT_LEVELS, spellAttackBonus, spellSaveDc, spendHitDie, spendPact, spendSlot, togglePrepared } from "./sheetCasting";
 import { ABILITIES, signed } from "./sheetModel";
 
@@ -105,6 +106,8 @@ export function SheetSpells({ sheet, level, onChange }) {
       {dc !== null && (
         <Typography variant="body2">
           {ability.label}: spell save DC {dc}, spell attack {signed(spellAttackBonus(sheet, level))}
+          {["spell.dc", "spell.attack"].some((key) => adjustmentText(sheet, key)) &&
+            ` (${[["DC", "spell.dc"], ["attack", "spell.attack"]].filter(([, key]) => adjustmentText(sheet, key)).map(([name, key]) => `${name}: ${adjustmentText(sheet, key)}`).join(", ")})`}
         </Typography>
       )}
       {levels.map((spellLevel) => (

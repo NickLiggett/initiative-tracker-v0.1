@@ -16,6 +16,7 @@ import {
 import { saveSheet } from "../../api/players";
 import { MAX_USES } from "./sheetEntries";
 import SpellAdder from "./SpellAdder";
+import { adjustmentTargets, MAX_ADJUSTMENT } from "./sheetAdjust";
 import { CASTING_ABILITIES, DICE, SLOT_LEVELS } from "./sheetCasting";
 import { RESTS } from "./sheetRests";
 import {
@@ -248,6 +249,25 @@ export default function SheetEditor({ player, onSaved, onClose }) {
             </Box>
           ))}
           <SpellAdder onAdd={(row) => addRow("spells", row)} />
+        </Group>
+
+        <Group title="Adjustments" hint={`For homebrew that bends the rules: add up to ${MAX_ADJUSTMENT} to a saving throw, skill, passive score or spell number, and say why. A note can stand alone, such as "Advantage".`}>
+          {draft.adjustments.map((row, index) => (
+            <Box key={index} sx={{ display: "grid", gap: 1, gridTemplateColumns: "2fr 100px 3fr auto", alignItems: "start" }}>
+              <TextField select size="small" label={`Adjusts, ${index + 1}`} value={row.target} onChange={(event) => setRow("adjustments", index, "target", event.target.value)}>
+                <MenuItem value="">Choose a number</MenuItem>
+                {adjustmentTargets().map(({ key, label, group }) => (
+                  <MenuItem key={key} value={key}>{`${group}: ${label}`}</MenuItem>
+                ))}
+              </TextField>
+              <TextField size="small" label={`Bonus, ${index + 1}`} value={row.bonus} onChange={(event) => setRow("adjustments", index, "bonus", event.target.value)} />
+              <TextField size="small" label={`Note, ${index + 1}`} value={row.note} onChange={(event) => setRow("adjustments", index, "note", event.target.value)} />
+              <Button color="error" aria-label={`Remove adjustment ${index + 1}`} onClick={() => removeRow("adjustments", index)}>Remove</Button>
+            </Box>
+          ))}
+          <Box>
+            <Button onClick={() => addRow("adjustments", { target: "", bonus: "", note: "" })}>Add an adjustment</Button>
+          </Box>
         </Group>
 
         <Group title="Defenses">

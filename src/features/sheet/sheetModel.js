@@ -10,9 +10,11 @@
 //   training     {armor, weapons, tools, languages}: lists of text
 //   attacks      [{name, bonus, damage, notes}] and features [{name, source, description, uses}]: see sheetEntries.js
 //   spellcasting, slots, pact, hitDice, spells: see sheetCasting.js
+//   adjustments  {"save.dex": {bonus, note}, ...}: see sheetAdjust.js
 //   personal     {gender, age, size, height, weight, alignment, faith, skin, eyes, hair, appearance, allies, traits,
 //                ideals, bonds, flaws, backstory}: text
 
+import { adjustmentBonus, adjustmentDrafts, adjustmentProblems, adjustmentsToSheet } from "./sheetAdjust";
 import { spellDrafts, spellProblems, spellsToSheet } from "./sheetCasting";
 import { attackDrafts, attacksToSheet, featureDrafts, featuresToSheet, listProblems } from "./sheetEntries";
 
@@ -119,7 +121,7 @@ export function abilityModifier(sheet, ability) {
 /** The saving throw bonus of an ability: its modifier, and the proficiency bonus if the character is proficient. Null without the score. */
 export function saveBonus(sheet, ability, level) {
   const base = abilityModifier(sheet, ability);
-  return base === null ? null : base + ((sheet.saves ?? []).includes(ability) ? proficiencyBonus(level) : 0);
+  return base === null ? null : base + ((sheet.saves ?? []).includes(ability) ? proficiencyBonus(level) : 0) + adjustmentBonus(sheet, `save.${ability}`);
 }
 
 /** "proficient", "expertise" or "none". */
@@ -135,13 +137,13 @@ export function skillBonus(sheet, skill, level) {
     return null;
   }
   const bonus = proficiencyBonus(level);
-  return base + { none: 0, proficient: bonus, expertise: 2 * bonus }[skillLevel(sheet, skill)];
+  return base + { none: 0, proficient: bonus, expertise: 2 * bonus }[skillLevel(sheet, skill)] + adjustmentBonus(sheet, `skill.${skill}`);
 }
 
 /** 10 plus the bonus of the skill, or null without the score. */
 export function passiveScore(sheet, skill, level) {
   const bonus = skillBonus(sheet, skill, level);
-  return bonus === null ? null : 10 + bonus;
+  return bonus === null ? null : 10 + bonus + adjustmentBonus(sheet, `passive.${skill}`);
 }
 
 /** The sheet as the editor works on it: every field present, scores and speed as the text typed, lists as text with one entry a line. */
@@ -160,6 +162,7 @@ export function toSheetDraft(sheet = {}) {
     attacks: attackDrafts(sheet?.attacks),
     features: featureDrafts(sheet?.features),
     ...spellDrafts(sheet),
+    adjustments: adjustmentDrafts(sheet),
   };
 }
 
@@ -177,7 +180,7 @@ export function sheetProblems(draft) {
   if (String(draft.speed.walk).trim() !== "" && !(wholeNumber(draft.speed.walk) <= 999)) {
     problems.push("Walking speed must be 0 to 999 feet, or left empty.");
   }
-  return [...problems, ...listProblems(draft), ...spellProblems(draft)];
+  return [...problems, ...listProblems(draft), ...spellProblems(draft), ...adjustmentProblems(draft.adjustments)];
 }
 
 const entries = (text) =>
@@ -187,7 +190,7 @@ const entries = (text) =>
     .filter(Boolean);
 
 /** The parts of the sheet the editor shows, which it replaces; anything else on the sheet (added later) is kept as it was. */
-const EDITED = ["abilities", "saves", "skills", "speed", "senses", "defenses", "training", "personal", "attacks", "features", "spellcasting", "slots", "pact", "hitDice", "spells"];
+const EDITED = ["abilities", "saves", "skills", "speed", "senses", "defenses", "training", "personal", "attacks", "features", "spellcasting", "slots", "pact", "hitDice", "spells", "adjustments"];
 
 /**
  * The sheet to send the backend for a draft, from the sheet it was opened from. Call it only when `sheetProblems` is
@@ -237,5 +240,5 @@ export function toSheet(draft, existing = {}) {
   if (features.length) {
     sheet.features = features;
   }
-  return { ...sheet, ...spellsToSheet(draft) };
+  return { ...sheet, ...spellsToSheet(draft), ...adjustmentsToSheet(draft.adjustments) };
 }

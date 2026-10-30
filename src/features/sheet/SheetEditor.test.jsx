@@ -127,6 +127,29 @@ describe("the sheet editor", () => {
     expect(spells[1]).toEqual({ name: "Homebrew Hex", level: 1 });
   });
 
+  it("adds an adjustment to a saving throw with a note, and sends it", async () => {
+    const { fetchMock, onSaved } = open();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add an adjustment" }));
+    fireEvent.mouseDown(screen.getByLabelText("Adjusts, 1"));
+    fireEvent.click(await screen.findByRole("option", { name: "Saving throws: Dexterity saving throw" }));
+    fireEvent.change(screen.getByLabelText("Bonus, 1"), { target: { value: "+1" } });
+    fireEvent.change(screen.getByLabelText("Note, 1"), { target: { value: "Cloak of Protection" } });
+    save();
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet.adjustments).toEqual({ "save.dex": { bonus: 1, note: "Cloak of Protection" } });
+  });
+
+  it("will not save an adjustment with nothing chosen", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Add an adjustment" }));
+    fireEvent.change(screen.getByLabelText("Bonus, 1"), { target: { value: "2" } });
+
+    expect(screen.getByText("Choose what each adjustment is for, or remove it.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
   it("marks a skill as proficient or expertise", async () => {
     const { fetchMock, onSaved } = open();
 
@@ -196,6 +219,15 @@ describe("the sheet's fields", () => {
     expect(screen.getByRole("list", { name: "Resistances" })).toHaveTextContent("necrotic");
     expect(screen.getByText("Alignment: Chaotic Good")).toBeInTheDocument();
     expect(screen.getByText("Long ago...")).toBeInTheDocument();
+  });
+
+  it("includes what was adjusted by hand in the number, and says so beside it", () => {
+    render(<SheetFields sheet={{ ...sheet, adjustments: { "save.dex": { bonus: 1, note: "Cloak of Protection" }, "skill.religion": { note: "Advantage" } } }} level={14} />);
+
+    const saves = within(screen.getByRole("region", { name: "Saving throws" }));
+    expect(saves.getByText("Dexterity").closest("div")).toHaveTextContent("+11");
+    expect(saves.getByLabelText("Adjusted: +1 Cloak of Protection")).toBeInTheDocument();
+    expect(screen.getByLabelText("Adjusted: Advantage")).toBeInTheDocument();
   });
 
   it("shows nothing for a sheet that is empty", () => {

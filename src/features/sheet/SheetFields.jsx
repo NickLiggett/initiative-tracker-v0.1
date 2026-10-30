@@ -16,6 +16,7 @@ import {
   skillBonus,
   skillLevel,
 } from "./sheetModel";
+import { adjustmentText } from "./sheetAdjust";
 import SheetLists from "./SheetLists";
 import { RestBar, SheetResources, SheetSpells } from "./SheetSpells";
 
@@ -45,12 +46,18 @@ function Mark({ level }) {
   );
 }
 
-function Row({ mark, label, value }) {
+/** A line of saves, skills or passive scores. `adjustment` is what was adjusted by hand (see sheetAdjust.js), shown beside the label. */
+function Row({ mark, label, value, adjustment }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <Box sx={{ width: 18, display: "flex" }}>{mark}</Box>
       <Typography variant="body2" sx={{ flex: 1 }}>
         {label}
+        {adjustment && (
+          <Typography component="span" variant="caption" color="primary" sx={{ ml: 1 }} aria-label={`Adjusted: ${adjustment}`}>
+            ({adjustment})
+          </Typography>
+        )}
       </Typography>
       <Typography variant="body2" sx={{ fontWeight: "bold" }}>
         {value}
@@ -132,6 +139,7 @@ export default function SheetFields({ sheet, level, onChange }) {
                 key={key}
                 mark={<Mark level={(sheet.saves ?? []).includes(key) ? "proficient" : "none"} />}
                 label={label}
+                adjustment={adjustmentText(sheet, `save.${key}`)}
                 value={dash(saveBonus(sheet, key, level) === null ? null : signed(saveBonus(sheet, key, level)))}
               />
             ))}
@@ -142,13 +150,14 @@ export default function SheetFields({ sheet, level, onChange }) {
                 key={key}
                 mark={<Mark level={skillLevel(sheet, key)} />}
                 label={`${label} (${ability.toUpperCase()})`}
+                adjustment={adjustmentText(sheet, `skill.${key}`)}
                 value={dash(skillBonus(sheet, key, level) === null ? null : signed(skillBonus(sheet, key, level)))}
               />
             ))}
           </Section>
           <Section title="Senses and speed">
             {PASSIVES.map(({ skill, label }) => (
-              <Row key={skill} label={label} value={dash(passiveScore(sheet, skill, level))} />
+              <Row key={skill} label={label} adjustment={adjustmentText(sheet, `passive.${skill}`)} value={dash(passiveScore(sheet, skill, level))} />
             ))}
             {speedText && <Typography variant="body2">{speedText}</Typography>}
             <Tags label="Senses" items={sheet.senses} />

@@ -73,7 +73,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
         classes: draft.classes.map((row) => ({ ...row, key: row.key ?? optionNamed(classOptions, row.name)?.key ?? null })),
         speciesKey: draft.speciesKey ?? optionNamed(speciesOptions, draft.speciesName)?.key ?? null,
       });
-      onSaved(player ? await updatePlayer(player.id, request) : await createPlayer(request));
+      onSaved(player ? await updatePlayer(player.id, { ...request, version: player.version }) : await createPlayer(request));
     } catch (e) {
       setError(sharingErrorMessage(e, draft.playedBy.trim().replace(/^@+/, "").toLowerCase()));
       setSaving(false);

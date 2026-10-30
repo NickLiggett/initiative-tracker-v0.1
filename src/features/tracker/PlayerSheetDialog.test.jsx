@@ -22,6 +22,22 @@ describe("PlayerSheetDialog", () => {
     expect(dialog.queryByRole("button", { name: "Edit" })).not.toBeInTheDocument(); // a card to read, not to change
   });
 
+  it("lets a DM change the hit points and conditions of a character in their party, and shows them at once", async () => {
+    const party = { ...thorin, role: "PARTY", owner: "anna" };
+    stubApi({
+      "GET /api/players/1": party,
+      "PATCH /api/players/1/vitals": (body) => ({ ...party, vitals: { currentHp: 52, tempHp: 0, ...body } }),
+    });
+    render(<PlayerSheetDialog playerId={1} name="Thorin" onClose={vi.fn()} />);
+    await screen.findByText("Level 6 Fighter · Dwarf");
+
+    fireEvent.click(screen.getByRole("button", { name: "Hit points" }));
+    fireEvent.click(screen.getByRole("button", { name: "Prone" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByRole("list", { name: "Conditions" })).toHaveTextContent("Prone");
+  });
+
   it("closes", async () => {
     stubApi({ "GET /api/players/1": thorin });
     const onClose = vi.fn();

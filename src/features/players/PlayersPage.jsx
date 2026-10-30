@@ -8,6 +8,7 @@ import PartyPanel, { RequestsBadge } from "./PartyPanel";
 import InventoryDialog from "./InventoryDialog";
 import PlayerCard from "./PlayerCard";
 import PlayerEditor from "./PlayerEditor";
+import VitalsDialog from "./VitalsDialog";
 import { duplicateDraft } from "./playerDraft";
 
 /**
@@ -21,6 +22,7 @@ export default function PlayersPage() {
   const [editing, setEditing] = useState(null); // { player, start }: the character, null for a new one; start is a copy's draft
   const [deleting, setDeleting] = useState(null);
   const [carrying, setCarrying] = useState(null); // the character whose inventory is open
+  const [hurting, setHurting] = useState(null); // the character whose hit points and conditions are open
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("players");
   const [requests, setRequests] = useState([]); // the parties the user has been asked to join or is in
@@ -131,6 +133,7 @@ export default function PlayersPage() {
                     busy={busy}
                     onEdit={(chosen) => setEditing({ player: chosen })}
                     onInventory={setCarrying}
+                    onVitals={setHurting}
                     onDuplicate={(chosen) => setEditing({ player: null, start: duplicateDraft(chosen) })}
                     onDelete={setDeleting}
                   />
@@ -141,6 +144,16 @@ export default function PlayersPage() {
         </Box>
       )}
 
+      {hurting && (
+        <VitalsDialog
+          player={hurting}
+          onSaved={(player) => {
+            setPlayers((current) => current.map((existing) => (existing.id === player.id ? player : existing)));
+            setHurting(null);
+          }}
+          onClose={() => setHurting(null)}
+        />
+      )}
       {carrying && <InventoryDialog player={carrying} onClose={() => setCarrying(null)} />}
 
       <ConfirmDeleteDialog

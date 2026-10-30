@@ -18,6 +18,11 @@ describe("playerCombatant", () => {
     });
   });
 
+  it("starts at the hit points the character has now, with their temporary ones", () => {
+    expect(playerCombatant({ ...thorin, vitals: { currentHp: 12, tempHp: 5 } }, 3)).toMatchObject({ hp: 12, maxHp: 52, tempHp: 5 });
+    expect(playerCombatant({ ...thorin, vitals: { currentHp: 52, tempHp: 0 } }, 3).tempHp).toBeUndefined();
+  });
+
   it("leaves armor class and hit points empty when the player has none", () => {
     expect(playerCombatant({ ...thorin, armorClass: null, hitPoints: null }, 3)).toMatchObject({ ac: "", hp: "" });
   });

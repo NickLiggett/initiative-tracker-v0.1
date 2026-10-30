@@ -5,7 +5,8 @@ import { apiGet, apiSend } from "./client";
  *
  * The characters the user made or plays, by name. Each has `id`, `name`, `ruleset` ("5e-2014" or "5e-2024"),
  * `classKey`/`className`, `speciesKey`/`speciesName`, `level`, `armorClass`, `hitPoints`, `initiativeBonus`, `notes`,
- * `owner`, `playedBy` and `role` ("OWNER", or "PLAYER" if the user only plays it).
+ * `owner`, `playedBy`, `role` ("OWNER", or "PLAYER" if the user only plays it), `vitals` (see `updateVitals`) and
+ * `version`, which a save sends back so that one made from an out-of-date copy is refused.
  * @returns {Promise<object[]>}
  */
 export function listPlayers({ signal } = {}) {
@@ -28,6 +29,15 @@ export function createPlayer(request) {
  */
 export function updatePlayer(id, request) {
   return apiSend("PUT", `/api/players/${encodeURIComponent(id)}`, request);
+}
+
+/**
+ * Changes what changes during play: any of `currentHp`, `tempHp`, `heroicInspiration`, `conditions`, `exhaustion`,
+ * `deathSaveSuccesses` and `deathSaveFailures`; fields left out stay as they are. Anyone who can see the character can,
+ * a DM seeing it through their party included. Resolves to the character.
+ */
+export function updateVitals(id, changes) {
+  return apiSend("PATCH", `/api/players/${encodeURIComponent(id)}/vitals`, changes);
 }
 
 /** Deletes a character. Owner only. */

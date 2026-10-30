@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stubApi } from "../test/fakeApi";
-import { createPlayer, deletePlayer, listPlayers, updatePlayer } from "./players";
+import { createPlayer, deletePlayer, listPlayers, updatePlayer, updateVitals } from "./players";
 import { listClasses, listSpecies } from "./reference";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -22,6 +22,17 @@ describe("players", () => {
     await deletePlayer(2);
 
     expect(calls(fetchMock)).toEqual(["GET /api/players", "POST /api/players", "PUT /api/players/2", "DELETE /api/players/2"]);
+  });
+});
+
+describe("vitals", () => {
+  it("patches only the fields it is given", async () => {
+    const fetchMock = stubApi({ "PATCH /api/players/2/vitals": (body) => ({ id: 2, vitals: body }) });
+
+    await expect(updateVitals(2, { currentHp: 5 })).resolves.toEqual({ id: 2, vitals: { currentHp: 5 } });
+
+    expect(calls(fetchMock)).toEqual(["PATCH /api/players/2/vitals"]);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ currentHp: 5 });
   });
 });
 

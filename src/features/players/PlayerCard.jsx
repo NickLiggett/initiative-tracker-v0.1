@@ -1,7 +1,9 @@
 import { Box, Button, Chip, Paper, Typography } from "@mui/material";
-import { ContentCopy, Delete, Edit, Inventory2 } from "@mui/icons-material";
+import { ContentCopy, Delete, Edit, Favorite, Inventory2, Star } from "@mui/icons-material";
 import UserAvatar from "../../components/layout/UserAvatar";
+import HpBar from "./HpBar";
 import { describePlayer, formatBonus, rulesetLabel } from "./players";
+import { vitalsOf } from "./vitals";
 
 function Stat({ label, value }) {
   return (
@@ -24,12 +26,15 @@ function Stat({ label, value }) {
  * @param {boolean} [busy] turns the buttons off
  * @param {(player: object) => void} [onEdit]
  * @param {(player: object) => void} [onInventory] opens what the character carries
+ * @param {(player: object) => void} [onVitals] opens the hit points and conditions; anyone who sees the character can
  * @param {(player: object) => void} [onDuplicate] only offered for the user's own
  * @param {(player: object) => void} [onDelete] only offered for the user's own
  */
-export default function PlayerCard({ player, busy, onEdit, onInventory, onDuplicate, onDelete }) {
+export default function PlayerCard({ player, busy, onEdit, onInventory, onVitals, onDuplicate, onDelete }) {
   const owned = player.role === "OWNER";
-  const hasActions = onEdit || onInventory || onDuplicate || onDelete;
+  const hasActions = onEdit || onInventory || onVitals || onDuplicate || onDelete;
+  const vitals = vitalsOf(player);
+  const afflicted = [...vitals.conditions, ...(vitals.exhaustion > 0 ? [`Exhaustion ${vitals.exhaustion}`] : [])];
 
   return (
     <Paper variant="outlined" role="group" aria-label={player.name} sx={{ p: 2, display: "grid", gap: 1.5, alignContent: "start" }}>
@@ -47,9 +52,26 @@ export default function PlayerCard({ player, busy, onEdit, onInventory, onDuplic
 
       <Box sx={{ display: "flex", justifyContent: "space-around" }}>
         <Stat label="AC" value={player.armorClass} />
-        <Stat label="HP" value={player.hitPoints} />
         <Stat label="Init" value={formatBonus(player.initiativeBonus)} />
+        {vitals.heroicInspiration && (
+          <Box sx={{ textAlign: "center", minWidth: 56 }}>
+            <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.5, display: "block" }}>
+              Insp
+            </Typography>
+            <Star color="warning" titleAccess="Heroic Inspiration" />
+          </Box>
+        )}
       </Box>
+      <HpBar player={player} />
+      {afflicted.length > 0 && (
+        <Box component="ul" aria-label="Conditions" sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+          {afflicted.map((condition) => (
+            <Box component="li" key={condition}>
+              <Chip size="small" color="warning" label={condition} />
+            </Box>
+          ))}
+        </Box>
+      )}
 
       {player.notes && (
         <Typography variant="body2" sx={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", whiteSpace: "pre-line" }}>
@@ -94,6 +116,11 @@ export default function PlayerCard({ player, busy, onEdit, onInventory, onDuplic
           {onEdit && (
             <Button size="small" startIcon={<Edit />} disabled={busy} onClick={() => onEdit(player)}>
               Edit
+            </Button>
+          )}
+          {onVitals && (
+            <Button size="small" startIcon={<Favorite />} disabled={busy} onClick={() => onVitals(player)}>
+              Hit points
             </Button>
           )}
           {onInventory && (

@@ -449,3 +449,43 @@ describe("playing your own character", () => {
     expect(bodiesSentTo(fetchMock, "POST /api/players")[0]).toMatchObject({ name: "Me", playedBy: "dev" });
   });
 });
+
+describe("hit points and conditions on the card", () => {
+  const hurt = {
+    ...thorin,
+    version: 3,
+    vitals: { currentHp: 12, tempHp: 5, heroicInspiration: true, conditions: ["Poisoned"], exhaustion: 2, deathSaveSuccesses: 0, deathSaveFailures: 0 },
+  };
+
+  it("shows the bar, the conditions with exhaustion, and inspiration", async () => {
+    await renderPage({}, [hurt]);
+
+    expect(card("Thorin").getByRole("progressbar", { name: "Hit points 12 of 52, 5 temporary" })).toBeInTheDocument();
+    expect(card("Thorin").getByRole("list", { name: "Conditions" })).toHaveTextContent("PoisonedExhaustion 2");
+    expect(card("Thorin").getByTitle("Heroic Inspiration")).toBeInTheDocument();
+  });
+
+  it("changes them from the card, for a character the user only plays", async () => {
+    const fetchMock = await renderPage({ "PATCH /api/players/2/vitals": (body) => ({ ...borrowed, vitals: { currentHp: 21, tempHp: 0, ...body } }) });
+
+    fireEvent.click(card("Pip").getByRole("button", { name: "Hit points" }));
+    fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(card("Pip").getByRole("list", { name: "Conditions" })).toHaveTextContent("Stunned"));
+    expect(bodiesSentTo(fetchMock, "PATCH /api/players/2/vitals")).toEqual([{ conditions: ["Stunned"] }]);
+  });
+
+  it("sends the version the character was opened at when it is saved, so an out-of-date copy is refused", async () => {
+    const fetchMock = await renderPage(
+      { "PUT /api/players/1": new Response(JSON.stringify({ detail: "Thorin was saved by someone else since you opened it" }), { status: 409 }) },
+      [hurt],
+    );
+
+    fireEvent.click(card("Thorin").getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText(/saved by someone else/)).toBeInTheDocument();
+    expect(bodiesSentTo(fetchMock, "PUT /api/players/1")[0]).toMatchObject({ version: 3 });
+  });
+});

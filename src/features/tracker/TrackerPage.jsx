@@ -15,6 +15,7 @@ import { buildColumns, isCellEditable } from "./trackerColumns";
 import useSavedTracker from "./useSavedTracker";
 import useUndo from "./useUndo";
 import useNextTurnShortcut from "./useNextTurnShortcut";
+import useCharacterHpSync from "./useCharacterHpSync";
 import {
   editedFields,
   fieldShownChange,
@@ -46,6 +47,7 @@ export default function TrackerPage() {
   const gridRef = useRef(null);
   const apiRef = useGridApiRef();
   useNextTurnShortcut(() => setCombatants(nextTurn));
+  useCharacterHpSync(combatants, loadKey);
 
   /** Removes a row, and says so for a few seconds with the chance to take it back. */
   const remove = (id) => {

@@ -27,6 +27,7 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
   const [species, setSpecies] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [notLoaded, setNotLoaded] = useState([]); // which of the lists couldn't be loaded
   const { username } = useSettings();
 
   const limited = Boolean(player) && player.role !== "OWNER"; // only plays it
@@ -36,9 +37,10 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    // The lists are a convenience: without them the names can still be typed.
-    listClasses({ signal: controller.signal }).then(setClasses).catch(() => {});
-    listSpecies({ signal: controller.signal }).then(setSpecies).catch(() => {});
+    // The lists are a convenience: without them the names can still be typed, but the user is told.
+    const failed = (what) => (e) => e.name !== "AbortError" && setNotLoaded((current) => [...current, what]);
+    listClasses({ signal: controller.signal }).then(setClasses).catch(failed("classes"));
+    listSpecies({ signal: controller.signal }).then(setSpecies).catch(failed("species"));
     return () => controller.abort();
   }, []);
 
@@ -139,6 +141,11 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
               </ToggleButtonGroup>
             </Box>
             {nameField("Species", draft.speciesName, changeName("speciesName", "speciesKey"), speciesOptions)}
+            {notLoaded.length > 0 && (
+              <Typography variant="caption" color="warning.main">
+                Couldn't load the list of {notLoaded.join(" and ")}, so only names you type are kept. Reload the page to try again.
+              </Typography>
+            )}
           </FormSection>
 
           <FormSection title="Class and level">

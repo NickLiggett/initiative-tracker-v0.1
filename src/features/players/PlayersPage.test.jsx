@@ -189,6 +189,21 @@ describe("making a player", () => {
     expect(screen.getByRole("option", { name: "Goliath" })).toBeInTheDocument();
   });
 
+  it("says so when the species list can't be loaded, and still lets a name be typed", async () => {
+    const fetchMock = await renderPage({
+      "GET /api/species": () => new Response("{}", { status: 500 }),
+      "POST /api/players": (body) => ({ ...thorin, ...body, id: 9 }),
+    });
+    openNew();
+
+    expect(await screen.findByText(/Couldn't load the list of species/)).toBeInTheDocument();
+    type("Name", "Aria");
+    type("Species", "Aasimar");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "POST /api/players")).toHaveLength(1));
+    expect(bodiesSentTo(fetchMock, "POST /api/players")[0]).toMatchObject({ speciesName: "Aasimar", speciesKey: null });
+  });
+
   it("saves several classes, each with its level, and the levels added up", async () => {
     const fetchMock = await renderPage({ "POST /api/players": (body) => ({ ...thorin, ...body, id: 9 }) });
     openNew();

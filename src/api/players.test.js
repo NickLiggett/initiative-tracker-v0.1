@@ -37,7 +37,7 @@ describe("classes and species", () => {
 
     const urls = fetchMock.mock.calls.map(([url]) => url);
     expect(urls[0]).toContain("subclass=false");
-    expect(urls[0]).toContain("pageSize=500");
-    expect(urls[1]).toContain("pageSize=500");
+    expect(urls[0]).toContain("pageSize=100");
+    expect(urls[1]).toContain("pageSize=100");
   });
 });

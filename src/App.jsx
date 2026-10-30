@@ -17,10 +17,28 @@ import SpellsPage from "./features/spells/SpellsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import { Pages } from "./constants/pages";
 
+/**
+ * The pages of content, which are kept (hidden, not removed) once opened, so that coming back to one finds its search,
+ * filters, the thing being read and the scroll as they were left.
+ */
+const KEPT_PAGES = [
+  [Pages.CREATURES, CreaturesPage],
+  [Pages.ITEMS, ItemsPage],
+  [Pages.SPELLS, SpellsPage],
+  [Pages.CLASSES, ClassesPage],
+  [Pages.SPECIES, SpeciesPage],
+  [Pages.BACKGROUNDS, BackgroundsPage],
+  [Pages.FEATS, FeatsPage],
+];
+
 /** The app shell: toolbar, navigation drawer, and the current page. */
 export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(Pages.INITIATIVE_TRACKER);
+  const [opened, setOpened] = useState(() => new Set()); // the kept pages that have been opened
+  if (KEPT_PAGES.some(([page]) => page === currentPage) && !opened.has(currentPage)) {
+    setOpened(new Set(opened).add(currentPage));
+  }
   const [settingsTab, setSettingsTab] = useState("profile");
 
   const toggleDrawer = (open) => () => setDrawerOpen(open);
@@ -42,18 +60,17 @@ export default function App() {
       />
       {currentPage === Pages.INITIATIVE_TRACKER && <TrackerPage />}
       {currentPage === Pages.PARTY_TRACKER && <PartyTrackerPage />}
-      {currentPage === Pages.CREATURES && <CreaturesPage />}
-      {currentPage === Pages.ITEMS && <ItemsPage />}
-      {currentPage === Pages.SPELLS && <SpellsPage />}
-      {currentPage === Pages.CLASSES && <ClassesPage />}
-      {currentPage === Pages.SPECIES && <SpeciesPage />}
-      {currentPage === Pages.BACKGROUNDS && <BackgroundsPage />}
-      {currentPage === Pages.FEATS && <FeatsPage />}
+      {KEPT_PAGES.filter(([page]) => opened.has(page)).map(([page, Page]) => (
+        // "contents" leaves the layout as if the page were not wrapped; hiding it keeps it alive but out of sight
+        <div key={page} data-page={page} style={{ display: page === currentPage ? "contents" : "none" }}>
+          <Page />
+        </div>
+      ))}
       {currentPage === Pages.SHARING && <SharingPage />}
       {currentPage === Pages.PLAYERS && <PlayersPage />}
       {currentPage === Pages.ENCOUNTERS && <EncountersPage onOpenTracker={() => setCurrentPage(Pages.INITIATIVE_TRACKER)} />}
       {currentPage === Pages.SETTINGS && <SettingsPage tab={settingsTab} onTabChange={setSettingsTab} />}
-      {![Pages.INITIATIVE_TRACKER, Pages.PARTY_TRACKER, Pages.CREATURES, Pages.ITEMS, Pages.SPELLS, Pages.CLASSES, Pages.SPECIES, Pages.BACKGROUNDS, Pages.FEATS, Pages.SHARING, Pages.PLAYERS, Pages.ENCOUNTERS, Pages.SETTINGS].includes(currentPage) && (
+      {![Pages.INITIATIVE_TRACKER, Pages.PARTY_TRACKER, ...KEPT_PAGES.map(([page]) => page), Pages.SHARING, Pages.PLAYERS, Pages.ENCOUNTERS, Pages.SETTINGS].includes(currentPage) && (
         <PlaceholderPage title={currentPage} />
       )}
     </div>

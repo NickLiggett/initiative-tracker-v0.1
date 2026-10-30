@@ -34,18 +34,6 @@ These are built and tested in code but have not been tried in a browser. Please 
    the app reloads or tells the user. Possible cause of the earlier report of HP and AC resetting to the creature's
    originals. Deferred earlier; worth doing before more people use the tracker.
 
-5. **Character inventory (planned, not started).** A list of Items on each character.
-   - **Backend:** a table `player_character_items` (character, item key and whether it is an item or a magic item, name
-     kept as text so it still reads right if the item is deleted or typed by hand, quantity, equipped, attuned, notes,
-     position). Read and replaced as a whole list with `GET` and `PUT /api/players/{id}/inventory`, the way saved filters
-     are. The owner and the player can change it; a DM who sees the character through their party can read it. Up to 200
-     entries. Magic items that need attunement are limited to 3 attuned.
-   - **Frontend:** an Inventory section in the character editor with the same item search as elsewhere (with the Sources
-     filter), a quantity box, Equipped and Attuned switches and a note per line; the character card shows the count and
-     total weight; the sheet in the tracker shows the list read-only.
-   - **Questions first:** coins (gp, sp, cp) as part of this? Add up weight against a carrying limit? Also allow plain text
-     entries that are not in the Items list ("Grandfather's locket")?
-
 ## Tabled
 
 - **Background gallery** (planned for Settings > Appearance) and **image crop.** Tabled by choice. Needs details from
@@ -68,7 +56,9 @@ These are built and tested in code but have not been tried in a browser. Please 
 Merged: quick wins (confirm Clear, Player View name, page descriptions); saved trackers; row menu and editor, make a
 row a character, count up or down HP; configurable columns (Temp HP, Damage taken, three named Notes columns, Edit
 button, Reset to defaults); hide name, AC and HP from players one by one; undo and redo; source filters on every page
-and saved named filters; the fix for an open cell edit being lost when a toolbar or footer button was clicked.
+and saved named filters; the fix for an open cell edit being lost when a toolbar or footer button was clicked; fonts and
+text size; favorite pages in the drawer.
 
-Built, branches ready to push (backend first): fonts and text size, and favorite pages in the drawer
-(`feature/fonts-favorites` in both repos).
+Built, branches ready to push (backend first), each on top of the one before: multiclass characters, every source in
+the class and species lists, "I play this character" (`feature/multiclass` in the backend, `feature/character-fixes` in
+the frontend); character inventory with coins and typed lines (`feature/inventory` in both).

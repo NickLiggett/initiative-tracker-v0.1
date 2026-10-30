@@ -311,6 +311,11 @@ they use (**2014** or **2024**), armor class, hit points, initiative bonus, note
   character on their own Characters page (marked "You play this one") and can keep its levels, armor class, hit points,
   initiative bonus and notes up to date; the name, rules, which classes, species and who plays it stay with whoever made
   it. The friend needs to have signed in once.
+- **Inventory** (on each card) holds the character's coins (gold, silver, copper) and a list of items. **Add an item**
+  finds one by name in the Items lists (the **Sources** box narrows where to look), or type anything and press Enter or
+  **Add as written** for something that isn't one ("Grandfather's locket"). Each line has a quantity, **Equipped** and
+  **Attuned** (three at most), and a note. Whoever made or plays the character can change it; a DM who sees the character
+  through their party, or from the tracker's character sheet, can read it. There is no carrying limit.
 - **Duplicate** starts a new character like an existing one, named "(copy)" and played by nobody. **Delete** is only for
   the character's maker.
 

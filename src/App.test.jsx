@@ -58,6 +58,19 @@ describe("the pages of content", () => {
     expect(screen.getByText("Celestial Resistance")).toBeInTheDocument(); // still open, no search needed
   });
 
+  it("is a character's sheet alone, with no toolbar, at ?sheet=ID", async () => {
+    stubApi({ "GET /api/players/7": { id: 7, name: "Thorin", level: 1, hitPoints: 10, initiativeBonus: 0, role: "OWNER", owner: "dev", ruleset: "5e-2014" } });
+    window.history.pushState({}, "", "/?sheet=7");
+    try {
+      render(<App />);
+
+      expect(await screen.findByRole("heading", { name: "Thorin" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "menu" })).not.toBeInTheDocument();
+    } finally {
+      window.history.pushState({}, "", "/");
+    }
+  });
+
   it("leave the other pages to start fresh each time", () => {
     renderApp();
 

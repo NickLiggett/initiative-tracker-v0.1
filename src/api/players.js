@@ -1,4 +1,5 @@
 import { apiGet, apiSend } from "./client";
+import { announcePlayerChanged } from "./playerChanges";
 
 /**
  * A "player" here is a character: the sheet a person plays. See the README.
@@ -28,7 +29,10 @@ export function createPlayer(request) {
  * (the rest must be sent as it is).
  */
 export function updatePlayer(id, request) {
-  return apiSend("PUT", `/api/players/${encodeURIComponent(id)}`, request);
+  return apiSend("PUT", `/api/players/${encodeURIComponent(id)}`, request).then((player) => {
+    announcePlayerChanged(id);
+    return player;
+  });
 }
 
 /**
@@ -37,7 +41,22 @@ export function updatePlayer(id, request) {
  * a DM seeing it through their party included. Resolves to the character.
  */
 export function updateVitals(id, changes) {
-  return apiSend("PATCH", `/api/players/${encodeURIComponent(id)}/vitals`, changes);
+  return apiSend("PATCH", `/api/players/${encodeURIComponent(id)}/vitals`, changes).then((player) => {
+    announcePlayerChanged(id);
+    return player;
+  });
+}
+
+/**
+ * Replaces the rest of a character's sheet (see features/sheet/sheetModel.js): `sheet` is a JSON object, and `version` the
+ * character's `version` it was edited from, so that a save from an out-of-date copy is refused (409). The owner and whoever
+ * plays the character can; a DM seeing it through their party can't. Resolves to the character.
+ */
+export function saveSheet(id, { version, sheet }) {
+  return apiSend("PUT", `/api/players/${encodeURIComponent(id)}/sheet`, { version, sheet }).then((player) => {
+    announcePlayerChanged(id);
+    return player;
+  });
 }
 
 /** Deletes a character. Owner only. */

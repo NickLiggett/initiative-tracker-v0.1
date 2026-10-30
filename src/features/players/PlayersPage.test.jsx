@@ -489,3 +489,15 @@ describe("hit points and conditions on the card", () => {
     expect(bodiesSentTo(fetchMock, "PUT /api/players/1")[0]).toMatchObject({ version: 3 });
   });
 });
+
+describe("opening a sheet", () => {
+  it("opens the character's sheet in a new tab", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    await renderPage();
+
+    fireEvent.click(card("Thorin").getByRole("button", { name: "Open sheet" }));
+
+    expect(open).toHaveBeenCalledWith(expect.stringContaining("?sheet=1"), "_blank");
+  });
+});

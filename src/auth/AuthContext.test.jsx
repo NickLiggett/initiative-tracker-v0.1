@@ -210,6 +210,26 @@ describe("coming back from the provider", () => {
     expect(window.location.hash).toBe("#section");
   });
 
+  it("puts the address that was asked for back, such as a character's sheet opened in a new tab", async () => {
+    stubApi({ [TOKEN_ROUTE]: tokens() });
+    savePending({ state: "STATE-1", verifier: "VERIFIER-1", nonce: "N1", returnTo: "?sheet=7" });
+    cameBackWith("?code=CODE-1&state=STATE-1&session_state=abc");
+    renderAuth();
+
+    await waitFor(() => expect(status()).toBe("signedIn"));
+    expect(window.location.search).toBe("?sheet=7");
+  });
+
+  it("remembers the address when a sign-in starts", async () => {
+    window.history.replaceState({}, "", "/?sheet=7");
+    renderAuth();
+    await waitFor(() => expect(status()).toBe("signedOut"));
+
+    await act(() => auth.signIn());
+
+    expect(loadPending().returnTo).toBe("?sheet=7");
+  });
+
   it("finishes the sign-in only once, though React runs its effects twice while developing", async () => {
     const fetchMock = stubApi({ [TOKEN_ROUTE]: tokens() });
     started();

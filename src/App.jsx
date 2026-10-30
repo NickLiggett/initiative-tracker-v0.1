@@ -15,6 +15,8 @@ import FeatsPage from "./features/feats/FeatsPage";
 import SpeciesPage from "./features/species/SpeciesPage";
 import SpellsPage from "./features/spells/SpellsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import SheetPage from "./features/sheet/SheetPage";
+import { sheetIdFromSearch } from "./features/sheet/sheetAddress";
 import { Pages } from "./constants/pages";
 
 /**
@@ -31,8 +33,16 @@ const KEPT_PAGES = [
   [Pages.FEATS, FeatsPage],
 ];
 
-/** The app shell: toolbar, navigation drawer, and the current page. */
+/**
+ * The app. An address with `?sheet=ID` is a character's sheet, alone in its tab; anything else is the app shell with its
+ * toolbar, navigation drawer and current page.
+ */
 export default function App() {
+  const sheetId = sheetIdFromSearch(window.location.search);
+  return sheetId === null ? <Shell /> : <SheetPage playerId={sheetId} />;
+}
+
+function Shell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(Pages.INITIATIVE_TRACKER);
   const [opened, setOpened] = useState(() => new Set()); // the kept pages that have been opened

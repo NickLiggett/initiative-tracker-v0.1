@@ -157,6 +157,11 @@ export function AuthProvider({ children, config, navigate = (url) => window.loca
         if (claims && (claims.nonce !== pending.nonce || claims.iss !== settings.issuer || !audiences.includes(settings.clientId))) {
           throw new AuthError("The sign-in answer wasn't meant for this app.", "mismatch");
         }
+        if (pending.returnTo) {
+          // Back to the address that was asked for (a character sheet opened in a new tab, say), not just the front page.
+          const back = new URL(window.location.href);
+          window.history.replaceState({}, "", back.pathname + pending.returnTo + back.hash);
+        }
         adopt(toSession(tokens));
       } catch (e) {
         endSession(e instanceof AuthError ? e.message : "Sign-in failed. Try again.");
@@ -214,7 +219,7 @@ export function AuthProvider({ children, config, navigate = (url) => window.loca
       const { verifier, challenge } = await createPkce();
       const state = randomString(16);
       const nonce = randomString(16);
-      savePending({ state, verifier, nonce });
+      savePending({ state, verifier, nonce, returnTo: window.location.search });
       navigate(authorizationUrl(settings, { challenge, state, nonce }, { register }));
     },
     [settings, navigate],

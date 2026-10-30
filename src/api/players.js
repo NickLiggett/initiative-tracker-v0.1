@@ -47,6 +47,18 @@ export function updateVitals(id, changes) {
   });
 }
 
+/**
+ * Replaces the rest of a character's sheet (see features/sheet/sheetModel.js): `sheet` is a JSON object, and `version` the
+ * character's `version` it was edited from, so that a save from an out-of-date copy is refused (409). The owner and whoever
+ * plays the character can; a DM seeing it through their party can't. Resolves to the character.
+ */
+export function saveSheet(id, { version, sheet }) {
+  return apiSend("PUT", `/api/players/${encodeURIComponent(id)}/sheet`, { version, sheet }).then((player) => {
+    announcePlayerChanged(id);
+    return player;
+  });
+}
+
 /** Deletes a character. Owner only. */
 export function deletePlayer(id) {
   return apiSend("DELETE", `/api/players/${encodeURIComponent(id)}`);

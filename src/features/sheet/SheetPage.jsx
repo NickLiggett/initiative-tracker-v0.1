@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, Chip, CircularProgress, FormControlLabel, MenuItem, Paper, Switch, TextField, Typography } from "@mui/material";
-import { Inventory2, Refresh } from "@mui/icons-material";
+import { EditNote, Inventory2, Refresh } from "@mui/icons-material";
 import { updateVitals } from "../../api/players";
 import HpBar from "../players/HpBar";
 import InventoryDialog from "../players/InventoryDialog";
 import { describePlayer, formatBonus, rulesetLabel } from "../players/players";
 import { CONDITIONS, MAX_EXHAUSTION, vitalsOf } from "../players/vitals";
+import SheetEditor from "./SheetEditor";
+import SheetFields from "./SheetFields";
 import useLivePlayer from "./useLivePlayer";
 
 function Stat({ label, value }) {
@@ -55,6 +57,7 @@ export default function SheetPage({ playerId }) {
   const [amount, setAmount] = useState("");
   const [problem, setProblem] = useState(null);
   const [showInventory, setShowInventory] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     document.title = player ? `${player.name} · Character sheet` : "Character sheet";
@@ -195,6 +198,8 @@ export default function SheetPage({ playerId }) {
         </Box>
       </Paper>
 
+      <SheetFields sheet={player.sheet ?? {}} level={player.level} />
+
       {player.notes && (
         <Paper variant="outlined" component="section" aria-label="Notes" sx={{ p: 2 }}>
           <Typography variant="subtitle2" component="h2" gutterBottom>
@@ -205,6 +210,11 @@ export default function SheetPage({ playerId }) {
       )}
 
       <Box sx={{ display: "flex", gap: 1 }}>
+        {player.role !== "PARTY" && (
+          <Button startIcon={<EditNote />} onClick={() => setEditing(true)}>
+            Edit sheet
+          </Button>
+        )}
         <Button startIcon={<Inventory2 />} onClick={() => setShowInventory(true)}>
           Inventory
         </Button>
@@ -215,6 +225,16 @@ export default function SheetPage({ playerId }) {
           {player.playedBy ? `Played by ${player.playedBy}. ` : ""}Made by {player.owner}. This page keeps itself up to date.
         </Typography>
       </Box>
+      {editing && (
+        <SheetEditor
+          player={player}
+          onSaved={(saved) => {
+            setPlayer(saved);
+            setEditing(false);
+          }}
+          onClose={() => setEditing(false)}
+        />
+      )}
       {showInventory && <InventoryDialog player={player} readOnly={player.role === "PARTY"} onClose={() => setShowInventory(false)} />}
     </Box>
   );

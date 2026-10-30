@@ -10,6 +10,7 @@ import PlayerCard from "./PlayerCard";
 import PlayerEditor from "./PlayerEditor";
 import VitalsDialog from "./VitalsDialog";
 import { duplicateDraft } from "./playerDraft";
+import { openSheet } from "../sheet/sheetAddress";
 
 /**
  * The user's characters: the ones they made and the ones they play. Make a new one, copy one, change it or
@@ -134,6 +135,7 @@ export default function PlayersPage() {
                     onEdit={(chosen) => setEditing({ player: chosen })}
                     onInventory={setCarrying}
                     onVitals={setHurting}
+                    onOpenSheet={(chosen) => openSheet(chosen.id)}
                     onDuplicate={(chosen) => setEditing({ player: null, start: duplicateDraft(chosen) })}
                     onDelete={setDeleting}
                   />

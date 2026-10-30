@@ -1,5 +1,5 @@
 import { Box, Button, Chip, Paper, Typography } from "@mui/material";
-import { ContentCopy, Delete, Edit, Favorite, Inventory2, Star } from "@mui/icons-material";
+import { ContentCopy, Delete, Edit, Favorite, Inventory2, OpenInNew, Star } from "@mui/icons-material";
 import UserAvatar from "../../components/layout/UserAvatar";
 import HpBar from "./HpBar";
 import { describePlayer, formatBonus, rulesetLabel } from "./players";
@@ -26,13 +26,14 @@ function Stat({ label, value }) {
  * @param {boolean} [busy] turns the buttons off
  * @param {(player: object) => void} [onEdit]
  * @param {(player: object) => void} [onInventory] opens what the character carries
+ * @param {(player: object) => void} [onOpenSheet] opens the character's sheet in a new tab
  * @param {(player: object) => void} [onVitals] opens the hit points and conditions; anyone who sees the character can
  * @param {(player: object) => void} [onDuplicate] only offered for the user's own
  * @param {(player: object) => void} [onDelete] only offered for the user's own
  */
-export default function PlayerCard({ player, busy, onEdit, onInventory, onVitals, onDuplicate, onDelete }) {
+export default function PlayerCard({ player, busy, onEdit, onInventory, onVitals, onOpenSheet, onDuplicate, onDelete }) {
   const owned = player.role === "OWNER";
-  const hasActions = onEdit || onInventory || onVitals || onDuplicate || onDelete;
+  const hasActions = onEdit || onInventory || onVitals || onOpenSheet || onDuplicate || onDelete;
   const vitals = vitalsOf(player);
   const afflicted = [...vitals.conditions, ...(vitals.exhaustion > 0 ? [`Exhaustion ${vitals.exhaustion}`] : [])];
 
@@ -116,6 +117,11 @@ export default function PlayerCard({ player, busy, onEdit, onInventory, onVitals
           {onEdit && (
             <Button size="small" startIcon={<Edit />} disabled={busy} onClick={() => onEdit(player)}>
               Edit
+            </Button>
+          )}
+          {onOpenSheet && (
+            <Button size="small" startIcon={<OpenInNew />} disabled={busy} onClick={() => onOpenSheet(player)}>
+              Open sheet
             </Button>
           )}
           {onVitals && (

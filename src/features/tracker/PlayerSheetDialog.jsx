@@ -4,6 +4,7 @@ import { getPlayer } from "../../api/players";
 import InventoryDialog from "../players/InventoryDialog";
 import PlayerCard from "../players/PlayerCard";
 import VitalsDialog from "../players/VitalsDialog";
+import { openSheet } from "../sheet/sheetAddress";
 
 /**
  * A character in the initiative order, as their card: asked for when opened, so it shows the character as they are now (their
@@ -47,6 +48,7 @@ export default function PlayerSheetDialog({ playerId, name, onClose }) {
       )}
       {showInventory && <InventoryDialog player={player} readOnly onClose={() => setShowInventory(false)} />}
       <DialogActions>
+        {player && <Button onClick={() => openSheet(player.id)}>Open sheet</Button>}
         {player && <Button onClick={() => setShowVitals(true)}>Hit points</Button>}
         {player && <Button onClick={() => setShowInventory(true)}>Inventory</Button>}
         <Button onClick={onClose}>Close</Button>

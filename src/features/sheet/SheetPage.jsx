@@ -1,0 +1,221 @@
+import { useEffect, useState } from "react";
+import { Alert, Box, Button, Chip, CircularProgress, FormControlLabel, MenuItem, Paper, Switch, TextField, Typography } from "@mui/material";
+import { Inventory2, Refresh } from "@mui/icons-material";
+import { updateVitals } from "../../api/players";
+import HpBar from "../players/HpBar";
+import InventoryDialog from "../players/InventoryDialog";
+import { describePlayer, formatBonus, rulesetLabel } from "../players/players";
+import { CONDITIONS, MAX_EXHAUSTION, vitalsOf } from "../players/vitals";
+import useLivePlayer from "./useLivePlayer";
+
+function Stat({ label, value }) {
+  return (
+    <Paper variant="outlined" sx={{ p: 1.5, textAlign: "center", minWidth: 88 }}>
+      <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.5, display: "block" }}>
+        {label}
+      </Typography>
+      <Typography variant="h5" component="p">
+        {value ?? "—"}
+      </Typography>
+    </Paper>
+  );
+}
+
+function Pips({ label, value, onChange }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Typography variant="body2" sx={{ minWidth: 80 }}>
+        {label}
+      </Typography>
+      {[1, 2, 3].map((n) => (
+        <Chip
+          key={n}
+          size="small"
+          label={n}
+          aria-label={`${label} ${n}`}
+          aria-pressed={value >= n}
+          color={value >= n ? (label === "Failures" ? "error" : "success") : "default"}
+          variant={value >= n ? "filled" : "outlined"}
+          onClick={() => onChange(value === n ? n - 1 : n)}
+        />
+      ))}
+    </Box>
+  );
+}
+
+/**
+ * A character's sheet, filling a tab of its own: opened from the app with `?sheet=ID`, and kept up to date as the
+ * character changes anywhere (the tracker, another tab, another device). The hit points, conditions and the rest of what
+ * changes during play can be changed here and are saved as they are, by anyone who can see the character.
+ *
+ * @param {number} playerId
+ */
+export default function SheetPage({ playerId }) {
+  const { player, error, setPlayer } = useLivePlayer(playerId);
+  const [amount, setAmount] = useState("");
+  const [problem, setProblem] = useState(null);
+  const [showInventory, setShowInventory] = useState(false);
+
+  useEffect(() => {
+    document.title = player ? `${player.name} · Character sheet` : "Character sheet";
+  }, [player]);
+
+  /** Saves a change to what changes during play, and shows the character as the backend answers. */
+  const change = async (changes) => {
+    setProblem(null);
+    try {
+      setPlayer(await updateVitals(playerId, changes));
+    } catch (e) {
+      setProblem(e.message || "Couldn't save that.");
+    }
+  };
+
+  if (!player) {
+    return (
+      <Box sx={{ p: 3, display: "grid", gap: 2, justifyItems: "center" }}>
+        {error ? <Alert severity="warning">{error}</Alert> : <CircularProgress aria-label="Loading" />}
+      </Box>
+    );
+  }
+
+  const vitals = vitalsOf(player);
+  const max = player.hitPoints;
+  const hit = (sign) => {
+    const points = /^\d+$/.test(amount.trim()) ? parseInt(amount, 10) : NaN;
+    if (Number.isNaN(points) || vitals.currentHp == null) {
+      return;
+    }
+    // Damage uses up temporary hit points first, as it does at the table.
+    if (sign < 0) {
+      const absorbed = Math.min(vitals.tempHp, points);
+      change({ currentHp: Math.max(0, vitals.currentHp - (points - absorbed)), ...(absorbed ? { tempHp: vitals.tempHp - absorbed } : {}) });
+    } else {
+      change({ currentHp: Math.min(max ?? Infinity, vitals.currentHp + points) });
+    }
+    setAmount("");
+  };
+  const toggleCondition = (condition) =>
+    change({ conditions: vitals.conditions.includes(condition) ? vitals.conditions.filter((one) => one !== condition) : [...vitals.conditions, condition] });
+
+  return (
+    <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: "bolder", overflowWrap: "anywhere" }}>
+            {player.name}
+          </Typography>
+          <Typography color="text.secondary">{describePlayer(player)}</Typography>
+        </Box>
+        <Chip size="small" label={rulesetLabel(player.ruleset)} />
+      </Box>
+
+      {error && <Alert severity="warning">{error} Showing the last it was loaded.</Alert>}
+      {problem && (
+        <Alert severity="error" onClose={() => setProblem(null)}>
+          {problem}
+        </Alert>
+      )}
+
+      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+        <Stat label="Armor class" value={player.armorClass} />
+        <Stat label="Initiative" value={formatBonus(player.initiativeBonus)} />
+        <Stat label="Level" value={player.level} />
+        <Stat label="Inspiration" value={vitals.heroicInspiration ? "★" : "—"} />
+      </Box>
+
+      <Paper variant="outlined" component="section" aria-label="Hit points" sx={{ p: 2, display: "grid", gap: 1.5 }}>
+        <HpBar player={player} />
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+          <TextField
+            size="small"
+            label="Amount"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && hit(-1)}
+            sx={{ width: 110 }}
+          />
+          <Button variant="outlined" color="error" onClick={() => hit(-1)}>
+            Damage
+          </Button>
+          <Button variant="outlined" color="success" onClick={() => hit(1)}>
+            Heal
+          </Button>
+          <TextField
+            size="small"
+            label="Temporary hit points"
+            defaultValue={vitals.tempHp}
+            key={`temp-${vitals.tempHp}`}
+            onBlur={(event) => {
+              const next = /^\d+$/.test(event.target.value.trim()) ? parseInt(event.target.value, 10) : NaN;
+              if (!Number.isNaN(next) && next <= 999 && next !== vitals.tempHp) {
+                change({ tempHp: next });
+              }
+            }}
+            sx={{ width: 200 }}
+          />
+        </Box>
+      </Paper>
+
+      <Paper variant="outlined" component="section" aria-label="Conditions" sx={{ p: 2, display: "grid", gap: 1.5 }}>
+        <Typography variant="subtitle2" component="h2">
+          Conditions
+        </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+          {CONDITIONS.map((condition) => (
+            <Chip
+              key={condition}
+              size="small"
+              label={condition}
+              aria-pressed={vitals.conditions.includes(condition)}
+              color={vitals.conditions.includes(condition) ? "warning" : "default"}
+              variant={vitals.conditions.includes(condition) ? "filled" : "outlined"}
+              onClick={() => toggleCondition(condition)}
+            />
+          ))}
+        </Box>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+          <TextField select size="small" label="Exhaustion" value={vitals.exhaustion} onChange={(event) => change({ exhaustion: Number(event.target.value) })} sx={{ width: 160 }}>
+            {Array.from({ length: MAX_EXHAUSTION + 1 }, (_, level) => (
+              <MenuItem key={level} value={level}>
+                {level === 0 ? "None" : `Level ${level}`}
+              </MenuItem>
+            ))}
+          </TextField>
+          <FormControlLabel
+            control={<Switch checked={vitals.heroicInspiration} onChange={(event) => change({ heroicInspiration: event.target.checked })} />}
+            label="Heroic Inspiration"
+          />
+        </Box>
+        <Box sx={{ display: "grid", gap: 0.5 }}>
+          <Typography variant="subtitle2" component="h2">
+            Death saving throws
+          </Typography>
+          <Pips label="Successes" value={vitals.deathSaveSuccesses} onChange={(value) => change({ deathSaveSuccesses: value })} />
+          <Pips label="Failures" value={vitals.deathSaveFailures} onChange={(value) => change({ deathSaveFailures: value })} />
+        </Box>
+      </Paper>
+
+      {player.notes && (
+        <Paper variant="outlined" component="section" aria-label="Notes" sx={{ p: 2 }}>
+          <Typography variant="subtitle2" component="h2" gutterBottom>
+            Notes
+          </Typography>
+          <Typography sx={{ whiteSpace: "pre-line" }}>{player.notes}</Typography>
+        </Paper>
+      )}
+
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <Button startIcon={<Inventory2 />} onClick={() => setShowInventory(true)}>
+          Inventory
+        </Button>
+        <Button startIcon={<Refresh />} onClick={() => window.location.reload()}>
+          Reload
+        </Button>
+        <Typography variant="caption" color="text.secondary" sx={{ alignSelf: "center" }}>
+          {player.playedBy ? `Played by ${player.playedBy}. ` : ""}Made by {player.owner}. This page keeps itself up to date.
+        </Typography>
+      </Box>
+      {showInventory && <InventoryDialog player={player} readOnly={player.role === "PARTY"} onClose={() => setShowInventory(false)} />}
+    </Box>
+  );
+}

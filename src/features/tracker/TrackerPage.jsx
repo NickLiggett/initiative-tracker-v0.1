@@ -47,7 +47,7 @@ export default function TrackerPage() {
   const gridRef = useRef(null);
   const apiRef = useGridApiRef();
   useNextTurnShortcut(() => setCombatants(nextTurn));
-  useCharacterHpSync(combatants, loadKey);
+  useCharacterHpSync(combatants, loadKey, { setCombatants: setSaved });
 
   /** Removes a row, and says so for a few seconds with the chance to take it back. */
   const remove = (id) => {

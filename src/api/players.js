@@ -34,3 +34,16 @@ export function updatePlayer(id, request) {
 export function deletePlayer(id) {
   return apiSend("DELETE", `/api/players/${encodeURIComponent(id)}`);
 }
+
+/**
+ * What a character carries: `gold`, `silver`, `copper` and `items`, each `{itemKey, kind ("ITEM" or "MAGIC"), name,
+ * quantity, equipped, attuned, notes}`; a line typed by hand has no `itemKey`. Anyone who can see the character can read it.
+ */
+export function getInventory(id, { signal } = {}) {
+  return apiGet(`/api/players/${encodeURIComponent(id)}/inventory`, undefined, { signal });
+}
+
+/** Replaces what a character carries. Its owner and whoever plays it can; a DM seeing it through their party can't. */
+export function saveInventory(id, inventory) {
+  return apiSend("PUT", `/api/players/${encodeURIComponent(id)}/inventory`, inventory);
+}

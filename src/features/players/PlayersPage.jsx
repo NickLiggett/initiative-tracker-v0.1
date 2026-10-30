@@ -5,6 +5,7 @@ import { listPartyInvitations } from "../../api/party";
 import { deletePlayer, listPlayers } from "../../api/players";
 import ConfirmDeleteDialog from "../../components/resource/ConfirmDeleteDialog";
 import PartyPanel, { RequestsBadge } from "./PartyPanel";
+import InventoryDialog from "./InventoryDialog";
 import PlayerCard from "./PlayerCard";
 import PlayerEditor from "./PlayerEditor";
 import { duplicateDraft } from "./playerDraft";
@@ -19,6 +20,7 @@ export default function PlayersPage() {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null); // { player, start }: the character, null for a new one; start is a copy's draft
   const [deleting, setDeleting] = useState(null);
+  const [carrying, setCarrying] = useState(null); // the character whose inventory is open
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("players");
   const [requests, setRequests] = useState([]); // the parties the user has been asked to join or is in
@@ -128,6 +130,7 @@ export default function PlayersPage() {
                     player={player}
                     busy={busy}
                     onEdit={(chosen) => setEditing({ player: chosen })}
+                    onInventory={setCarrying}
                     onDuplicate={(chosen) => setEditing({ player: null, start: duplicateDraft(chosen) })}
                     onDelete={setDeleting}
                   />
@@ -137,6 +140,8 @@ export default function PlayersPage() {
           )}
         </Box>
       )}
+
+      {carrying && <InventoryDialog player={carrying} onClose={() => setCarrying(null)} />}
 
       <ConfirmDeleteDialog
         open={Boolean(deleting)}

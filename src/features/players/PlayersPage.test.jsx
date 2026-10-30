@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { bodiesSentTo, stubApi } from "../../test/fakeApi";
+import { SettingsProvider } from "../../settings/SettingsContext";
+import { DEFAULT_SETTINGS, cacheSettings, rememberUser } from "../../settings/settings";
 import PlayersPage from "./PlayersPage";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -50,7 +52,13 @@ const REFERENCE = {
       item("srd-2024_barbarian", "Barbarian", "5e-2024"),
     ],
   },
-  "GET /api/species": { content: [item("srd_dwarf", "Dwarf", "5e-2014"), item("srd-2024_goliath", "Goliath", "5e-2024")] },
+  "GET /api/species": {
+    content: [
+      item("srd_dwarf", "Dwarf", "5e-2014"),
+      item("srd-2024_goliath", "Goliath", "5e-2024"),
+      { key: "mine_aasimar", name: "Aasimar", document: { gamesystem: null } }, // a user's own
+    ],
+  },
 };
 
 async function renderPage(routes = {}, players = [thorin, borrowed]) {
@@ -145,6 +153,7 @@ describe("making a player", () => {
         ruleset: "5e-2014",
         classKey: "srd_wizard",
         className: "wizard",
+        classes: [{ classKey: "srd_wizard", className: "wizard", level: 4 }],
         speciesKey: "srd_dwarf",
         speciesName: "Dwarf",
         level: 4,
@@ -158,14 +167,74 @@ describe("making a player", () => {
     expect(card("Aria").getByText("Level 4 wizard · Dwarf")).toBeInTheDocument();
   });
 
-  it("starts on the 2024 rules and offers only that rule set's classes", async () => {
+  it("starts on the 2024 rules and offers that rule set's classes first, then the others'", async () => {
     await renderPage();
     openNew();
 
     expect(screen.getByRole("button", { name: "2024 rules" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.mouseDown(field("Class"));
     expect(await screen.findByRole("option", { name: "Barbarian" })).toBeInTheDocument();
-    expect(screen.queryByRole("option", { name: "Fighter" })).not.toBeInTheDocument();
+    const names = screen.getAllByRole("option").map((option) => option.textContent);
+    expect(names).toEqual(["Barbarian", "Wizard", "Fighter", "Wizard"]); // 2024's, then 2014's
+  });
+
+  it("offers species from every source the user can see, such as their own", async () => {
+    await renderPage();
+    openNew();
+
+    fireEvent.mouseDown(field("Species"));
+
+    expect(await screen.findByRole("option", { name: "Aasimar" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Dwarf" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Goliath" })).toBeInTheDocument();
+  });
+
+  it("saves several classes, each with its level, and the levels added up", async () => {
+    const fetchMock = await renderPage({ "POST /api/players": (body) => ({ ...thorin, ...body, id: 9 }) });
+    openNew();
+    await listsLoaded();
+    type("Name", "Mix");
+    type("Class", "Barbarian");
+    type("Level", "3");
+    fireEvent.click(screen.getByRole("button", { name: "Add a class" }));
+    type("Class 2", "Blood Hunter");
+    type("Level 2", "2");
+
+    expect(screen.getByText("Level 5 in all.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "POST /api/players")).toHaveLength(1));
+    expect(bodiesSentTo(fetchMock, "POST /api/players")[0]).toMatchObject({
+      level: 5,
+      className: "Barbarian",
+      classKey: "srd-2024_barbarian",
+      classes: [
+        { classKey: "srd-2024_barbarian", className: "Barbarian", level: 3 },
+        { classKey: null, className: "Blood Hunter", level: 2 },
+      ],
+    });
+  });
+
+  it("can't be saved with more than 20 levels, or a class twice, and a class can be removed", async () => {
+    await renderPage();
+    openNew();
+    type("Name", "Mix");
+    type("Class", "Fighter");
+    type("Level", "15");
+    fireEvent.click(screen.getByRole("button", { name: "Add a class" }));
+    type("Class 2", "Wizard");
+    type("Level 2", "9");
+
+    expect(screen.getByRole("status")).toHaveTextContent("The levels add up to 24; 20 is the most.");
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+
+    type("Class 2", "fighter");
+    expect(screen.getByRole("status")).toHaveTextContent("Fighter is listed twice");
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove class 2" }));
+    expect(screen.queryByLabelText("Class 2")).not.toBeInTheDocument();
+    type("Level", "15");
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
   });
 
   it("looks the class up again when the rules change, since the same name is another class under other rules", async () => {
@@ -273,6 +342,7 @@ describe("changing a player", () => {
     expect(screen.getByText(/gm made this character/)).toBeInTheDocument();
     expect(field("Name")).toBeDisabled();
     expect(field("Class")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Add a class" })).not.toBeInTheDocument();
     expect(field("Species")).toBeDisabled();
     expect(field("Played by (username)")).toBeDisabled();
     expect(screen.getByRole("button", { name: "2014 rules" })).toBeDisabled();
@@ -329,5 +399,38 @@ describe("deleting a player", () => {
     expect(await screen.findByText("Couldn't delete Thorin: Only dev can delete this player")).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(screen.getByRole("group", { name: "Thorin" })).toBeInTheDocument();
+  });
+});
+
+describe("playing your own character", () => {
+  it("fills in the user's own username with one click, and saves it", async () => {
+    cacheSettings("dev", { ...DEFAULT_SETTINGS });
+    rememberUser("dev");
+    const fetchMock = stubApi({
+      "GET /api/players": [],
+      "GET /api/me": { id: 1, username: "dev" },
+      "GET /api/me/settings": { avatarVersion: null },
+      "POST /api/players": (body) => ({ ...thorin, ...body, id: 9, owner: "dev", role: "OWNER" }),
+      ...REFERENCE,
+    });
+    render(
+      <SettingsProvider>
+        <PlayersPage />
+      </SettingsProvider>,
+    );
+    await screen.findByRole("heading", { name: "Characters" });
+    await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => url === "/api/me/settings")).toBe(true));
+    await act(async () => {});
+
+    openNew();
+    type("Name", "Me");
+    expect(field("Played by (username)")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "I play this character" }));
+
+    expect(field("Played by (username)")).toHaveValue("dev");
+    expect(screen.queryByRole("button", { name: "I play this character" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "POST /api/players")).toHaveLength(1));
+    expect(bodiesSentTo(fetchMock, "POST /api/players")[0]).toMatchObject({ name: "Me", playedBy: "dev" });
   });
 });

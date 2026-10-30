@@ -6,11 +6,9 @@ import { DEFAULT_RULESET } from "./players";
 export const EMPTY_DRAFT = {
   name: "",
   ruleset: DEFAULT_RULESET,
-  classKey: null,
-  className: "",
+  classes: [{ key: null, name: "", level: "1" }], // at least one row; a row with no name is a level with no class
   speciesKey: null,
   speciesName: "",
-  level: "1",
   armorClass: "",
   hitPoints: "",
   initiativeBonus: "0",
@@ -25,11 +23,11 @@ export function toDraft(player) {
   return {
     name: player.name,
     ruleset: player.ruleset,
-    classKey: player.classKey ?? null,
-    className: player.className ?? "",
+    classes: player.classes?.length
+      ? player.classes.map(({ classKey, className, level }) => ({ key: classKey ?? null, name: className, level: String(level) }))
+      : [{ key: player.classKey ?? null, name: player.className ?? "", level: String(player.level) }],
     speciesKey: player.speciesKey ?? null,
     speciesName: player.speciesName ?? "",
-    level: String(player.level),
     armorClass: player.armorClass == null ? "" : String(player.armorClass),
     hitPoints: player.hitPoints == null ? "" : String(player.hitPoints),
     initiativeBonus: String(player.initiativeBonus),
@@ -57,11 +55,43 @@ function problemWithNumber(label, text, min, max, optional = false) {
   return Number.isNaN(value) || value < min || value > max ? `${label} must be ${min} to ${max}.` : null;
 }
 
+/** The rows of the draft that name a class. */
+function namedClasses(draft) {
+  return draft.classes.filter(({ name }) => name.trim());
+}
+
+/** The levels in the classes added up, or the one level of a character with no class; NaN if one isn't a number. */
+export function totalLevel(draft) {
+  const rows = namedClasses(draft);
+  return (rows.length ? rows : draft.classes.slice(0, 1)).reduce((sum, { level }) => sum + whole(level), 0);
+}
+
+function classProblems(draft) {
+  const named = namedClasses(draft);
+  const lone = draft.classes.length === 1;
+  const problems = draft.classes
+    .filter(({ name }) => lone || name.trim())
+    .map(({ name, level }) => problemWithNumber(name.trim() ? `Level in ${name.trim()}` : "Level", level, 1, 20));
+  if (!lone && named.length < draft.classes.length) {
+    problems.push("Name each class, or remove the empty one.");
+  }
+  const names = named.map(({ name }) => name.trim().toLowerCase());
+  const twice = names.findIndex((name, index) => names.indexOf(name) !== index);
+  if (twice >= 0) {
+    problems.push(`${named[names.indexOf(names[twice])].name.trim()} is listed twice; use one row and add up its levels.`);
+  }
+  const total = totalLevel(draft);
+  if (!problems.some(Boolean) && total > 20) {
+    problems.push(`The levels add up to ${total}; 20 is the most.`);
+  }
+  return problems;
+}
+
 /** What stops this draft from being saved: sentences, none when it can be. */
 export function draftProblems(draft) {
   return [
     draft.name.trim() ? null : "Give the character a name.",
-    problemWithNumber("Level", draft.level, 1, 20),
+    ...classProblems(draft),
     problemWithNumber("Armor class", draft.armorClass, 0, 40, true),
     problemWithNumber("Hit points", draft.hitPoints, 0, 9999, true),
     problemWithNumber("Initiative bonus", draft.initiativeBonus, -10, 30),
@@ -73,16 +103,17 @@ export function draftProblems(draft) {
 export function toRequest(draft) {
   const optionalNumber = (text) => (String(text).trim() === "" ? null : whole(text));
   const optionalText = (text) => text.trim() || null;
-  const className = optionalText(draft.className);
   const speciesName = optionalText(draft.speciesName);
+  const classes = namedClasses(draft).map(({ key, name, level }) => ({ classKey: key, className: name.trim(), level: whole(level) }));
   return {
     name: draft.name.trim(),
     ruleset: draft.ruleset,
-    classKey: className ? draft.classKey : null,
-    className,
+    classKey: classes[0]?.classKey ?? null,
+    className: classes[0]?.className ?? null,
+    classes,
     speciesKey: speciesName ? draft.speciesKey : null,
     speciesName,
-    level: whole(draft.level),
+    level: totalLevel(draft),
     armorClass: optionalNumber(draft.armorClass),
     hitPoints: optionalNumber(draft.hitPoints),
     initiativeBonus: whole(draft.initiativeBonus),
@@ -94,7 +125,11 @@ export function toRequest(draft) {
 /** The character a draft describes, shaped like the backend's, for showing a preview. */
 export function previewOf(draft, existing) {
   const valid = (text, fallback) => (Number.isNaN(whole(text)) ? fallback : whole(text));
-  const request = toRequest({ ...draft, level: String(valid(draft.level, 1)), initiativeBonus: String(valid(draft.initiativeBonus, 0)) });
+  const request = toRequest({
+    ...draft,
+    classes: draft.classes.map((row) => ({ ...row, level: String(valid(row.level, 1)) })),
+    initiativeBonus: String(valid(draft.initiativeBonus, 0)),
+  });
   return {
     ...request,
     id: existing?.id ?? 0,

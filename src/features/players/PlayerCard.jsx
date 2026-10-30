@@ -1,5 +1,5 @@
 import { Box, Button, Chip, Paper, Typography } from "@mui/material";
-import { ContentCopy, Delete, Edit } from "@mui/icons-material";
+import { ContentCopy, Delete, Edit, Inventory2 } from "@mui/icons-material";
 import UserAvatar from "../../components/layout/UserAvatar";
 import { describePlayer, formatBonus, rulesetLabel } from "./players";
 
@@ -23,12 +23,13 @@ function Stat({ label, value }) {
  * @param {object} player as the backend gives it
  * @param {boolean} [busy] turns the buttons off
  * @param {(player: object) => void} [onEdit]
+ * @param {(player: object) => void} [onInventory] opens what the character carries
  * @param {(player: object) => void} [onDuplicate] only offered for the user's own
  * @param {(player: object) => void} [onDelete] only offered for the user's own
  */
-export default function PlayerCard({ player, busy, onEdit, onDuplicate, onDelete }) {
+export default function PlayerCard({ player, busy, onEdit, onInventory, onDuplicate, onDelete }) {
   const owned = player.role === "OWNER";
-  const hasActions = onEdit || onDuplicate || onDelete;
+  const hasActions = onEdit || onInventory || onDuplicate || onDelete;
 
   return (
     <Paper variant="outlined" role="group" aria-label={player.name} sx={{ p: 2, display: "grid", gap: 1.5, alignContent: "start" }}>
@@ -93,6 +94,11 @@ export default function PlayerCard({ player, busy, onEdit, onDuplicate, onDelete
           {onEdit && (
             <Button size="small" startIcon={<Edit />} disabled={busy} onClick={() => onEdit(player)}>
               Edit
+            </Button>
+          )}
+          {onInventory && (
+            <Button size="small" startIcon={<Inventory2 />} disabled={busy} onClick={() => onInventory(player)}>
+              Inventory
             </Button>
           )}
           {owned && onDuplicate && (

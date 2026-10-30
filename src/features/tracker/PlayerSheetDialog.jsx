@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, CircularProgress, Dialog, DialogActions, DialogContent } from "@mui/material";
 import { getPlayer } from "../../api/players";
+import InventoryDialog from "../players/InventoryDialog";
 import PlayerCard from "../players/PlayerCard";
 
 /**
@@ -11,6 +12,7 @@ import PlayerCard from "../players/PlayerCard";
 export default function PlayerSheetDialog({ playerId, name, onClose }) {
   const [player, setPlayer] = useState(null);
   const [error, setError] = useState(null);
+  const [showInventory, setShowInventory] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -31,7 +33,9 @@ export default function PlayerSheetDialog({ playerId, name, onClose }) {
         {!player && !error && <CircularProgress aria-label="Loading" />}
         {player && <PlayerCard player={player} />}
       </DialogContent>
+      {showInventory && <InventoryDialog player={player} readOnly onClose={() => setShowInventory(false)} />}
       <DialogActions>
+        {player && <Button onClick={() => setShowInventory(true)}>Inventory</Button>}
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackDrafts, attacksToSheet, featureDrafts, featuresToSheet, listProblems, restWouldHelp, spendUse, takeRest, usesLeft } from "./sheetEntries";
+import { attackDrafts, attacksToSheet, featureDrafts, featuresToSheet, listProblems, spendUse, usesLeft } from "./sheetEntries";
 import { toSheet, toSheetDraft } from "./sheetModel";
 
 const sheet = {
@@ -55,7 +55,7 @@ describe("what stops the lists from being saved", () => {
   });
 });
 
-describe("spending uses and taking rests", () => {
+describe("spending uses", () => {
   it("count the uses left, or none for a feature that isn't limited", () => {
     expect(usesLeft(sheet.features[0])).toBe(1);
     expect(usesLeft(sheet.features[2])).toBeNull();
@@ -69,26 +69,10 @@ describe("spending uses and taking rests", () => {
     expect(spendUse(sheet, 2, 1)).toEqual(sheet); // not limited: nothing to spend
   });
 
-  it("give back on a short rest only what comes back on one, and on a long rest everything", () => {
-    const short = takeRest(sheet, "short");
-    const long = takeRest(sheet, "long");
-
-    expect(short.features.map((feature) => feature.uses?.used)).toEqual([0, 1, undefined]);
-    expect(long.features.map((feature) => feature.uses?.used)).toEqual([0, 0, undefined]);
-  });
-
-  it("know whether a rest would give anything back", () => {
-    expect(restWouldHelp(sheet, "short")).toBe(true);
-    expect(restWouldHelp(takeRest(sheet, "short"), "short")).toBe(false);
-    expect(restWouldHelp(takeRest(sheet, "short"), "long")).toBe(true);
-    expect(restWouldHelp(takeRest(sheet, "long"), "long")).toBe(false);
-  });
-
   it("do not change the sheet they were given", () => {
     const before = JSON.stringify(sheet);
 
     spendUse(sheet, 0, 1);
-    takeRest(sheet, "long");
 
     expect(JSON.stringify(sheet)).toBe(before);
   });

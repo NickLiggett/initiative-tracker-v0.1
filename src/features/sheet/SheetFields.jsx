@@ -17,6 +17,7 @@ import {
   skillLevel,
 } from "./sheetModel";
 import SheetLists from "./SheetLists";
+import { RestBar, SheetResources, SheetSpells } from "./SheetSpells";
 
 const dash = (value) => (value === null || value === undefined ? "—" : value);
 
@@ -161,7 +162,10 @@ export default function SheetFields({ sheet, level, onChange }) {
         </Section>
       )}
 
+      <RestBar sheet={sheet} onChange={onChange} />
       <SheetLists sheet={sheet} onChange={onChange} />
+      <SheetResources sheet={sheet} onChange={onChange} />
+      <SheetSpells sheet={sheet} level={level} onChange={onChange} />
 
       {defenses.length > 0 && (
         <Section title="Defenses">

@@ -14,7 +14,10 @@ import {
   Typography,
 } from "@mui/material";
 import { saveSheet } from "../../api/players";
-import { MAX_USES, RESTS } from "./sheetEntries";
+import { MAX_USES } from "./sheetEntries";
+import SpellAdder from "./SpellAdder";
+import { CASTING_ABILITIES, DICE, SLOT_LEVELS } from "./sheetCasting";
+import { RESTS } from "./sheetRests";
 import {
   ABILITIES,
   DEFENSE_LISTS,
@@ -69,6 +72,8 @@ export default function SheetEditor({ player, onSaved, onClose }) {
   const set = (group, key, value) => setDraft((current) => ({ ...current, [group]: { ...current[group], [key]: value } }));
   const setRow = (list, index, field, value) =>
     setDraft((current) => ({ ...current, [list]: current[list].map((row, at) => (at === index ? { ...row, [field]: value } : row)) }));
+  const setNested = (group, key, field, value) =>
+    setDraft((current) => ({ ...current, [group]: { ...current[group], [key]: { ...current[group][key], [field]: value } } }));
   const addRow = (list, row) => setDraft((current) => ({ ...current, [list]: [...current[list], row] }));
   const removeRow = (list, index) => setDraft((current) => ({ ...current, [list]: current[list].filter((row, at) => at !== index) }));
   const setSave = (key, on) =>
@@ -196,6 +201,53 @@ export default function SheetEditor({ player, onSaved, onClose }) {
           <Box>
             <Button onClick={() => addRow("features", { name: "", source: "", description: "", max: "", per: "", used: "0" })}>Add a feature</Button>
           </Box>
+        </Group>
+
+        <Group title="Spell slots and hit dice" hint="Type how many of each you have; the sheet tracks which are spent. Pact slots are all of one level and come back on a short rest.">
+          <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))" }}>
+            {SLOT_LEVELS.map((level) => (
+              <TextField key={level} size="small" label={`Level ${level} slots`} value={draft.slots[level].max} onChange={(event) => setNested("slots", level, "max", event.target.value)} />
+            ))}
+          </Box>
+          <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "140px 140px 1fr" }}>
+            <TextField size="small" label="Pact slots" value={draft.pact.max} onChange={(event) => set("pact", "max", event.target.value)} />
+            <TextField size="small" label="Pact slot level" value={draft.pact.level} onChange={(event) => set("pact", "level", event.target.value)} />
+          </Box>
+          {draft.hitDice.map((pool, index) => (
+            <Box key={index} sx={{ display: "grid", gap: 1, gridTemplateColumns: "140px 140px auto", alignItems: "start" }}>
+              <TextField select size="small" label={`Size of hit dice ${index + 1}`} value={pool.die} onChange={(event) => setRow("hitDice", index, "die", event.target.value)}>
+                {DICE.map((die) => (
+                  <MenuItem key={die} value={die}>{die}</MenuItem>
+                ))}
+              </TextField>
+              <TextField size="small" label={`How many hit dice ${index + 1}`} value={pool.max} onChange={(event) => setRow("hitDice", index, "max", event.target.value)} />
+              <Button color="error" aria-label={`Remove hit dice ${index + 1}`} onClick={() => removeRow("hitDice", index)}>Remove</Button>
+            </Box>
+          ))}
+          <Box>
+            <Button onClick={() => addRow("hitDice", { die: "d8", max: "", used: "0" })}>Add hit dice</Button>
+          </Box>
+        </Group>
+
+        <Group title="Spells">
+          <TextField select size="small" label="Spellcasting ability" value={draft.spellcasting} onChange={(event) => setDraft((current) => ({ ...current, spellcasting: event.target.value }))} sx={{ maxWidth: 260 }} helperText="The save DC and attack bonus are worked out from it.">
+            <MenuItem value="">None</MenuItem>
+            {CASTING_ABILITIES.map(({ key, label }) => (
+              <MenuItem key={key} value={key}>{label}</MenuItem>
+            ))}
+          </TextField>
+          {draft.spells.map((row, index) => (
+            <Box key={index} sx={{ display: "grid", gap: 1, p: 1.5, border: 1, borderColor: "divider", borderRadius: 1 }}>
+              <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: "2fr 90px 1fr auto", alignItems: "start" }}>
+                <TextField size="small" label={`Name of spell ${index + 1}`} value={row.name} onChange={(event) => setRow("spells", index, "name", event.target.value)} />
+                <TextField size="small" label={`Level of spell ${index + 1}`} value={row.level} onChange={(event) => setRow("spells", index, "level", event.target.value)} helperText="0 is a cantrip" />
+                <TextField size="small" label={`Source of spell ${index + 1}`} value={row.source} onChange={(event) => setRow("spells", index, "source", event.target.value)} />
+                <Button color="error" aria-label={`Remove spell ${index + 1}`} onClick={() => removeRow("spells", index)}>Remove</Button>
+              </Box>
+              <TextField size="small" label={`Notes on spell ${index + 1}`} value={row.notes} onChange={(event) => setRow("spells", index, "notes", event.target.value)} />
+            </Box>
+          ))}
+          <SpellAdder onAdd={(row) => addRow("spells", row)} />
         </Group>
 
         <Group title="Defenses">

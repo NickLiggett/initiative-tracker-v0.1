@@ -7,11 +7,6 @@ export const MAX_ATTACKS = 50;
 export const MAX_FEATURES = 200;
 export const MAX_USES = 99;
 
-export const RESTS = [
-  { key: "short", label: "Short rest" },
-  { key: "long", label: "Long rest" },
-];
-
 const text = (value) => (typeof value === "string" ? value : "");
 
 /** The attack rows of the editor for the attacks on the sheet. */
@@ -92,17 +87,4 @@ export function spendUse(sheet, index, by = 1) {
     at === index && feature.uses ? { ...feature, uses: { ...feature.uses, used: Math.min(feature.uses.max, Math.max(0, feature.uses.used + by)) } } : feature,
   );
   return { ...sheet, features };
-}
-
-/** The sheet after a rest: a short rest gives back the uses that come back on one, and a long rest all of them. */
-export function takeRest(sheet, rest) {
-  const features = (sheet.features ?? []).map((feature) =>
-    feature.uses && (rest === "long" || feature.uses.per === "short") ? { ...feature, uses: { ...feature.uses, used: 0 } } : feature,
-  );
-  return { ...sheet, features };
-}
-
-/** Whether a rest would give anything back: used up uses that come back on it. */
-export function restWouldHelp(sheet, rest) {
-  return (sheet.features ?? []).some((feature) => feature.uses && feature.uses.used > 0 && (rest === "long" || feature.uses.per === "short"));
 }

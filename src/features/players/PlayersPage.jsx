@@ -5,10 +5,8 @@ import { listPartyInvitations } from "../../api/party";
 import { deletePlayer, listPlayers } from "../../api/players";
 import ConfirmDeleteDialog from "../../components/resource/ConfirmDeleteDialog";
 import PartyPanel, { RequestsBadge } from "./PartyPanel";
-import InventoryDialog from "./InventoryDialog";
 import PlayerCard from "./PlayerCard";
 import PlayerEditor from "./PlayerEditor";
-import VitalsDialog from "./VitalsDialog";
 import { duplicateDraft } from "./playerDraft";
 import { openSheet } from "../sheet/sheetAddress";
 
@@ -22,9 +20,8 @@ export default function PlayersPage() {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null); // { player, start }: the character, null for a new one; start is a copy's draft
   const [deleting, setDeleting] = useState(null);
-  const [carrying, setCarrying] = useState(null); // the character whose inventory is open
-  const [hurting, setHurting] = useState(null); // the character whose hit points and conditions are open
   const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState(null); // the character just made, with a way to open its sheet
   const [tab, setTab] = useState("players");
   const [requests, setRequests] = useState([]); // the parties the user has been asked to join or is in
 
@@ -47,6 +44,13 @@ export default function PlayersPage() {
   }, [load]);
 
   useEffect(() => {
+    // A character is changed on its sheet, in a tab of its own: coming back to this one shows what changed.
+    const refresh = () => load();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [load]);
+
+  useEffect(() => {
     // Only for the badge on the Party tab; the tab itself says if the party can't be loaded.
     const controller = new AbortController();
     listPartyInvitations({ signal: controller.signal })
@@ -58,6 +62,9 @@ export default function PlayersPage() {
   const waiting = requests.filter((request) => request.status === "PENDING").length;
 
   const saved = (player) => {
+    // Only a new character (or a copy) is announced; changing one happens on its sheet. A button, not a tab opened for
+    // them: a tab opened after the save has gone through is one browsers block.
+    setCreated(editing?.player ? null : player);
     setPlayers((current) => {
       const others = (current ?? []).filter((existing) => existing.id !== player.id);
       return [...others, player].sort((a, b) => a.name.localeCompare(b.name));
@@ -114,6 +121,19 @@ export default function PlayersPage() {
           {tab === "party" && <PartyPanel onInvitationsChange={setRequests} />}
 
           {tab === "players" && loadError && <Alert severity="error">{loadError}</Alert>}
+          {tab === "players" && created && (
+            <Alert
+              severity="success"
+              onClose={() => setCreated(null)}
+              action={
+                <Button color="inherit" size="small" aria-label={`Open ${created.name}'s sheet`} onClick={() => openSheet(created.id)}>
+                  Open sheet
+                </Button>
+              }
+            >
+              {created.name} is made. Open its sheet to fill in the abilities, spells, inventory and the rest.
+            </Alert>
+          )}
           {tab === "players" && error && (
             <Alert severity="error" onClose={() => setError(null)}>
               {error}
@@ -132,9 +152,6 @@ export default function PlayersPage() {
                   <PlayerCard
                     player={player}
                     busy={busy}
-                    onEdit={(chosen) => setEditing({ player: chosen })}
-                    onInventory={setCarrying}
-                    onVitals={setHurting}
                     onOpenSheet={(chosen) => openSheet(chosen.id)}
                     onDuplicate={(chosen) => setEditing({ player: null, start: duplicateDraft(chosen) })}
                     onDelete={setDeleting}
@@ -145,18 +162,6 @@ export default function PlayersPage() {
           )}
         </Box>
       )}
-
-      {hurting && (
-        <VitalsDialog
-          player={hurting}
-          onSaved={(player) => {
-            setPlayers((current) => current.map((existing) => (existing.id === player.id ? player : existing)));
-            setHurting(null);
-          }}
-          onClose={() => setHurting(null)}
-        />
-      )}
-      {carrying && <InventoryDialog player={carrying} onClose={() => setCarrying(null)} />}
 
       <ConfirmDeleteDialog
         open={Boolean(deleting)}

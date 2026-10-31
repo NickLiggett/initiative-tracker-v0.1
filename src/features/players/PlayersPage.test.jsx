@@ -96,14 +96,17 @@ describe("the list", () => {
     expect(mine.getByText("+1")).toBeInTheDocument();
     expect(mine.getByText("Carries a grudge")).toBeInTheDocument();
     expect(mine.getByText("Played by anna")).toBeInTheDocument();
-    expect(mine.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(mine.getByRole("button", { name: "Open sheet" })).toBeInTheDocument();
+    for (const name of ["Edit", "Inventory", "Hit points"]) {
+      expect(mine.queryByRole("button", { name })).not.toBeInTheDocument(); // all of that is on the sheet
+    }
     expect(mine.getByRole("button", { name: "Duplicate" })).toBeInTheDocument();
     expect(mine.getByRole("button", { name: "Delete" })).toBeInTheDocument();
 
     const played = card("Pip");
     expect(played.getByText("2024 rules")).toBeInTheDocument();
     expect(played.getByText("Made by gm. You play this one.")).toBeInTheDocument();
-    expect(played.getByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(played.getByRole("button", { name: "Open sheet" })).toBeInTheDocument();
     expect(played.queryByRole("button", { name: "Duplicate" })).not.toBeInTheDocument();
     expect(played.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
   });
@@ -331,48 +334,6 @@ describe("making a player", () => {
   });
 });
 
-describe("changing a player", () => {
-  it("starts from the player, and replaces it", async () => {
-    const fetchMock = await renderPage({ "PUT /api/players/1": (body) => ({ ...thorin, ...body }) });
-
-    fireEvent.click(card("Thorin").getByRole("button", { name: "Edit" }));
-    expect(field("Name")).toHaveValue("Thorin");
-    expect(field("Class")).toHaveValue("Fighter");
-    expect(field("Level")).toHaveValue("5");
-    expect(screen.getByRole("button", { name: "2014 rules" })).toHaveAttribute("aria-pressed", "true");
-    type("Level", "6");
-    type("Hit points", "60");
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
-
-    await waitFor(() => expect(card("Thorin").getByText("Level 6 Fighter · Dwarf")).toBeInTheDocument());
-    expect(bodiesSentTo(fetchMock, "PUT /api/players/1")[0]).toMatchObject({ name: "Thorin", level: 6, hitPoints: 60, classKey: "srd_fighter", playedBy: "anna" });
-    expect(card("Thorin").getByText("60")).toBeInTheDocument();
-  });
-
-  it("lets whoever only plays a player change its numbers, and nothing else", async () => {
-    const fetchMock = await renderPage({ "PUT /api/players/2": (body) => ({ ...borrowed, ...body }) });
-
-    fireEvent.click(card("Pip").getByRole("button", { name: "Edit" }));
-
-    expect(screen.getByText(/gm made this character/)).toBeInTheDocument();
-    expect(field("Name")).toBeDisabled();
-    expect(field("Class")).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Add a class" })).not.toBeInTheDocument();
-    expect(field("Species")).toBeDisabled();
-    expect(field("Played by (username)")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "2014 rules" })).toBeDisabled();
-    expect(field("Level")).toBeEnabled();
-    expect(field("Hit points")).toBeEnabled();
-    expect(field("Notes")).toBeEnabled();
-
-    type("Hit points", "30");
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
-
-    await waitFor(() => expect(card("Pip").getByText("30")).toBeInTheDocument());
-    expect(bodiesSentTo(fetchMock, "PUT /api/players/2")[0]).toMatchObject({ name: "Pip", ruleset: "5e-2024", className: "Rogue", hitPoints: 30, playedBy: "dev" });
-  });
-});
-
 describe("duplicating a player", () => {
   it("starts a new player like it, named as a copy and played by nobody", async () => {
     const fetchMock = await renderPage({ "POST /api/players": (body) => ({ ...thorin, ...body, id: 10 }) });
@@ -464,30 +425,6 @@ describe("hit points and conditions on the card", () => {
     expect(card("Thorin").getByRole("list", { name: "Conditions" })).toHaveTextContent("PoisonedExhaustion 2");
     expect(card("Thorin").getByTitle("Heroic Inspiration")).toBeInTheDocument();
   });
-
-  it("changes them from the card, for a character the user only plays", async () => {
-    const fetchMock = await renderPage({ "PATCH /api/players/2/vitals": (body) => ({ ...borrowed, vitals: { currentHp: 21, tempHp: 0, ...body } }) });
-
-    fireEvent.click(card("Pip").getByRole("button", { name: "Hit points" }));
-    fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
-
-    await waitFor(() => expect(card("Pip").getByRole("list", { name: "Conditions" })).toHaveTextContent("Stunned"));
-    expect(bodiesSentTo(fetchMock, "PATCH /api/players/2/vitals")).toEqual([{ conditions: ["Stunned"] }]);
-  });
-
-  it("sends the version the character was opened at when it is saved, so an out-of-date copy is refused", async () => {
-    const fetchMock = await renderPage(
-      { "PUT /api/players/1": new Response(JSON.stringify({ detail: "Thorin was saved by someone else since you opened it" }), { status: 409 }) },
-      [hurt],
-    );
-
-    fireEvent.click(card("Thorin").getByRole("button", { name: "Edit" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
-
-    expect(await screen.findByText(/saved by someone else/)).toBeInTheDocument();
-    expect(bodiesSentTo(fetchMock, "PUT /api/players/1")[0]).toMatchObject({ version: 3 });
-  });
 });
 
 describe("opening a sheet", () => {
@@ -501,3 +438,57 @@ describe("opening a sheet", () => {
     expect(open).toHaveBeenCalledWith(expect.stringContaining("?sheet=1"), "_blank");
   });
 });
+
+describe("the name on a card", () => {
+  it("opens the sheet too", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    await renderPage();
+
+    fireEvent.click(card("Thorin").getByRole("button", { name: "Thorin" }));
+
+    expect(open).toHaveBeenCalledWith(expect.stringContaining("?sheet=1"), "_blank");
+  });
+});
+
+describe("coming back from a sheet", () => {
+  it("shows what changed there when the tab is focused again", async () => {
+    const fetchMock = await renderPage({}, [thorin]);
+    const changed = { ...thorin, level: 6 };
+    fetchMock.mockClear();
+    stubApi({ "GET /api/players": [changed], ...REFERENCE });
+
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    expect(await screen.findByText("Level 6 Fighter · Dwarf")).toBeInTheDocument();
+  });
+});
+
+describe("after making a character", () => {
+  it("offers to open its sheet, which opens in a new tab", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    await renderPage({ "POST /api/players": (body) => ({ ...thorin, ...body, id: 9, owner: "dev", role: "OWNER" }) });
+
+    openNew();
+    await listsLoaded();
+    type("Name", "Aria");
+    type("Class", "wizard");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const banner = await screen.findByText(/Aria is made/);
+    expect(banner).toBeInTheDocument();
+    expect(open).not.toHaveBeenCalled(); // not opened for them: a tab opened after the save is one browsers block
+    fireEvent.click(screen.getByRole("button", { name: "Open Aria's sheet" }));
+    expect(open).toHaveBeenCalledWith(expect.stringContaining("?sheet=9"), "_blank");
+  });
+
+  it("says nothing about a character that was only looked at, and goes when closed", async () => {
+    await renderPage();
+
+    expect(screen.queryByText(/is made/)).not.toBeInTheDocument();
+  });
+});
+

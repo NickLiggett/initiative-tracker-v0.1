@@ -90,3 +90,10 @@ export function adjustmentsToSheet(rows) {
     .filter(([, one]) => Object.keys(one).length);
   return entries.length ? { adjustments: Object.fromEntries(entries) } : {};
 }
+
+/** The sheet with these rows as its adjustments in place of the ones it had; the rest is as it was. */
+export function withAdjustments(sheet, rows) {
+  const { adjustments, ...rest } = sheet;
+  return { ...rest, ...adjustmentsToSheet(rows) };
+}
+

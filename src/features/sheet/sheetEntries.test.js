@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackDrafts, attacksToSheet, featureDrafts, featuresToSheet, listProblems, spendUse, usesLeft } from "./sheetEntries";
+import { attackDrafts, attacksToSheet, featureDrafts, featuresToSheet, listProblems, spendUse, usesLeft, withAttack, withFeature, withoutAttack, withoutFeature } from "./sheetEntries";
 import { toSheet, toSheetDraft } from "./sheetModel";
 
 const sheet = {
@@ -77,3 +77,33 @@ describe("spending uses", () => {
     expect(JSON.stringify(sheet)).toBe(before);
   });
 });
+
+describe("adding, changing and removing one entry", () => {
+  const sheet = { abilities: { str: 10 }, attacks: [{ name: "Longsword", bonus: "+9" }], features: [{ name: "Second Wind", uses: { max: 1, used: 1, per: "short" } }] };
+
+  it("adds an attack at the end and changes one in place, trimming it", () => {
+    const added = withAttack(sheet, null, { name: " Dagger ", bonus: "+7", damage: "", notes: "" });
+    expect(added.attacks).toEqual([{ name: "Longsword", bonus: "+9" }, { name: "Dagger", bonus: "+7" }]);
+    expect(withAttack(added, 0, { name: "Longsword", bonus: "+10", damage: "", notes: "" }).attacks[0]).toEqual({ name: "Longsword", bonus: "+10" });
+    expect(added.abilities).toEqual({ str: 10 });
+  });
+
+  it("takes an attack away, and the list with its last one", () => {
+    expect(withoutAttack(sheet, 0)).toEqual({ abilities: { str: 10 }, features: sheet.features });
+    expect(withoutAttack({ attacks: [{ name: "a" }, { name: "b" }] }, 0).attacks).toEqual([{ name: "b" }]);
+  });
+
+  it("changes a feature keeping the uses spent, and never more than there are", () => {
+    const row = { ...featureDrafts(sheet.features)[0], description: "Heal." };
+    expect(withFeature(sheet, 0, row).features[0]).toEqual({ name: "Second Wind", description: "Heal.", uses: { max: 1, used: 1, per: "short" } });
+    expect(withFeature(sheet, 0, { ...row, max: "1", used: "5" }).features[0].uses.used).toBe(1);
+  });
+
+  it("adds a feature that isn't limited, and removes one", () => {
+    const added = withFeature(sheet, null, { name: "Darkvision", source: "Elf", description: "", max: "", per: "", used: "0" });
+    expect(added.features[1]).toEqual({ name: "Darkvision", source: "Elf" });
+    expect(withoutFeature(added, 0).features).toEqual([{ name: "Darkvision", source: "Elf" }]);
+    expect(withoutFeature(sheet, 0).features).toBeUndefined();
+  });
+});
+

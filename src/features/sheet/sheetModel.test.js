@@ -9,6 +9,8 @@ import {
   signed,
   skillBonus,
   skillLevel,
+  withSaveToggled,
+  withSkillCycled,
   toSheet,
   toSheetDraft,
 } from "./sheetModel";
@@ -119,5 +121,29 @@ describe("the draft of a sheet", () => {
       "Dexterity must be 1 to 30, or left empty.",
       "Walking speed must be 0 to 999 feet, or left empty.",
     ]);
+  });
+});
+
+describe("changing a proficiency", () => {
+  it("turns a saving throw on and off, in the order of the abilities, leaving the rest alone", () => {
+    const sheet = { abilities: { str: 10 }, saves: ["int"] };
+
+    expect(withSaveToggled(sheet, "dex")).toEqual({ abilities: { str: 10 }, saves: ["dex", "int"] });
+    expect(withSaveToggled(sheet, "int")).toEqual({ abilities: { str: 10 } });
+  });
+
+  it("takes a skill from none to proficient to expertise and round again", () => {
+    let sheet = { speed: { walk: 30 } };
+
+    sheet = withSkillCycled(sheet, "stealth");
+    expect(sheet).toEqual({ speed: { walk: 30 }, skills: { stealth: "proficient" } });
+    sheet = withSkillCycled(sheet, "stealth");
+    expect(sheet.skills).toEqual({ stealth: "expertise" });
+    sheet = withSkillCycled(sheet, "stealth");
+    expect(sheet).toEqual({ speed: { walk: 30 } });
+  });
+
+  it("keeps the other skills", () => {
+    expect(withSkillCycled({ skills: { arcana: "expertise" } }, "stealth").skills).toEqual({ arcana: "expertise", stealth: "proficient" });
   });
 });

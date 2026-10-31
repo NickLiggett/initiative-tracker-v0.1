@@ -147,6 +147,22 @@ export function spellProblems({ slots, pact, hitDice, spells }) {
   return problems;
 }
 
+/** The spell to keep on the sheet for a row of the editor: what is empty is left out. */
+function spellFromRow(spell) {
+  const one = { name: spell.name.trim(), level: whole(spell.level) };
+  for (const field of ["key", "school", "castingTime", "range", "duration", "source", "notes"]) {
+    if (spell[field].trim()) {
+      one[field] = spell[field].trim();
+    }
+  }
+  for (const field of ["concentration", "ritual", "prepared"]) {
+    if (spell[field]) {
+      one[field] = true;
+    }
+  }
+  return one;
+}
+
 /** The parts of the sheet the spell editor replaces, from the drafts. What is empty is left out. */
 export function spellsToSheet({ spellcasting, slots, pact, hitDice, spells }) {
   const sheet = {};
@@ -171,22 +187,7 @@ export function spellsToSheet({ spellcasting, slots, pact, hitDice, spells }) {
   if (pools.length) {
     sheet.hitDice = pools;
   }
-  const kept = spells
-    .filter((spell) => spell.name.trim())
-    .map((spell) => {
-      const one = { name: spell.name.trim(), level: whole(spell.level) };
-      for (const field of ["key", "school", "castingTime", "range", "duration", "source", "notes"]) {
-        if (spell[field].trim()) {
-          one[field] = spell[field].trim();
-        }
-      }
-      for (const field of ["concentration", "ritual", "prepared"]) {
-        if (spell[field]) {
-          one[field] = true;
-        }
-      }
-      return one;
-    });
+  const kept = spells.filter((spell) => spell.name.trim()).map(spellFromRow);
   if (kept.length) {
     sheet.spells = kept;
   }
@@ -245,3 +246,47 @@ export function regainHitDice(sheet) {
   }
   return { ...sheet, hitDice: (sheet.hitDice ?? []).map((pool, index) => ({ ...pool, used: pool.used - (back.get(index) ?? 0) })) };
 }
+
+// ---- changing one part in place ----
+
+/** The sheet with this casting ability ("int", "wis", "cha"), or none for an empty one. */
+export function withSpellcastingAbility(sheet, ability) {
+  const { spellcasting, ...rest } = sheet;
+  return CASTING_ABILITIES.some(({ key }) => key === ability) ? { ...rest, spellcasting: { ability } } : rest;
+}
+
+/** The sheet with this spell (the dialog's row) added at the end (`index` null) or in place of the one at `index`. */
+export function withSpell(sheet, index, row) {
+  const spells = [...(sheet.spells ?? [])];
+  const spell = spellFromRow(row);
+  if (index === null) {
+    spells.push(spell);
+  } else {
+    spells[index] = spell;
+  }
+  return { ...sheet, spells };
+}
+
+/** The sheet without the spell at `index`; the list is left out when that was the last. */
+export function withoutSpell(sheet, index) {
+  const { spells, ...rest } = sheet;
+  const kept = (spells ?? []).filter((spell, at) => at !== index);
+  return kept.length ? { ...rest, spells: kept } : rest;
+}
+
+/** The slots, pact slots and hit dice as the dialog works on them: totals as text, what is spent kept. */
+export function resourceDraft(sheet) {
+  const { slots, pact, hitDice } = spellDrafts(sheet);
+  return { slots, pact, hitDice };
+}
+
+/** What stops these from being saved: sentences, none when they can be. */
+export const resourceProblems = (draft) => spellProblems({ ...draft, spells: [] });
+
+/** The sheet with the dialog's slots, pact slots and hit dice in place of its own; the rest is as it was. */
+export function withResources(sheet, draft) {
+  const { slots, pact, hitDice, ...rest } = sheet;
+  const { slots: newSlots, pact: newPact, hitDice: newDice } = spellsToSheet({ spellcasting: "", ...draft, spells: [] });
+  return { ...rest, ...(newSlots && { slots: newSlots }), ...(newPact && { pact: newPact }), ...(newDice && { hitDice: newDice }) };
+}
+

@@ -13,6 +13,12 @@ import {
   spendPact,
   spendSlot,
   togglePrepared,
+  resourceDraft,
+  resourceProblems,
+  withResources,
+  withSpell,
+  withSpellcastingAbility,
+  withoutSpell,
 } from "./sheetCasting";
 import { restWouldHelp, takeRest } from "./sheetRests";
 import { toSheet, toSheetDraft } from "./sheetModel";
@@ -152,3 +158,41 @@ describe("resting", () => {
     expect(restWouldHelp({ slots: { 1: { max: 2, used: 1 } } }, "long")).toBe(true);
   });
 });
+
+describe("changing one part in place", () => {
+  const sheet = { abilities: { wis: 16 }, spellcasting: { ability: "wis" }, slots: { 1: { max: 2, used: 1 } }, hitDice: [{ die: "d10", max: 4, used: 2 }], spells: [{ name: "Light", level: 0 }] };
+
+  it("sets and clears the casting ability", () => {
+    expect(withSpellcastingAbility(sheet, "int").spellcasting).toEqual({ ability: "int" });
+    expect(withSpellcastingAbility(sheet, "").spellcasting).toBeUndefined();
+    expect(withSpellcastingAbility(sheet, "str").spellcasting).toBeUndefined(); // not one that casts
+  });
+
+  it("adds, changes and removes a spell", () => {
+    const row = { ...newSpellRow(" Fire Bolt "), level: "0", notes: "x" };
+    const added = withSpell(sheet, null, row);
+    expect(added.spells).toEqual([{ name: "Light", level: 0 }, { name: "Fire Bolt", level: 0, notes: "x" }]);
+    expect(withSpell(added, 0, { ...newSpellRow("Light"), level: "0", prepared: true }).spells[0]).toEqual({ name: "Light", level: 0, prepared: true });
+    expect(withoutSpell(added, 0).spells).toEqual([{ name: "Fire Bolt", level: 0, notes: "x" }]);
+    expect(withoutSpell(sheet, 0).spells).toBeUndefined();
+  });
+
+  it("changes the totals keeping what is spent, and drops what is emptied", () => {
+    const draft = resourceDraft(sheet);
+    draft.slots[1].max = "1"; // fewer than spent... one of two spent stays at most one
+    draft.slots[3].max = "2";
+    draft.hitDice = [];
+    const changed = withResources(sheet, draft);
+    expect(changed.slots).toEqual({ 1: { max: 1, used: 1 }, 3: { max: 2, used: 0 } });
+    expect(changed.hitDice).toBeUndefined();
+    expect(changed.spells).toEqual(sheet.spells);
+    expect(changed.abilities).toEqual({ wis: 16 });
+  });
+
+  it("says what stops the totals from being saved", () => {
+    const draft = resourceDraft(sheet);
+    draft.slots[1].max = "40";
+    expect(resourceProblems(draft)).toEqual(["Spell slots must be 0 to 20 of each level, or left empty."]);
+  });
+});
+

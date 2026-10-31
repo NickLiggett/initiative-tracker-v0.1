@@ -15,10 +15,12 @@ import {
   signed,
   skillBonus,
   skillLevel,
+  withSaveToggled,
+  withSkillCycled,
 } from "./sheetModel";
+import EditableField from "./EditableField";
 import { adjustmentText } from "./sheetAdjust";
-import SheetLists from "./SheetLists";
-import { RestBar, SheetResources, SheetSpells } from "./SheetSpells";
+import { withListEntry, withOtherSpeed, withPersonal, withSenses } from "./sheetEdits";
 
 const dash = (value) => (value === null || value === undefined ? "—" : value);
 
@@ -46,11 +48,26 @@ function Mark({ level }) {
   );
 }
 
-/** A line of saves, skills or passive scores. `adjustment` is what was adjusted by hand (see sheetAdjust.js), shown beside the label. */
-function Row({ mark, label, value, adjustment }) {
+/**
+ * A line of saves, skills or passive scores. `adjustment` is what was adjusted by hand (see sheetAdjust.js), shown beside the
+ * label. With `onMark` the mark is a button that takes the proficiency one step on.
+ */
+function Row({ mark, label, value, adjustment, onMark, markLabel }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Box sx={{ width: 18, display: "flex" }}>{mark}</Box>
+      {onMark ? (
+        <Box
+          component="button"
+          type="button"
+          aria-label={markLabel}
+          onClick={onMark}
+          sx={{ all: "unset", cursor: "pointer", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1, "&:hover, &:focus-visible": { bgcolor: "action.hover" } }}
+        >
+          {mark}
+        </Box>
+      ) : (
+        <Box sx={{ width: 22, display: "flex", justifyContent: "center" }}>{mark}</Box>
+      )}
       <Typography variant="body2" sx={{ flex: 1 }}>
         {label}
         {adjustment && (
@@ -87,57 +104,61 @@ function Tags({ label, items }) {
   );
 }
 
+/** The other speeds and the senses: as text, or, when the sheet can be changed, each with a pencil (and shown even when empty). The walking speed is changed in the header. */
+function SpeedAndSenses({ sheet, speedText, onChange }) {
+  if (!onChange) {
+    return (
+      <>
+        {speedText && <Typography variant="body2">{speedText}</Typography>}
+        <Tags label="Senses" items={sheet.senses} />
+      </>
+    );
+  }
+  const speed = sheet.speed ?? {};
+  const none = (text) => (
+    <Typography variant="body2" color="text.secondary">
+      {text}
+    </Typography>
+  );
+  return (
+    <>
+      {speed.walk !== undefined && <Typography variant="body2">Walking {speed.walk} ft.</Typography>}
+      <EditableField label="Other speeds" value={speed.other ?? ""} hint="Such as fly 30 ft., swim 30 ft." onSave={(text) => onChange(withOtherSpeed(sheet, text))}>
+        {speed.other ? <Typography variant="body2">{speed.other}</Typography> : none("No other speeds")}
+      </EditableField>
+      <EditableField label="Senses" value={(sheet.senses ?? []).join("\n")} multiline hint="One a line, such as Darkvision 120 ft." onSave={(text) => onChange(withSenses(sheet, text))}>
+        {sheet.senses?.length ? <Tags label="Senses" items={sheet.senses} /> : none("No senses")}
+      </EditableField>
+    </>
+  );
+}
+
 /**
- * What the sheet holds beyond hit points: the ability scores with their modifiers, saving throws, skills and passive
- * scores worked out from them and the character's level, then speed, senses, defenses, what the character is trained in, and
- * the personal details. A part with nothing in it is not shown.
+ * Saving throws, skills and passive scores worked out from the ability scores (see SheetAbilities) and the character's
+ * level, and speed and senses. Proficiencies can be changed from their marks. The rest of the sheet is in SheetTabs.
  *
  * @param {object} sheet the character's `sheet`
  * @param {number} level the character's level, for the proficiency bonus
- * @param {(sheet: object) => void} [onChange] given the sheet as it would be after a use is spent or a rest taken, to save;
- *   without it the uses are only shown
+ * @param {(sheet: object) => void} [onChange] given the sheet as it would be after a use is spent, a rest taken or a
+ *   proficiency changed, to save; without it they are only shown
  */
 export default function SheetFields({ sheet, level, onChange }) {
   const filled = ABILITIES.some(({ key }) => abilityModifier(sheet, key) !== null);
   const speed = sheet.speed ?? {};
   const speedText = [speed.walk !== undefined ? `Walking ${speed.walk} ft.` : null, speed.other].filter(Boolean).join(" · ");
-  const defenses = DEFENSE_LISTS.filter(({ key }) => sheet.defenses?.[key]?.length);
-  const training = TRAINING_LISTS.filter(({ key }) => sheet.training?.[key]?.length);
-  const lines = PERSONAL_LINES.filter(({ key }) => sheet.personal?.[key]);
-  const texts = PERSONAL_TEXTS.filter(({ key }) => sheet.personal?.[key]);
 
   return (
     <>
       {filled && (
-        <Section title="Abilities">
-          <Box component="ul" aria-label="Ability scores" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 1, gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))" }}>
-            {ABILITIES.map(({ key, label }) => (
-              <Paper component="li" variant="outlined" key={key} aria-label={label} sx={{ p: 1, textAlign: "center" }}>
-                <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.5, display: "block" }}>
-                  {label}
-                </Typography>
-                <Typography variant="h5" component="p">
-                  {dash(sheet.abilities?.[key] === undefined ? null : signed(abilityModifier(sheet, key)))}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {dash(sheet.abilities?.[key])}
-                </Typography>
-              </Paper>
-            ))}
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            Proficiency bonus {signed(proficiencyBonus(level))}
-          </Typography>
-        </Section>
-      )}
-
-      {filled && (
-        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", alignItems: "start" }}>
+          <Box sx={{ display: "grid", gap: 2 }}>
           <Section title="Saving throws">
             {ABILITIES.map(({ key, label }) => (
               <Row
                 key={key}
                 mark={<Mark level={(sheet.saves ?? []).includes(key) ? "proficient" : "none"} />}
+                onMark={onChange && (() => onChange(withSaveToggled(sheet, key)))}
+                markLabel={`${label} saving throw proficiency: ${(sheet.saves ?? []).includes(key) ? "proficient" : "none"}. Change`}
                 label={label}
                 adjustment={adjustmentText(sheet, `save.${key}`)}
                 value={dash(saveBonus(sheet, key, level) === null ? null : signed(saveBonus(sheet, key, level)))}
@@ -149,61 +170,84 @@ export default function SheetFields({ sheet, level, onChange }) {
               <Row
                 key={key}
                 mark={<Mark level={skillLevel(sheet, key)} />}
+                onMark={onChange && (() => onChange(withSkillCycled(sheet, key)))}
+                markLabel={`${label} proficiency: ${skillLevel(sheet, key)}. Change`}
                 label={`${label} (${ability.toUpperCase()})`}
                 adjustment={adjustmentText(sheet, `skill.${key}`)}
                 value={dash(skillBonus(sheet, key, level) === null ? null : signed(skillBonus(sheet, key, level)))}
               />
             ))}
           </Section>
+          </Box>
           <Section title="Senses and speed">
             {PASSIVES.map(({ skill, label }) => (
               <Row key={skill} label={label} adjustment={adjustmentText(sheet, `passive.${skill}`)} value={dash(passiveScore(sheet, skill, level))} />
             ))}
-            {speedText && <Typography variant="body2">{speedText}</Typography>}
-            <Tags label="Senses" items={sheet.senses} />
+            <SpeedAndSenses sheet={sheet} speedText={speedText} onChange={onChange} />
           </Section>
         </Box>
       )}
-      {!filled && (speedText || sheet.senses?.length) && (
+      {!filled && (speedText || sheet.senses?.length || onChange) && (
         <Section title="Senses and speed">
-          {speedText && <Typography variant="body2">{speedText}</Typography>}
-          <Tags label="Senses" items={sheet.senses} />
+          <SpeedAndSenses sheet={sheet} speedText={speedText} onChange={onChange} />
         </Section>
       )}
 
-      <RestBar sheet={sheet} onChange={onChange} />
-      <SheetLists sheet={sheet} onChange={onChange} />
-      <SheetResources sheet={sheet} onChange={onChange} />
-      <SheetSpells sheet={sheet} level={level} onChange={onChange} />
+    </>
+  );
+}
 
-      {defenses.length > 0 && (
-        <Section title="Defenses">
-          {defenses.map(({ key, label }) => (
-            <Tags key={key} label={label} items={sheet.defenses[key]} />
-          ))}
-        </Section>
-      )}
-      {training.length > 0 && (
-        <Section title="Proficiencies and training">
-          {training.map(({ key, label }) => (
-            <Tags key={key} label={label} items={sheet.training[key]} />
-          ))}
-        </Section>
-      )}
+/**
+ * Defenses, what the character is trained in, and the personal details. Read only, a part with nothing in it is not shown;
+ * with `onChange` (given the sheet after a change, to save) every part is shown with a pencil beside it.
+ */
+export function SheetDescription({ sheet, onChange }) {
+  const editable = Boolean(onChange);
+  const defenses = DEFENSE_LISTS.filter(({ key }) => editable || sheet.defenses?.[key]?.length);
+  const training = TRAINING_LISTS.filter(({ key }) => editable || sheet.training?.[key]?.length);
+  const lines = PERSONAL_LINES.filter(({ key }) => editable || sheet.personal?.[key]);
+  const texts = PERSONAL_TEXTS.filter(({ key }) => editable || sheet.personal?.[key]);
+  const empty = (label) => (
+    <Typography variant="body2" color="text.secondary">
+      {label}: none
+    </Typography>
+  );
+  const list = (group, { key, label }) => (
+    <EditableField key={key} label={label} value={(sheet[group]?.[key] ?? []).join("\n")} multiline hint="One a line" onSave={onChange && ((text) => onChange(withListEntry(sheet, group, key, text)))}>
+      {sheet[group]?.[key]?.length ? <Tags label={label} items={sheet[group][key]} /> : empty(label)}
+    </EditableField>
+  );
+
+  return (
+    <>
+      {defenses.length > 0 && <Section title="Defenses">{defenses.map((one) => list("defenses", one))}</Section>}
+      {training.length > 0 && <Section title="Proficiencies and training">{training.map((one) => list("training", one))}</Section>}
       {(lines.length > 0 || texts.length > 0) && (
         <Section title="Personal">
-          {lines.length > 0 && (
-            <Typography variant="body2">{lines.map(({ key, label }) => `${label}: ${sheet.personal[key]}`).join(" · ")}</Typography>
+          {editable ? (
+            <Box sx={{ display: "grid", gap: 0.5, gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}>
+              {lines.map(({ key, label }) => (
+                <EditableField key={key} label={label} value={sheet.personal?.[key] ?? ""} onSave={(text) => onChange(withPersonal(sheet, key, text))}>
+                  <Typography variant="body2" color={sheet.personal?.[key] ? "text.primary" : "text.secondary"}>
+                    {label}: {sheet.personal?.[key] || "—"}
+                  </Typography>
+                </EditableField>
+              ))}
+            </Box>
+          ) : (
+            lines.length > 0 && <Typography variant="body2">{lines.map(({ key, label }) => `${label}: ${sheet.personal[key]}`).join(" · ")}</Typography>
           )}
           {texts.map(({ key, label }) => (
-            <Box key={key}>
-              <Typography variant="caption" color="text.secondary">
-                {label}
-              </Typography>
-              <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
-                {sheet.personal[key]}
-              </Typography>
-            </Box>
+            <EditableField key={key} label={label} value={sheet.personal?.[key] ?? ""} multiline onSave={onChange && ((text) => onChange(withPersonal(sheet, key, text)))}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  {label}
+                </Typography>
+                <Typography variant="body2" color={sheet.personal?.[key] ? "text.primary" : "text.secondary"} sx={{ whiteSpace: "pre-line" }}>
+                  {sheet.personal?.[key] || "—"}
+                </Typography>
+              </Box>
+            </EditableField>
           ))}
         </Section>
       )}

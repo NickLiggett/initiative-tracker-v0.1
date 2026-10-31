@@ -1,5 +1,5 @@
-import { Box, Button, Chip, Paper, Typography } from "@mui/material";
-import { ContentCopy, Delete, Edit, Favorite, Inventory2, OpenInNew, Star } from "@mui/icons-material";
+import { Box, Button, Chip, Link, Paper, Typography } from "@mui/material";
+import { ContentCopy, Delete, OpenInNew, Star } from "@mui/icons-material";
 import UserAvatar from "../../components/layout/UserAvatar";
 import HpBar from "./HpBar";
 import { describePlayer, formatBonus, rulesetLabel } from "./players";
@@ -24,16 +24,14 @@ function Stat({ label, value }) {
  *
  * @param {object} player as the backend gives it
  * @param {boolean} [busy] turns the buttons off
- * @param {(player: object) => void} [onEdit]
- * @param {(player: object) => void} [onInventory] opens what the character carries
- * @param {(player: object) => void} [onOpenSheet] opens the character's sheet in a new tab
- * @param {(player: object) => void} [onVitals] opens the hit points and conditions; anyone who sees the character can
+ * @param {(player: object) => void} [onOpenSheet] opens the character's sheet in a new tab: everything about a character
+ * (hit points, inventory, the details) is changed there
  * @param {(player: object) => void} [onDuplicate] only offered for the user's own
  * @param {(player: object) => void} [onDelete] only offered for the user's own
  */
-export default function PlayerCard({ player, busy, onEdit, onInventory, onVitals, onOpenSheet, onDuplicate, onDelete }) {
+export default function PlayerCard({ player, busy, onOpenSheet, onDuplicate, onDelete }) {
   const owned = player.role === "OWNER";
-  const hasActions = onEdit || onInventory || onVitals || onOpenSheet || onDuplicate || onDelete;
+  const hasActions = onOpenSheet || onDuplicate || onDelete;
   const vitals = vitalsOf(player);
   const afflicted = [...vitals.conditions, ...(vitals.exhaustion > 0 ? [`Exhaustion ${vitals.exhaustion}`] : [])];
 
@@ -42,7 +40,13 @@ export default function PlayerCard({ player, busy, onEdit, onInventory, onVitals
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="h6" component="h3" sx={{ overflowWrap: "anywhere" }}>
-            {player.name}
+            {onOpenSheet ? (
+              <Link component="button" type="button" color="inherit" underline="hover" disabled={busy} onClick={() => onOpenSheet(player)} sx={{ font: "inherit", textAlign: "left" }}>
+                {player.name}
+              </Link>
+            ) : (
+              player.name
+            )}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             {describePlayer(player)}
@@ -114,24 +118,9 @@ export default function PlayerCard({ player, busy, onEdit, onInventory, onVitals
 
       {hasActions && (
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-          {onEdit && (
-            <Button size="small" startIcon={<Edit />} disabled={busy} onClick={() => onEdit(player)}>
-              Edit
-            </Button>
-          )}
           {onOpenSheet && (
-            <Button size="small" startIcon={<OpenInNew />} disabled={busy} onClick={() => onOpenSheet(player)}>
+            <Button size="small" variant="contained" startIcon={<OpenInNew />} disabled={busy} onClick={() => onOpenSheet(player)}>
               Open sheet
-            </Button>
-          )}
-          {onVitals && (
-            <Button size="small" startIcon={<Favorite />} disabled={busy} onClick={() => onVitals(player)}>
-              Hit points
-            </Button>
-          )}
-          {onInventory && (
-            <Button size="small" startIcon={<Inventory2 />} disabled={busy} onClick={() => onInventory(player)}>
-              Inventory
             </Button>
           )}
           {owned && onDuplicate && (

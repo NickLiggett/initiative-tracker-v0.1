@@ -130,6 +130,27 @@ export function skillLevel(sheet, skill) {
   return marked === "proficient" || marked === "expertise" ? marked : "none";
 }
 
+/** The sheet with the saving throw of this ability turned on, or off if it was on. */
+export function withSaveToggled(sheet, ability) {
+  const on = (sheet.saves ?? []).includes(ability);
+  const saves = ABILITIES.map(({ key }) => key).filter((key) => (key === ability ? !on : (sheet.saves ?? []).includes(key)));
+  const { saves: old, ...rest } = sheet;
+  return saves.length ? { ...rest, saves } : rest;
+}
+
+const SKILL_STEPS = ["none", "proficient", "expertise"];
+
+/** The sheet with this skill taken one step on: not proficient, proficient, expertise, and round again. */
+export function withSkillCycled(sheet, skill) {
+  const next = SKILL_STEPS[(SKILL_STEPS.indexOf(skillLevel(sheet, skill)) + 1) % SKILL_STEPS.length];
+  const { skills: old, ...rest } = sheet;
+  const skills = Object.fromEntries(Object.entries(old ?? {}).filter(([key]) => key !== skill));
+  if (next !== "none") {
+    skills[skill] = next;
+  }
+  return Object.keys(skills).length ? { ...rest, skills } : rest;
+}
+
 /** The bonus of a skill: its ability's modifier, plus the proficiency bonus, or twice it for expertise. Null without the score. */
 export function skillBonus(sheet, skill, level) {
   const base = abilityModifier(sheet, SKILLS.find(({ key }) => key === skill).ability);

@@ -150,7 +150,8 @@ export default function SheetFields({ sheet, level, onChange }) {
   return (
     <>
       {filled && (
-        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", alignItems: "start" }}>
+          <Box sx={{ display: "grid", gap: 2 }}>
           <Section title="Saving throws">
             {ABILITIES.map(({ key, label }) => (
               <Row
@@ -177,6 +178,7 @@ export default function SheetFields({ sheet, level, onChange }) {
               />
             ))}
           </Section>
+          </Box>
           <Section title="Senses and speed">
             {PASSIVES.map(({ skill, label }) => (
               <Row key={skill} label={label} adjustment={adjustmentText(sheet, `passive.${skill}`)} value={dash(passiveScore(sheet, skill, level))} />

@@ -88,7 +88,7 @@ function Tags({ label, items }) {
 }
 
 /**
- * What the sheet holds beyond hit points: the ability scores with their modifiers, saving throws, skills and passive
+ * What the sheet holds beyond hit points and the ability scores (see SheetAbilities): saving throws, skills and passive
  * scores worked out from them and the character's level, then speed, senses, defenses, what the character is trained in, and
  * the personal details. A part with nothing in it is not shown.
  *
@@ -108,29 +108,6 @@ export default function SheetFields({ sheet, level, onChange }) {
 
   return (
     <>
-      {filled && (
-        <Section title="Abilities">
-          <Box component="ul" aria-label="Ability scores" sx={{ listStyle: "none", m: 0, p: 0, display: "grid", gap: 1, gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))" }}>
-            {ABILITIES.map(({ key, label }) => (
-              <Paper component="li" variant="outlined" key={key} aria-label={label} sx={{ p: 1, textAlign: "center" }}>
-                <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.5, display: "block" }}>
-                  {label}
-                </Typography>
-                <Typography variant="h5" component="p">
-                  {dash(sheet.abilities?.[key] === undefined ? null : signed(abilityModifier(sheet, key)))}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {dash(sheet.abilities?.[key])}
-                </Typography>
-              </Paper>
-            ))}
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            Proficiency bonus {signed(proficiencyBonus(level))}
-          </Typography>
-        </Section>
-      )}
-
       {filled && (
         <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
           <Section title="Saving throws">

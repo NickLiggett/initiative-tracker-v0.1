@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { bodiesSentTo, stubApi } from "../../test/fakeApi";
 import SheetPage from "./SheetPage";
 
@@ -51,6 +51,7 @@ describe("the character sheet", () => {
     const fetchMock = open();
     await screen.findByRole("heading", { name: "Thorin" });
 
+    fireEvent.click(screen.getByRole("button", { name: "Manage hit points" }));
     fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "8" } });
     fireEvent.click(screen.getByRole("button", { name: "Damage" }));
 
@@ -61,6 +62,7 @@ describe("the character sheet", () => {
     const fetchMock = open();
     await screen.findByRole("heading", { name: "Thorin" });
 
+    fireEvent.click(screen.getByRole("button", { name: "Manage hit points" }));
     fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "100" } });
     fireEvent.click(screen.getByRole("button", { name: "Heal" }));
 
@@ -73,7 +75,7 @@ describe("the character sheet", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Prone" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Prone" })).toHaveAttribute("aria-pressed", "true"));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Heroic Inspiration" }));
+    fireEvent.click(screen.getByRole("button", { name: "Heroic Inspiration" }));
     fireEvent.click(screen.getByRole("button", { name: "Failures 2" }));
 
     await waitFor(() => expect(patches(fetchMock)).toHaveLength(3));
@@ -258,5 +260,59 @@ describe("the inventory, on the sheet", () => {
 
     expect(await screen.findByDisplayValue("Rope")).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+  });
+});
+
+describe("the header and the ability scores", () => {
+  const scored = { ...thorin, version: 2, sheet: { abilities: { str: 16, dex: 12, con: 14, int: 8, wis: 10, cha: 11 }, speed: { walk: 30 } } };
+
+  it("shows the numbers a player looks at most, and the six scores with their modifiers", async () => {
+    stubApi({ "GET /api/players/7": scored });
+    render(<SheetPage playerId={7} />);
+
+    await screen.findByRole("heading", { name: "Thorin" });
+    expect(screen.getByText("30 ft.")).toBeInTheDocument();
+    expect(screen.getByText("Proficiency").parentElement).toHaveTextContent("+3"); // at level 5
+    const strength = within(screen.getByRole("listitem", { name: "Strength" }));
+    expect(strength.getByText("+3")).toBeInTheDocument();
+    expect(strength.getByText("16")).toBeInTheDocument();
+  });
+
+  it("sets a score from its tile, and refuses one out of range", async () => {
+    let saved = scored; // what the backend has, which the sheet asks for again after the save
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...scored, sheet: body.sheet, version: 3 }),
+    });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: /^Strength 16, modifier \+3/ }));
+    fireEvent.change(screen.getByLabelText("Strength score"), { target: { value: "31" } });
+    expect(screen.getByRole("button", { name: "Set" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Strength score"), { target: { value: "18" } });
+    fireEvent.click(screen.getByRole("button", { name: "Set" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")).toHaveLength(1));
+    expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0]).toMatchObject({ version: 2, sheet: { abilities: { str: 18, dex: 12 } } });
+    await waitFor(() => expect(screen.getByRole("listitem", { name: "Strength" })).toHaveTextContent("+4"));
+  });
+
+  it("only shows the scores to a DM seeing a party member", async () => {
+    stubApi({ "GET /api/players/7": { ...scored, role: "PARTY" } });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    expect(screen.queryByRole("button", { name: /Strength .*Change/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit stats" })).not.toBeInTheDocument();
+    expect(screen.getByRole("listitem", { name: "Strength" })).toHaveTextContent("16");
+  });
+
+  it("offers empty scores to fill in on a sheet that has none", async () => {
+    stubApi({ "GET /api/players/7": thorin });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    expect(screen.getByRole("button", { name: "Strength not set. Change" })).toBeInTheDocument();
   });
 });

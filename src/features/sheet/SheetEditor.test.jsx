@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { bodiesSentTo, stubApi } from "../../test/fakeApi";
 import SheetEditor from "./SheetEditor";
+import SheetAbilities from "./SheetAbilities";
 import SheetFields from "./SheetFields";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -207,7 +208,12 @@ describe("the sheet's fields", () => {
   };
 
   it("works out the modifiers, saves, skills and passive scores from the scores and the level", () => {
-    render(<SheetFields sheet={sheet} level={14} />);
+    render(
+      <>
+        <SheetAbilities sheet={sheet} level={14} />
+        <SheetFields sheet={sheet} level={14} />
+      </>,
+    );
 
     expect(screen.getByLabelText("Dexterity")).toHaveTextContent("+5");
     expect(screen.getByLabelText("Dexterity")).toHaveTextContent("20");

@@ -1,28 +1,15 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Chip, CircularProgress, FormControlLabel, MenuItem, Paper, Switch, TextField, Typography } from "@mui/material";
-import { Edit, EditNote, Refresh } from "@mui/icons-material";
+import { Alert, Box, Button, Chip, CircularProgress, MenuItem, Paper, TextField, Typography } from "@mui/material";
+import { Refresh } from "@mui/icons-material";
 import { saveSheet, updateVitals } from "../../api/players";
-import HpBar from "../players/HpBar";
 import { InventoryPanel } from "../players/InventoryDialog";
 import PlayerEditor from "../players/PlayerEditor";
-import { describePlayer, formatBonus, rulesetLabel } from "../players/players";
 import { CONDITIONS, MAX_EXHAUSTION, vitalsOf } from "../players/vitals";
 import SheetEditor from "./SheetEditor";
+import SheetAbilities from "./SheetAbilities";
 import SheetFields from "./SheetFields";
+import SheetHeader from "./SheetHeader";
 import useLivePlayer from "./useLivePlayer";
-
-function Stat({ label, value }) {
-  return (
-    <Paper variant="outlined" sx={{ p: 1.5, textAlign: "center", minWidth: 88 }}>
-      <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.5, display: "block" }}>
-        {label}
-      </Typography>
-      <Typography variant="h5" component="p">
-        {value ?? "—"}
-      </Typography>
-    </Paper>
-  );
-}
 
 function Pips({ label, value, onChange }) {
   return (
@@ -55,7 +42,6 @@ function Pips({ label, value, onChange }) {
  */
 export default function SheetPage({ playerId }) {
   const { player, error, setPlayer, reload } = useLivePlayer(playerId);
-  const [amount, setAmount] = useState("");
   const [problem, setProblem] = useState(null);
   const [editing, setEditing] = useState(false); // the sheet's numbers
   const [editingDetails, setEditingDetails] = useState(false); // who the character is: name, classes, level, AC
@@ -83,21 +69,6 @@ export default function SheetPage({ playerId }) {
   }
 
   const vitals = vitalsOf(player);
-  const max = player.hitPoints;
-  const hit = (sign) => {
-    const points = /^\d+$/.test(amount.trim()) ? parseInt(amount, 10) : NaN;
-    if (Number.isNaN(points) || vitals.currentHp == null) {
-      return;
-    }
-    // Damage uses up temporary hit points first, as it does at the table.
-    if (sign < 0) {
-      const absorbed = Math.min(vitals.tempHp, points);
-      change({ currentHp: Math.max(0, vitals.currentHp - (points - absorbed)), ...(absorbed ? { tempHp: vitals.tempHp - absorbed } : {}) });
-    } else {
-      change({ currentHp: Math.min(max ?? Infinity, vitals.currentHp + points) });
-    }
-    setAmount("");
-  };
   /** Saves the sheet as it would be after a use is spent or a rest taken; if someone saved in between, shows theirs instead. */
   const changeSheet = async (sheet) => {
     setProblem(null);
@@ -128,23 +99,12 @@ export default function SheetPage({ playerId }) {
 
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: "bolder", overflowWrap: "anywhere" }}>
-            {player.name}
-          </Typography>
-          <Typography color="text.secondary">{describePlayer(player)}</Typography>
-        </Box>
-        <Chip size="small" label={rulesetLabel(player.ruleset)} />
-        <Button startIcon={<Edit />} onClick={() => setEditingDetails(true)}>
-          Edit details
-        </Button>
-        {player.role !== "PARTY" && (
-          <Button startIcon={<EditNote />} onClick={() => setEditing(true)}>
-            Edit stats
-          </Button>
-        )}
-      </Box>
+      <SheetHeader
+        player={player}
+        onVitals={change}
+        onEditDetails={() => setEditingDetails(true)}
+        onEditStats={player.role === "PARTY" ? undefined : () => setEditing(true)}
+      />
 
       {error && <Alert severity="warning">{error} Showing the last it was loaded.</Alert>}
       {problem && (
@@ -153,45 +113,7 @@ export default function SheetPage({ playerId }) {
         </Alert>
       )}
 
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-        <Stat label="Armor class" value={player.armorClass} />
-        <Stat label="Initiative" value={formatBonus(player.initiativeBonus)} />
-        <Stat label="Level" value={player.level} />
-        <Stat label="Inspiration" value={vitals.heroicInspiration ? "★" : "—"} />
-      </Box>
-
-      <Paper variant="outlined" component="section" aria-label="Hit points" sx={{ p: 2, display: "grid", gap: 1.5 }}>
-        <HpBar player={player} />
-        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
-          <TextField
-            size="small"
-            label="Amount"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            onKeyDown={(event) => event.key === "Enter" && hit(-1)}
-            sx={{ width: 110 }}
-          />
-          <Button variant="outlined" color="error" onClick={() => hit(-1)}>
-            Damage
-          </Button>
-          <Button variant="outlined" color="success" onClick={() => hit(1)}>
-            Heal
-          </Button>
-          <TextField
-            size="small"
-            label="Temporary hit points"
-            defaultValue={vitals.tempHp}
-            key={`temp-${vitals.tempHp}`}
-            onBlur={(event) => {
-              const next = /^\d+$/.test(event.target.value.trim()) ? parseInt(event.target.value, 10) : NaN;
-              if (!Number.isNaN(next) && next <= 999 && next !== vitals.tempHp) {
-                change({ tempHp: next });
-              }
-            }}
-            sx={{ width: 200 }}
-          />
-        </Box>
-      </Paper>
+      <SheetAbilities sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
 
       <Paper variant="outlined" component="section" aria-label="Conditions" sx={{ p: 2, display: "grid", gap: 1.5 }}>
         <Typography variant="subtitle2" component="h2">
@@ -218,10 +140,6 @@ export default function SheetPage({ playerId }) {
               </MenuItem>
             ))}
           </TextField>
-          <FormControlLabel
-            control={<Switch checked={vitals.heroicInspiration} onChange={(event) => change({ heroicInspiration: event.target.checked })} />}
-            label="Heroic Inspiration"
-          />
         </Box>
         <Box sx={{ display: "grid", gap: 0.5 }}>
           <Typography variant="subtitle2" component="h2">

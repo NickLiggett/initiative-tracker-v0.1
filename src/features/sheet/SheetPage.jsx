@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, Chip, CircularProgress, FormControlLabel, MenuItem, Paper, Switch, TextField, Typography } from "@mui/material";
-import { EditNote, Inventory2, Refresh } from "@mui/icons-material";
+import { Edit, EditNote, Refresh } from "@mui/icons-material";
 import { saveSheet, updateVitals } from "../../api/players";
 import HpBar from "../players/HpBar";
-import InventoryDialog from "../players/InventoryDialog";
+import { InventoryPanel } from "../players/InventoryDialog";
+import PlayerEditor from "../players/PlayerEditor";
 import { describePlayer, formatBonus, rulesetLabel } from "../players/players";
 import { CONDITIONS, MAX_EXHAUSTION, vitalsOf } from "../players/vitals";
 import SheetEditor from "./SheetEditor";
@@ -56,8 +57,8 @@ export default function SheetPage({ playerId }) {
   const { player, error, setPlayer, reload } = useLivePlayer(playerId);
   const [amount, setAmount] = useState("");
   const [problem, setProblem] = useState(null);
-  const [showInventory, setShowInventory] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(false); // the sheet's numbers
+  const [editingDetails, setEditingDetails] = useState(false); // who the character is: name, classes, level, AC
 
   useEffect(() => {
     document.title = player ? `${player.name} · Character sheet` : "Character sheet";
@@ -110,6 +111,21 @@ export default function SheetPage({ playerId }) {
   const toggleCondition = (condition) =>
     change({ conditions: vitals.conditions.includes(condition) ? vitals.conditions.filter((one) => one !== condition) : [...vitals.conditions, condition] });
 
+  if (editingDetails) {
+    return (
+      <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", p: 2, boxSizing: "border-box" }}>
+        <PlayerEditor
+          player={player}
+          onSaved={(saved) => {
+            setPlayer(saved);
+            setEditingDetails(false);
+          }}
+          onCancel={() => setEditingDetails(false)}
+        />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
@@ -120,6 +136,14 @@ export default function SheetPage({ playerId }) {
           <Typography color="text.secondary">{describePlayer(player)}</Typography>
         </Box>
         <Chip size="small" label={rulesetLabel(player.ruleset)} />
+        <Button startIcon={<Edit />} onClick={() => setEditingDetails(true)}>
+          Edit details
+        </Button>
+        {player.role !== "PARTY" && (
+          <Button startIcon={<EditNote />} onClick={() => setEditing(true)}>
+            Edit stats
+          </Button>
+        )}
       </Box>
 
       {error && <Alert severity="warning">{error} Showing the last it was loaded.</Alert>}
@@ -219,15 +243,14 @@ export default function SheetPage({ playerId }) {
         </Paper>
       )}
 
-      <Box sx={{ display: "flex", gap: 1 }}>
-        {player.role !== "PARTY" && (
-          <Button startIcon={<EditNote />} onClick={() => setEditing(true)}>
-            Edit sheet
-          </Button>
-        )}
-        <Button startIcon={<Inventory2 />} onClick={() => setShowInventory(true)}>
+      <Paper variant="outlined" component="section" aria-label="Inventory" sx={{ p: 2, display: "grid", gap: 1 }}>
+        <Typography variant="subtitle2" component="h2">
           Inventory
-        </Button>
+        </Typography>
+        <InventoryPanel player={player} readOnly={player.role === "PARTY"} />
+      </Paper>
+
+      <Box sx={{ display: "flex", gap: 1 }}>
         <Button startIcon={<Refresh />} onClick={() => window.location.reload()}>
           Reload
         </Button>
@@ -245,7 +268,6 @@ export default function SheetPage({ playerId }) {
           onClose={() => setEditing(false)}
         />
       )}
-      {showInventory && <InventoryDialog player={player} readOnly={player.role === "PARTY"} onClose={() => setShowInventory(false)} />}
     </Box>
   );
 }

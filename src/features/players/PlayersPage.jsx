@@ -5,10 +5,8 @@ import { listPartyInvitations } from "../../api/party";
 import { deletePlayer, listPlayers } from "../../api/players";
 import ConfirmDeleteDialog from "../../components/resource/ConfirmDeleteDialog";
 import PartyPanel, { RequestsBadge } from "./PartyPanel";
-import InventoryDialog from "./InventoryDialog";
 import PlayerCard from "./PlayerCard";
 import PlayerEditor from "./PlayerEditor";
-import VitalsDialog from "./VitalsDialog";
 import { duplicateDraft } from "./playerDraft";
 import { openSheet } from "../sheet/sheetAddress";
 
@@ -22,8 +20,6 @@ export default function PlayersPage() {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null); // { player, start }: the character, null for a new one; start is a copy's draft
   const [deleting, setDeleting] = useState(null);
-  const [carrying, setCarrying] = useState(null); // the character whose inventory is open
-  const [hurting, setHurting] = useState(null); // the character whose hit points and conditions are open
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("players");
   const [requests, setRequests] = useState([]); // the parties the user has been asked to join or is in
@@ -44,6 +40,13 @@ export default function PlayersPage() {
     const controller = new AbortController();
     load(controller.signal);
     return () => controller.abort();
+  }, [load]);
+
+  useEffect(() => {
+    // A character is changed on its sheet, in a tab of its own: coming back to this one shows what changed.
+    const refresh = () => load();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
   }, [load]);
 
   useEffect(() => {
@@ -132,9 +135,6 @@ export default function PlayersPage() {
                   <PlayerCard
                     player={player}
                     busy={busy}
-                    onEdit={(chosen) => setEditing({ player: chosen })}
-                    onInventory={setCarrying}
-                    onVitals={setHurting}
                     onOpenSheet={(chosen) => openSheet(chosen.id)}
                     onDuplicate={(chosen) => setEditing({ player: null, start: duplicateDraft(chosen) })}
                     onDelete={setDeleting}
@@ -145,18 +145,6 @@ export default function PlayersPage() {
           )}
         </Box>
       )}
-
-      {hurting && (
-        <VitalsDialog
-          player={hurting}
-          onSaved={(player) => {
-            setPlayers((current) => current.map((existing) => (existing.id === player.id ? player : existing)));
-            setHurting(null);
-          }}
-          onClose={() => setHurting(null)}
-        />
-      )}
-      {carrying && <InventoryDialog player={carrying} onClose={() => setCarrying(null)} />}
 
       <ConfirmDeleteDialog
         open={Boolean(deleting)}

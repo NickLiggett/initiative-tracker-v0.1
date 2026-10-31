@@ -9,7 +9,9 @@ const thorin = {
   id: 7,
   name: "Thorin",
   ruleset: "5e-2014",
+  classKey: "srd_fighter",
   className: "Fighter",
+  speciesKey: null,
   speciesName: "Dwarf",
   level: 5,
   armorClass: 18,
@@ -177,5 +179,84 @@ describe("the character sheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
 
     await waitFor(() => expect(patches(fetchMock)).toEqual([{ conditions: ["Stunned"] }]));
+  });
+});
+
+const item = (key, name, system) => ({ key, name, document: { gamesystem: { key: system } } });
+const REFERENCE = {
+  "GET /api/classes": { content: [item("srd_fighter", "Fighter", "5e-2014")] },
+  "GET /api/species": { content: [item("srd_dwarf", "Dwarf", "5e-2014")] },
+};
+const field = (label) => screen.getByLabelText(label);
+const type = (label, value) => fireEvent.change(field(label), { target: { value } });
+
+describe("changing who the character is, on the sheet", () => {
+  it("starts from the character, saves, and shows the sheet again with the change", async () => {
+    let saved = { ...thorin, version: 3 }; // what the backend has, which the sheet asks for again after the save
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7": (body) => (saved = { ...saved, ...body }),
+      ...REFERENCE,
+    });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    expect(field("Name")).toHaveValue("Thorin");
+    type("Level", "6");
+    type("Hit points", "60");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    // (the editor's preview says the same, so wait for it to close)
+    await waitFor(() => expect(screen.queryByText("Edit Thorin")).not.toBeInTheDocument(), { timeout: 4000 });
+    expect(await screen.findByText("Level 6 Fighter · Dwarf")).toBeInTheDocument();
+    expect(bodiesSentTo(fetchMock, "PUT /api/players/7")[0]).toMatchObject({ name: "Thorin", level: 6, hitPoints: 60, version: 3 });
+  });
+
+  it("lets whoever only plays the character change its numbers, and nothing else", async () => {
+    stubApi({ "GET /api/players/7": { ...thorin, role: "PLAYER" }, ...REFERENCE });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+
+    expect(field("Name")).toBeDisabled();
+    expect(field("Class")).toBeDisabled();
+    expect(field("Hit points")).toBeEnabled();
+  });
+
+  it("goes back to the sheet on Cancel", async () => {
+    stubApi({ "GET /api/players/7": thorin, ...REFERENCE });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(await screen.findByRole("heading", { name: "Thorin" })).toBeInTheDocument();
+  });
+});
+
+describe("the inventory, on the sheet", () => {
+  const inventory = { cp: 0, sp: 0, gp: 12, pp: 0, items: [{ id: 1, name: "Rope", quantity: 1, equipped: false, attuned: false, notes: "" }] };
+
+  it("is on the page, and saves in place", async () => {
+    const fetchMock = stubApi({ "GET /api/players/7": thorin, "GET /api/players/7/inventory": inventory, "PUT /api/players/7/inventory": (body) => body });
+    render(<SheetPage playerId={7} />);
+
+    expect(await screen.findByDisplayValue("Rope")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Quantity of line 1"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/players/7/inventory")).toHaveLength(1));
+    expect(await screen.findByText("Saved.")).toBeInTheDocument();
+  });
+
+  it("can only be read by a DM seeing a party member", async () => {
+    stubApi({ "GET /api/players/7": { ...thorin, role: "PARTY" }, "GET /api/players/7/inventory": inventory });
+    render(<SheetPage playerId={7} />);
+
+    expect(await screen.findByDisplayValue("Rope")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
   });
 });

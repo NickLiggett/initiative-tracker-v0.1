@@ -7,7 +7,6 @@ import {
   Checkbox,
   CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   FormControlLabel,
@@ -87,16 +86,19 @@ function ItemAdder({ onAdd }) {
 /**
  * What a character carries: coins and a list of items, each with a quantity, whether it's equipped or attuned, and a note.
  * Items are found in the Items lists or typed by hand. Whoever can't change it (a DM seeing it through their party) just reads it.
+ * It sits on the character's sheet, and in a dialog where only a glance is wanted (see InventoryDialog).
  *
  * @param {{id: number, name: string}} player
  * @param {boolean} [readOnly]
- * @param {() => void} onClose
+ * @param {() => void} [onSaved] told once the inventory is saved
+ * @param {() => void} [onCancel] gives a Cancel (or, read only, Close) button that calls it
  */
-export default function InventoryDialog({ player, readOnly = false, onClose }) {
+export function InventoryPanel({ player, readOnly = false, onSaved, onCancel }) {
   const [draft, setDraft] = useState(null); // null until loaded
   const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [saved, setSaved] = useState(false); // saved, and not changed since
 
   useEffect(() => {
     const controller = new AbortController();
@@ -107,16 +109,21 @@ export default function InventoryDialog({ player, readOnly = false, onClose }) {
   }, [player.id]);
 
   const problems = draft ? inventoryProblems(draft) : [];
-  const change = (changes) => setDraft((current) => ({ ...current, ...changes }));
+  const change = (changes) => {
+    setSaved(false);
+    setDraft((current) => ({ ...current, ...changes }));
+  };
   const changeLine = (id, changes) =>
-    setDraft((current) => ({ ...current, items: current.items.map((line) => (line.id === id ? { ...line, ...changes } : line)) }));
+    change({ items: draft.items.map((line) => (line.id === id ? { ...line, ...changes } : line)) });
 
   const save = async () => {
     setSaving(true);
     setError(null);
     try {
       await saveInventory(player.id, toInventoryRequest(draft));
-      onClose();
+      setSaving(false);
+      setSaved(true);
+      onSaved?.();
     } catch (e) {
       setError(e.message || "Couldn't save.");
       setSaving(false);
@@ -124,20 +131,12 @@ export default function InventoryDialog({ player, readOnly = false, onClose }) {
   };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="md" aria-labelledby="inventory-title">
-      <DialogTitle id="inventory-title">
-        {player.name}'s inventory
-        {draft && summarize(draft) && (
-          <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            {summarize(draft)}
-          </Typography>
-        )}
-      </DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 2, alignContent: "start" }}>
+    <Box sx={{ display: "grid", gap: 2, alignContent: "start" }}>
         {loadError && <Alert severity="error">{loadError}</Alert>}
         {!draft && !loadError && <CircularProgress aria-label="Loading" />}
         {draft && (
           <>
+            {summarize(draft) && <Typography variant="body2" color="text.secondary">{summarize(draft)}</Typography>}
             <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", pt: 1 }}>
               {COINS.map(({ field, label }) => (
                 <TextField
@@ -212,15 +211,27 @@ export default function InventoryDialog({ player, readOnly = false, onClose }) {
             {error && <Alert severity="error">{error}</Alert>}
           </>
         )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>{readOnly ? "Close" : "Cancel"}</Button>
+      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end", alignItems: "center" }}>
+        {saved && <Typography variant="caption" color="success.main" role="status">Saved.</Typography>}
+        {onCancel && <Button onClick={onCancel}>{readOnly ? "Close" : "Cancel"}</Button>}
         {!readOnly && (
           <Button variant="contained" disabled={!draft || saving || problems.length > 0} onClick={save}>
             Save
           </Button>
         )}
-      </DialogActions>
+      </Box>
+    </Box>
+  );
+}
+
+/** The inventory in a dialog: saving closes it. */
+export default function InventoryDialog({ player, readOnly = false, onClose }) {
+  return (
+    <Dialog open onClose={onClose} fullWidth maxWidth="md" aria-labelledby="inventory-title">
+      <DialogTitle id="inventory-title">{player.name}'s inventory</DialogTitle>
+      <DialogContent sx={{ pt: 1 }}>
+        <InventoryPanel player={player} readOnly={readOnly} onSaved={onClose} onCancel={onClose} />
+      </DialogContent>
     </Dialog>
   );
 }

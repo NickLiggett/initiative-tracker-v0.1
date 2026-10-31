@@ -19,8 +19,6 @@ import {
   withSkillCycled,
 } from "./sheetModel";
 import { adjustmentText } from "./sheetAdjust";
-import SheetLists from "./SheetLists";
-import { RestBar, SheetResources, SheetSpells } from "./SheetSpells";
 
 const dash = (value) => (value === null || value === undefined ? "—" : value);
 
@@ -105,9 +103,8 @@ function Tags({ label, items }) {
 }
 
 /**
- * What the sheet holds beyond hit points and the ability scores (see SheetAbilities): saving throws, skills and passive
- * scores worked out from them and the character's level, then speed, senses, defenses, what the character is trained in, and
- * the personal details. A part with nothing in it is not shown.
+ * Saving throws, skills and passive scores worked out from the ability scores (see SheetAbilities) and the character's
+ * level, and speed and senses. Proficiencies can be changed from their marks. The rest of the sheet is in SheetTabs.
  *
  * @param {object} sheet the character's `sheet`
  * @param {number} level the character's level, for the proficiency bonus
@@ -118,10 +115,6 @@ export default function SheetFields({ sheet, level, onChange }) {
   const filled = ABILITIES.some(({ key }) => abilityModifier(sheet, key) !== null);
   const speed = sheet.speed ?? {};
   const speedText = [speed.walk !== undefined ? `Walking ${speed.walk} ft.` : null, speed.other].filter(Boolean).join(" · ");
-  const defenses = DEFENSE_LISTS.filter(({ key }) => sheet.defenses?.[key]?.length);
-  const training = TRAINING_LISTS.filter(({ key }) => sheet.training?.[key]?.length);
-  const lines = PERSONAL_LINES.filter(({ key }) => sheet.personal?.[key]);
-  const texts = PERSONAL_TEXTS.filter(({ key }) => sheet.personal?.[key]);
 
   return (
     <>
@@ -169,11 +162,19 @@ export default function SheetFields({ sheet, level, onChange }) {
         </Section>
       )}
 
-      <RestBar sheet={sheet} onChange={onChange} />
-      <SheetLists sheet={sheet} onChange={onChange} />
-      <SheetResources sheet={sheet} onChange={onChange} />
-      <SheetSpells sheet={sheet} level={level} onChange={onChange} />
+    </>
+  );
+}
 
+/** Defenses, what the character is trained in, and the personal details. A part with nothing in it is not shown. */
+export function SheetDescription({ sheet }) {
+  const defenses = DEFENSE_LISTS.filter(({ key }) => sheet.defenses?.[key]?.length);
+  const training = TRAINING_LISTS.filter(({ key }) => sheet.training?.[key]?.length);
+  const lines = PERSONAL_LINES.filter(({ key }) => sheet.personal?.[key]);
+  const texts = PERSONAL_TEXTS.filter(({ key }) => sheet.personal?.[key]);
+
+  return (
+    <>
       {defenses.length > 0 && (
         <Section title="Defenses">
           {defenses.map(({ key, label }) => (

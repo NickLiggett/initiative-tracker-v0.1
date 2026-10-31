@@ -45,10 +45,11 @@ function Uses({ feature, index, sheet, onChange }) {
 /**
  * The attacks, and the features and traits with the uses they have, of a character's sheet. With `onChange` the uses can
  * be spent and a rest taken (it is given the sheet as it would then be, to save); without it, they are only shown.
+ * `show` is "attacks" or "features" for one of the two; without it both are.
  */
-export default function SheetLists({ sheet, onChange }) {
-  const attacks = sheet.attacks ?? [];
-  const features = sheet.features ?? [];
+export default function SheetLists({ sheet, onChange, show }) {
+  const attacks = show === "features" ? [] : (sheet.attacks ?? []);
+  const features = show === "attacks" ? [] : (sheet.features ?? []);
   if (!attacks.length && !features.length) {
     return null;
   }

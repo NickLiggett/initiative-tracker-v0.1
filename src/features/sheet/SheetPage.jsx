@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { Alert, Box, Button, Chip, CircularProgress, MenuItem, Paper, TextField, Typography } from "@mui/material";
 import { Refresh } from "@mui/icons-material";
 import { saveSheet, updateVitals } from "../../api/players";
-import { InventoryPanel } from "../players/InventoryDialog";
 import PlayerEditor from "../players/PlayerEditor";
 import { CONDITIONS, MAX_EXHAUSTION, vitalsOf } from "../players/vitals";
 import SheetEditor from "./SheetEditor";
 import SheetAbilities from "./SheetAbilities";
 import SheetFields from "./SheetFields";
 import SheetHeader from "./SheetHeader";
+import SheetTabs from "./SheetTabs";
 import useLivePlayer from "./useLivePlayer";
 
 function Pips({ label, value, onChange }) {
@@ -152,21 +152,7 @@ export default function SheetPage({ playerId }) {
 
       <SheetFields sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
 
-      {player.notes && (
-        <Paper variant="outlined" component="section" aria-label="Notes" sx={{ p: 2 }}>
-          <Typography variant="subtitle2" component="h2" gutterBottom>
-            Notes
-          </Typography>
-          <Typography sx={{ whiteSpace: "pre-line" }}>{player.notes}</Typography>
-        </Paper>
-      )}
-
-      <Paper variant="outlined" component="section" aria-label="Inventory" sx={{ p: 2, display: "grid", gap: 1 }}>
-        <Typography variant="subtitle2" component="h2">
-          Inventory
-        </Typography>
-        <InventoryPanel player={player} readOnly={player.role === "PARTY"} />
-      </Paper>
+      <SheetTabs player={player} onChange={player.role === "PARTY" ? undefined : changeSheet} />
 
       <Box sx={{ display: "flex", gap: 1 }}>
         <Button startIcon={<Refresh />} onClick={() => window.location.reload()}>

@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { bodiesSentTo, stubApi } from "../../test/fakeApi";
 import SheetEditor from "./SheetEditor";
 import SheetAbilities from "./SheetAbilities";
-import SheetFields from "./SheetFields";
+import SheetFields, { SheetDescription } from "./SheetFields";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -212,6 +212,7 @@ describe("the sheet's fields", () => {
       <>
         <SheetAbilities sheet={sheet} level={14} />
         <SheetFields sheet={sheet} level={14} />
+        <SheetDescription sheet={sheet} />
       </>,
     );
 

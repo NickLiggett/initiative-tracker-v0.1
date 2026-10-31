@@ -33,6 +33,7 @@ function open(character = thorin) {
   return fetchMock;
 }
 
+const openTab = async (name) => fireEvent.click(await screen.findByRole("tab", { name }));
 const patches = (fetchMock) => bodiesSentTo(fetchMock, "PATCH /api/players/7/vitals");
 
 describe("the character sheet", () => {
@@ -43,6 +44,7 @@ describe("the character sheet", () => {
     expect(screen.getByText("Level 5 Fighter · Dwarf")).toBeInTheDocument();
     expect(screen.getByText("18")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "Hit points 30 of 52, 5 temporary" })).toBeInTheDocument();
+    await openTab("Description");
     expect(screen.getByText("Carries a grudge")).toBeInTheDocument();
     expect(document.title).toBe("Thorin · Character sheet");
   });
@@ -100,6 +102,7 @@ describe("the character sheet", () => {
     expect(await screen.findByText("Longsword")).toBeInTheDocument();
     expect(screen.getByText("1d8+5 slashing")).toBeInTheDocument();
 
+    await openTab("Features");
     fireEvent.click(screen.getAllByRole("button", { name: "Spend a use of Blood Maledict" })[0]);
     await waitFor(() => expect(screen.getByText("1 of 2, back on a short rest")).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Long rest" }));
@@ -118,6 +121,7 @@ describe("the character sheet", () => {
     });
     render(<SheetPage playerId={7} />);
 
+    await openTab("Features");
     expect(await screen.findByText("1 of 2, back on a short rest")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Short rest" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Take back a use of Blood Maledict" })).toHaveAttribute("aria-disabled", "true");
@@ -144,6 +148,7 @@ describe("the character sheet", () => {
     });
     render(<SheetPage playerId={7} />);
 
+    await openTab("Spells");
     expect(await screen.findByText("Wisdom: spell save DC 16, spell attack +8")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "2nd level" })).toHaveTextContent("Misty Step");
     expect(screen.getByRole("region", { name: "Cantrip" })).toHaveTextContent("Light");
@@ -246,6 +251,7 @@ describe("the inventory, on the sheet", () => {
     const fetchMock = stubApi({ "GET /api/players/7": thorin, "GET /api/players/7/inventory": inventory, "PUT /api/players/7/inventory": (body) => body });
     render(<SheetPage playerId={7} />);
 
+    await openTab("Inventory");
     expect(await screen.findByDisplayValue("Rope")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Quantity of line 1"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -258,6 +264,7 @@ describe("the inventory, on the sheet", () => {
     stubApi({ "GET /api/players/7": { ...thorin, role: "PARTY" }, "GET /api/players/7/inventory": inventory });
     render(<SheetPage playerId={7} />);
 
+    await openTab("Inventory");
     expect(await screen.findByDisplayValue("Rope")).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
   });
@@ -356,3 +363,28 @@ describe("saves and skills", () => {
   });
 });
 
+describe("the tabs", () => {
+  it("open on Actions, and say what is missing on a tab with nothing in it", async () => {
+    open();
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    expect(screen.getByRole("tab", { name: "Actions" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("No attacks yet. Add them with Edit stats.")).toBeInTheDocument();
+    await openTab("Spells");
+    expect(screen.getByText("No spells or spell slots yet. Add them with Edit stats.")).toBeInTheDocument();
+    await openTab("Features");
+    expect(screen.getByText("No features yet. Add them with Edit stats.")).toBeInTheDocument();
+    expect(screen.queryByText("No attacks yet. Add them with Edit stats.")).not.toBeInTheDocument();
+  });
+
+  it("show the attacks on one tab and the features on another", async () => {
+    stubApi({ "GET /api/players/7": { ...thorin, sheet: { attacks: [{ name: "Longsword" }], features: [{ name: "Second Wind" }] } } });
+    render(<SheetPage playerId={7} />);
+
+    expect(await screen.findByText("Longsword")).toBeInTheDocument();
+    expect(screen.queryByText("Second Wind")).not.toBeInTheDocument();
+    await openTab("Features");
+    expect(screen.getByText("Second Wind")).toBeInTheDocument();
+    expect(screen.queryByText("Longsword")).not.toBeInTheDocument();
+  });
+});

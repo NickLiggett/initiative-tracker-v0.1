@@ -80,6 +80,7 @@ function FightTable({ tracker }) {
               <TableCell>Name</TableCell>
               <TableCell>AC</TableCell>
               <TableCell>HP</TableCell>
+              <TableCell>Conditions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -93,6 +94,15 @@ function FightTable({ tracker }) {
                 </TableCell>
                 <TableCell aria-label={combatant.ac == null ? "AC hidden" : undefined}>{shown(combatant.ac)}</TableCell>
                 <TableCell aria-label={combatant.hp == null ? "HP hidden" : undefined}>{shown(combatant.hp)}</TableCell>
+                <TableCell>
+                  <Box component="ul" aria-label={`Conditions of ${combatant.name ?? "unknown creature"}`} sx={{ listStyle: "none", m: 0, p: 0, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {(combatant.conditions ?? []).map((condition) => (
+                      <Box component="li" key={condition}>
+                        <Chip size="small" color="warning" label={condition} />
+                      </Box>
+                    ))}
+                  </Box>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

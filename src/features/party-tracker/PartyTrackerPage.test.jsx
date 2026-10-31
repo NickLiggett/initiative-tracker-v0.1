@@ -39,6 +39,25 @@ describe("PartyTrackerPage", () => {
     expect(within(goblinRow).getByLabelText("HP hidden")).toBeInTheDocument();
   });
 
+  it("shows the conditions of every row, a monster's with its stats still hidden", async () => {
+    stubApi({
+      "GET /api/party/trackers": [fight({ ...wizard, conditions: ["Poisoned"] }, { ...goblin, conditions: ["Prone", "Stunned"] }, { ...goblin, id: 3, name: "Ogre" })],
+    });
+    render(<PartyTrackerPage />);
+
+    expect(await screen.findByRole("list", { name: "Conditions of Anna's Wizard" })).toHaveTextContent("Poisoned");
+    expect(screen.getByRole("list", { name: "Conditions of Goblin" })).toHaveTextContent("ProneStunned");
+    expect(within(screen.getByRole("list", { name: "Conditions of Ogre" })).queryAllByRole("listitem")).toHaveLength(0);
+    expect(within(screen.getByText("Goblin").closest("tr")).getByLabelText("HP hidden")).toBeInTheDocument();
+  });
+
+  it("copes with a backend that doesn't send conditions yet", async () => {
+    stubApi({ "GET /api/party/trackers": [fight(wizard)] });
+    render(<PartyTrackerPage />);
+
+    expect(await screen.findByRole("list", { name: "Conditions of Anna's Wizard" })).toBeEmptyDOMElement();
+  });
+
   it("has nothing to edit", async () => {
     stubApi({ "GET /api/party/trackers": [fight(wizard, goblin)] });
     render(<PartyTrackerPage />);

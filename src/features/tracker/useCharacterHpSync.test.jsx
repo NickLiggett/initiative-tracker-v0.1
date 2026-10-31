@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook } from "@testing-library/react";
-import useCharacterHpSync, { hpChanges, LOOK_MS, remoteChanges, SYNC_DELAY_MS } from "./useCharacterHpSync";
+import useCharacterHpSync, { conditionsKey, hpChanges, LOOK_MS, remoteChanges, SYNC_DELAY_MS } from "./useCharacterHpSync";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -12,7 +12,7 @@ const goblin = { id: 2, name: "Goblin", hp: 7, maxHp: 7 };
  * The hook with a backend that keeps the characters' vitals (`characters`, by player id), and a list of rows that
  * `setCombatants` changes the way the tracker's state does.
  */
-function setup(initial, loadKey = 1, characters = { 7: { currentHp: 40, tempHp: 0 } }) {
+function setup(initial, loadKey = 1, characters = { 7: { currentHp: 40, tempHp: 0, conditions: [] } }) {
   const send = vi.fn(async (id, changes) => {
     characters[id] = { ...characters[id], ...changes };
     return {};
@@ -213,5 +213,61 @@ describe("keeping a character's hit points in step with the tracker: character t
     await lookAgain();
 
     expect(rows()[0].hp).toBe(40);
+  });
+});
+
+describe("conditions, both ways", () => {
+  it("compares conditions as a set", () => {
+    expect(conditionsKey(["Prone", "Poisoned"])).toBe(conditionsKey(["Poisoned", "Prone"]));
+    expect(conditionsKey(undefined)).toBe("");
+  });
+
+  it("sends the conditions of a row that changed, and takes those of a character that did", () => {
+    const known = { hp: 40, tempHp: 0, conditions: "" };
+
+    expect(hpChanges({ hp: 40, conditions: ["Prone"] }, known)).toEqual({ conditions: ["Prone"] });
+    expect(hpChanges({ hp: 40, conditions: [] }, known)).toBeNull();
+    expect(remoteChanges({ hp: 40 }, known, { vitals: { currentHp: 40, tempHp: 0, conditions: ["Stunned"] } })).toEqual({ conditions: ["Stunned"] });
+    expect(remoteChanges({ hp: 40, conditions: ["Prone"] }, known, { vitals: { currentHp: 40, tempHp: 0, conditions: ["Stunned"] } })).toBeNull(); // the table's own wins
+    expect(remoteChanges({ hp: 40 }, known, { vitals: { currentHp: 40, tempHp: 0, conditions: [] } })).toBeNull();
+  });
+
+  it("writes a condition put on a character's row to the character", async () => {
+    const { send, update, wait } = setup([thorin]);
+
+    update([{ ...thorin, conditions: ["Poisoned"] }]);
+    await wait();
+
+    expect(send).toHaveBeenCalledWith(7, { conditions: ["Poisoned"] });
+  });
+
+  it("takes a condition put on the character's sheet, and does not send it back", async () => {
+    const { characters, lookAgain, rows, send } = setup([thorin]);
+
+    characters[7] = { currentHp: 40, tempHp: 0, conditions: ["Stunned", "Prone"] };
+    await lookAgain();
+
+    expect(rows()[0].conditions).toEqual(["Stunned", "Prone"]);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("takes a condition taken off on the sheet", async () => {
+    const withCondition = { ...thorin, conditions: ["Prone"] };
+    const { characters, lookAgain, rows } = setup([withCondition], 1, { 7: { currentHp: 40, tempHp: 0, conditions: ["Prone"] } });
+
+    characters[7] = { currentHp: 40, tempHp: 0, conditions: [] };
+    await lookAgain();
+
+    expect(rows()[0].conditions).toEqual([]);
+  });
+
+  it("leaves the conditions of a row that isn't a character to the table", async () => {
+    const { fetchPlayer, update, wait, send } = setup([goblin]);
+
+    update([{ ...goblin, conditions: ["Prone"] }]);
+    await wait();
+
+    expect(send).not.toHaveBeenCalled();
+    expect(fetchPlayer).not.toHaveBeenCalled();
   });
 });

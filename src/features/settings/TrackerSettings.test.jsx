@@ -81,9 +81,9 @@ describe("TrackerSettings", () => {
   it("names a Notes column", async () => {
     await renderSettings();
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Name of Notes 2" }), { target: { value: "Conditions" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Name of Notes 2" }), { target: { value: "Reminders" } });
 
-    expect(loadCachedSettings("dev").noteNames).toEqual(["", "Conditions", ""]);
-    expect(screen.getByRole("checkbox", { name: "Conditions" })).toBeInTheDocument();
+    expect(loadCachedSettings("dev").noteNames).toEqual(["", "Reminders", ""]);
+    expect(screen.getByRole("checkbox", { name: "Reminders" })).toBeInTheDocument();
   });
 });

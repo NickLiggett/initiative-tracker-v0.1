@@ -1,4 +1,4 @@
-import { Checkbox, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, Checkbox, Chip, IconButton, Tooltip, Typography } from "@mui/material";
 import { Clear as ClearIcon, Article as ArticleIcon, Edit as EditIcon, Visibility, VisibilityOff } from "@mui/icons-material";
 import { legendaryActionsPerRound, legendaryResistancesPerDay } from "../creatures/creatureFormat";
 import { columnLabel, TRACKER_COLUMNS, DEFAULT_TRACKER_COLUMNS, DEFAULT_NOTE_NAMES } from "./columnChoices";
@@ -30,6 +30,7 @@ export function buildColumns({
   onRevealChange = () => {},
   onRevealAllChange = () => {},
   onEdit = () => {},
+  onEditConditions = () => {},
 }) {
   const anyLegendary = combatants.some((combatant) => legendaryActionsOf(combatant) > 0);
   const chosen = new Set(visible);
@@ -93,6 +94,33 @@ export function buildColumns({
           sx={{ p: 0 }}
           onChange={(event) => onReactionChange(params.row.id, event.target.checked)}
         />
+      ),
+    },
+    {
+      // Which conditions a row has, as chips; a click on the cell opens the choice (see ConditionsDialog).
+      field: "conditions",
+      headerName: "Conditions",
+      sortable: false,
+      width: 220,
+      valueGetter: ({ row }) => (row.conditions ?? []).join(", "),
+      renderCell: ({ row }) => (
+        <Box
+          role="button"
+          tabIndex={0}
+          aria-label={`Conditions of ${row.name}: ${(row.conditions ?? []).join(", ") || "none"}`}
+          onClick={() => onEditConditions(row)}
+          onKeyDown={(event) => (event.key === "Enter" || event.key === " ") && onEditConditions(row)}
+          sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", alignItems: "center", width: "100%", minHeight: 32, cursor: "pointer" }}
+        >
+          {(row.conditions ?? []).map((condition) => (
+            <Chip key={condition} size="small" color="warning" label={condition} />
+          ))}
+          {!(row.conditions ?? []).length && (
+            <Typography variant="caption" color="text.secondary">
+              None
+            </Typography>
+          )}
+        </Box>
       ),
     },
     ...[0, 1, 2].map((index) => ({

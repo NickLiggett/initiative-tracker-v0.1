@@ -4,6 +4,7 @@ import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import GridFooter from "./GridFooter";
 import GridToolbar from "./GridToolbar";
 import CreatureInfoDialog from "../creatures/CreatureInfoDialog";
+import ConditionsDialog from "./ConditionsDialog";
 import PlayerPicker from "./PlayerPicker";
 import PlayerSheetDialog from "./PlayerSheetDialog";
 import RowEditDialog from "./RowEditDialog";
@@ -41,6 +42,7 @@ export default function TrackerPage() {
   const [showingTrackers, setShowingTrackers] = useState(false);
   const [rowMenu, setRowMenu] = useState(null); // { id, top, left } of the menu on a row
   const [editing, setEditing] = useState(null); // the combatant being edited
+  const [conditionsFor, setConditionsFor] = useState(null); // the combatant whose conditions are being chosen
   const [told, setTold] = useState(null); // what was just removed, offered to be taken back
   const pressTimer = useRef(null);
   const { settings } = useSettings();
@@ -61,6 +63,7 @@ export default function TrackerPage() {
     visible: settings.trackerColumns,
     noteNames: settings.noteNames,
     onEdit: setEditing,
+    onEditConditions: setConditionsFor,
     combatants,
     onReactionChange: (id, reaction) => setCombatants((current) => updateCombatant(current, id, { reaction })),
     onDelete: (id) => remove(id),
@@ -243,6 +246,16 @@ export default function TrackerPage() {
         onSwitch={switchTracker}
         onClose={() => setShowingTrackers(false)}
       />
+      {conditionsFor && (
+        <ConditionsDialog
+          combatant={conditionsFor}
+          onSave={(conditions) => {
+            setCombatants((current) => updateCombatant(current, conditionsFor.id, { conditions }));
+            setConditionsFor(null);
+          }}
+          onClose={() => setConditionsFor(null)}
+        />
+      )}
       <PlayerPicker open={picking} inFight={playerIdsIn(combatants)} onAdd={addPlayers} onClose={() => setPicking(false)} />
       {shownPlayer && (
         <PlayerSheetDialog playerId={shownPlayer.playerId} name={shownPlayer.name} onClose={() => setShownPlayer(null)} />

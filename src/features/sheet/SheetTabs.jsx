@@ -41,7 +41,7 @@ export default function SheetTabs({ player, onChange }) {
           <>
             <SheetResources sheet={sheet} onChange={onChange} />
             <SheetSpells sheet={sheet} level={player.level} onChange={onChange} />
-            {!casts && hint("No spells or spell slots yet. Add them with Edit stats.")}
+            {!casts && !onChange && hint("No spells or spell slots.")}
           </>
         )}
         {tab === "Inventory" && (

@@ -371,7 +371,8 @@ describe("the tabs", () => {
     expect(screen.getByRole("tab", { name: "Actions" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("No attacks yet.")).toBeInTheDocument();
     await openTab("Spells");
-    expect(screen.getByText("No spells or spell slots yet. Add them with Edit stats.")).toBeInTheDocument();
+    expect(screen.getByText("No spells yet.")).toBeInTheDocument();
+    expect(screen.getByText("No spell slots or hit dice yet.")).toBeInTheDocument();
     await openTab("Features");
     expect(screen.getByText("No features yet.")).toBeInTheDocument();
     expect(screen.queryByText("No attacks yet.")).not.toBeInTheDocument();
@@ -558,6 +559,104 @@ describe("attacks and features, in place", () => {
 
     expect(screen.queryByRole("button", { name: "Add an attack" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit Longsword" })).not.toBeInTheDocument();
+  });
+});
+
+describe("spells, in place", () => {
+  const caster = {
+    ...thorin,
+    level: 5,
+    version: 2,
+    sheet: {
+      abilities: { wis: 16 },
+      spellcasting: { ability: "wis" },
+      slots: { 1: { max: 2, used: 1 } },
+      spells: [{ name: "Misty Step", level: 2, school: "Conjuration" }],
+    },
+  };
+
+  function keeping(character) {
+    let saved = character;
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...saved, version: saved.version + 1, sheet: body.sheet }),
+      "GET /api/spells": { content: [] },
+    });
+    return { fetchMock, sheet: () => saved.sheet };
+  }
+  const fill = (label, value) => fireEvent.change(screen.getByRole("textbox", { name: label }), { target: { value } });
+
+  it("sets the spellcasting ability, and the save DC follows", async () => {
+    const backend = keeping(caster);
+    render(<SheetPage playerId={7} />);
+    await openTab("Spells");
+    expect(await screen.findByText("Wisdom: spell save DC 14, spell attack +6")).toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Spellcasting ability" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Not a spellcaster" }));
+
+    await waitFor(() => expect(backend.sheet().spellcasting).toBeUndefined());
+    await waitFor(() => expect(screen.queryByText(/spell save DC/)).not.toBeInTheDocument());
+  });
+
+  it("adds a spell as written, which starts at 1st level and can be changed to another", async () => {
+    const backend = keeping(caster);
+    render(<SheetPage playerId={7} />);
+    await openTab("Spells");
+
+    fireEvent.change(await screen.findByRole("combobox", { name: "Add a spell" }), { target: { value: "Fire Bolt" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add as written" }));
+    await waitFor(() => expect(backend.sheet().spells.map((spell) => [spell.name, spell.level])).toEqual([["Misty Step", 2], ["Fire Bolt", 1]]));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Fire Bolt" }));
+    fill("Level", "0");
+    fill("Notes", "Used a lot");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(backend.sheet().spells[1]).toEqual({ name: "Fire Bolt", level: 0, notes: "Used a lot" }));
+    expect(await screen.findByRole("region", { name: "Cantrip" })).toHaveTextContent("Fire Bolt");
+  });
+
+  it("refuses a level that isn't 0 to 9, and deletes a spell", async () => {
+    const backend = keeping(caster);
+    render(<SheetPage playerId={7} />);
+    await openTab("Spells");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Misty Step" }));
+    fill("Level", "12");
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(backend.sheet().spells).toBeUndefined());
+    expect(backend.sheet().slots).toEqual({ 1: { max: 2, used: 1 } }); // the rest is as it was
+  });
+
+  it("changes the slot totals and hit dice, keeping what is spent", async () => {
+    const backend = keeping(caster);
+    render(<SheetPage playerId={7} />);
+    await openTab("Spells");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit slots and hit dice" }));
+    fill("Level 1 slots", "4");
+    fill("Level 2 slots", "2");
+    fireEvent.click(screen.getByRole("button", { name: "Add hit dice" }));
+    fill("How many hit dice 1", "5");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(backend.sheet().slots).toEqual({ 1: { max: 4, used: 1 }, 2: { max: 2, used: 0 } }));
+    expect(backend.sheet().hitDice).toEqual([{ die: "d8", max: 5, used: 0 }]);
+    expect(backend.sheet().spells).toHaveLength(1);
+  });
+
+  it("offers a DM seeing a party member nothing to change", async () => {
+    stubApi({ "GET /api/players/7": { ...caster, role: "PARTY" } });
+    render(<SheetPage playerId={7} />);
+    await openTab("Spells");
+
+    expect(await screen.findByRole("region", { name: "2nd level" })).toHaveTextContent("Misty Step");
+    expect(screen.queryByRole("button", { name: "Edit Misty Step" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit slots and hit dice" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Spellcasting ability" })).not.toBeInTheDocument();
   });
 });
 

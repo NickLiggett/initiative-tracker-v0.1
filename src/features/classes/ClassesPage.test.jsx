@@ -191,16 +191,101 @@ describe("reading a class", () => {
     const options = within(await screen.findByRole("listbox", {}, { timeout: 2500 })).getAllByRole("option");
     expect(options.map((option) => option.textContent)).toEqual(["WizardClass · 5e 2014 Rules"]);
   });
+});
 
-  it("has nothing to make, change or delete: classes are read here", async () => {
+const homebrew = { key: "u1-homebrew", displayName: "dev's homebrew", name: "dev's homebrew" };
+/** Waits for the editor to close after a save (its preview shows the same heading while it is open), then for the class. */
+async function savedAs(name) {
+  await waitFor(() => expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument(), { timeout: 5000 });
+  return screen.findByRole("heading", { name }, { timeout: 5000 });
+}
+const bodiesSent = (fetchMock, route) =>
+  fetchMock.mock.calls.filter(([url, init = {}]) => `${init.method ?? "GET"} ${url.split("?")[0]}` === route).map(([, init]) => JSON.parse(init.body));
+
+describe("making and changing classes", () => {
+  it("offers New class, and Duplicate but not Edit or Delete on a class from a source", async () => {
     stubBackend();
     render(<ClassesPage />);
     await pick("Class", "Wizard");
 
     await screen.findByRole("heading", { name: "Wizard" });
-    for (const name of ["New class", "Duplicate", "Edit", "Delete"]) {
+    expect(screen.getByRole("button", { name: "New class" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Duplicate" })).toBeInTheDocument();
+    for (const name of ["Edit", "Delete"]) {
       expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
     }
+  });
+
+  it("makes a class with a level table and features, and shows it once saved", async () => {
+    const fetchMock = stubBackend({ "POST /api/classes": (body) => ({ ...body, key: "u1-homebrew_gunslinger", document: homebrew }) });
+    render(<ClassesPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New class" }));
+    expect(screen.getByRole("heading", { name: "New class" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled(); // no name yet
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Gunslinger" } });
+    fireEvent.change(screen.getByLabelText("Hit die"), { target: { value: "D10" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Dexterity saving throw" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add a table column" }));
+    fireEvent.change(screen.getByLabelText("Name of table column 1"), { target: { value: "Grit" } });
+    fireEvent.change(screen.getByLabelText("Values of table column 1"), { target: { value: "1\n2\n\n3" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add a feature" }));
+    fireEvent.change(screen.getByLabelText("Name of feature 1"), { target: { value: "Quick Draw" } });
+    fireEvent.change(screen.getByLabelText("Levels of feature 1"), { target: { value: "1, 5" } });
+    fireEvent.change(screen.getByLabelText("Description of feature 1"), { target: { value: "You draw fast." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await savedAs("Gunslinger")).toBeInTheDocument();
+    const [sent] = bodiesSent(fetchMock, "POST /api/classes");
+    expect(sent).toMatchObject({ name: "Gunslinger", hitDice: "D10", casterType: "NONE", subclassOf: null });
+    expect(sent.savingThrows).toEqual([{ key: "dexterity", name: "Dexterity" }]);
+    expect(sent.hitPoints).toMatchObject({ hitDice: "D10", hitDiceName: "d10" });
+    const byType = (type) => sent.features.filter((feature) => feature.featureType === type);
+    expect(byType("PROFICIENCY_BONUS")[0].dataForClassTable).toHaveLength(20);
+    expect(byType("CLASS_TABLE_DATA")[0]).toMatchObject({ name: "Grit", dataForClassTable: [{ level: 1, columnValue: "1" }, { level: 2, columnValue: "2" }, { level: 4, columnValue: "3" }] });
+    expect(byType("CLASS_LEVEL_FEATURE")[0]).toMatchObject({ key: "quick-draw", name: "Quick Draw", desc: "You draw fast.", gainedAt: [{ level: 1, detail: null }, { level: 5, detail: null }] });
+  });
+
+  it("makes a subclass of a class, with no table or hit points of its own", async () => {
+    const fetchMock = stubBackend({ "POST /api/classes": (body) => ({ ...body, key: "u1-homebrew_order", document: homebrew }) });
+    render(<ClassesPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New class" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Order of Dusk" } });
+    await screen.findByRole("option", { name: "Wizard" });
+    fireEvent.change(screen.getByLabelText("Subclass of"), { target: { value: "srd_wizard" } });
+    expect(screen.queryByLabelText("Hit die")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await savedAs("Order of Dusk");
+    expect(bodiesSent(fetchMock, "POST /api/classes")[0]).toMatchObject({ subclassOf: { key: "srd_wizard", name: "Wizard" }, hitDice: null, hitPoints: null, savingThrows: [], features: [] });
+  });
+
+  it("opens a copy of a class from a source to change, keeping the table columns it does not show", async () => {
+    const copy = { ...wizard, key: "u1-homebrew_wizard", document: homebrew, derivedFrom: "srd_wizard" };
+    const fetchMock = stubBackend({
+      "POST /api/classes/srd_wizard/copy": () => copy,
+      "PUT /api/classes/u1-homebrew_wizard": (body) => ({ ...body, document: homebrew }),
+    });
+    render(<ClassesPage />);
+    await pick("Class", "Wizard");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Duplicate" }));
+    expect(await screen.findByRole("heading", { name: "Edit Wizard" })).toBeInTheDocument();
+    expect(screen.getByText("Based on srd_wizard")).toBeInTheDocument();
+    expect(screen.getByLabelText("Hit die")).toHaveValue("D6");
+    expect(screen.getByLabelText("Name of feature 1")).toHaveValue("Arcane Recovery");
+    expect(screen.getByLabelText("Levels of feature 3")).toHaveValue("4, 8");
+    expect(screen.getByText(/2 other table columns/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Battle Wizard" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await savedAs("Battle Wizard");
+    const [sent] = bodiesSent(fetchMock, "PUT /api/classes/u1-homebrew_wizard");
+    expect(sent.savingThrows.map((one) => one.key)).toEqual(["intelligence", "wisdom"]);
+    expect(sent.features.filter((feature) => feature.featureType === "SPELL_SLOTS").map((feature) => feature.key)).toEqual(["w-slots-1st", "w-slots-2nd"]);
+    expect(sent.features.find((feature) => feature.name === "Cantrips Known").dataForClassTable).toEqual([{ level: 1, columnValue: "3" }, { level: 4, columnValue: "4" }]);
+    expect(sent.features.find((feature) => feature.name === "Ability Score Improvement").gainedAt.map((gained) => gained.level)).toEqual([4, 8]);
   });
 });
 

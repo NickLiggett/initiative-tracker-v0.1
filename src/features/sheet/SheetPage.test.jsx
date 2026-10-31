@@ -316,3 +316,43 @@ describe("the header and the ability scores", () => {
     expect(screen.getByRole("button", { name: "Strength not set. Change" })).toBeInTheDocument();
   });
 });
+
+describe("saves and skills", () => {
+  const scored = { ...thorin, version: 2, sheet: { abilities: { str: 16, dex: 12, con: 14, int: 8, wis: 10, cha: 11 }, saves: ["str"], skills: { athletics: "proficient" } } };
+
+  it("takes a skill one step on from its mark, and the bonus follows", async () => {
+    let saved = scored;
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...scored, sheet: body.sheet, version: 3 }),
+    });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+    const athletics = () => screen.getByText("Athletics (STR)").closest("div");
+    expect(athletics()).toHaveTextContent("+6"); // +3 and +3
+
+    fireEvent.click(screen.getByRole("button", { name: "Athletics proficiency: proficient. Change" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet.skills).toEqual({ athletics: "expertise" }));
+    await waitFor(() => expect(athletics()).toHaveTextContent("+9"));
+  });
+
+  it("turns a saving throw on from its mark", async () => {
+    const fetchMock = stubApi({ "GET /api/players/7": scored, "PUT /api/players/7/sheet": (body) => ({ ...scored, sheet: body.sheet }) });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Dexterity saving throw proficiency: none. Change" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet.saves).toEqual(["str", "dex"]));
+  });
+
+  it("shows the marks without a way to change them to a DM seeing a party member", async () => {
+    stubApi({ "GET /api/players/7": { ...scored, role: "PARTY" } });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    expect(screen.queryByRole("button", { name: /proficiency: .*Change/ })).not.toBeInTheDocument();
+  });
+});
+

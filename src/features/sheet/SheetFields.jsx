@@ -15,6 +15,8 @@ import {
   signed,
   skillBonus,
   skillLevel,
+  withSaveToggled,
+  withSkillCycled,
 } from "./sheetModel";
 import { adjustmentText } from "./sheetAdjust";
 import SheetLists from "./SheetLists";
@@ -46,11 +48,26 @@ function Mark({ level }) {
   );
 }
 
-/** A line of saves, skills or passive scores. `adjustment` is what was adjusted by hand (see sheetAdjust.js), shown beside the label. */
-function Row({ mark, label, value, adjustment }) {
+/**
+ * A line of saves, skills or passive scores. `adjustment` is what was adjusted by hand (see sheetAdjust.js), shown beside the
+ * label. With `onMark` the mark is a button that takes the proficiency one step on.
+ */
+function Row({ mark, label, value, adjustment, onMark, markLabel }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Box sx={{ width: 18, display: "flex" }}>{mark}</Box>
+      {onMark ? (
+        <Box
+          component="button"
+          type="button"
+          aria-label={markLabel}
+          onClick={onMark}
+          sx={{ all: "unset", cursor: "pointer", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 1, "&:hover, &:focus-visible": { bgcolor: "action.hover" } }}
+        >
+          {mark}
+        </Box>
+      ) : (
+        <Box sx={{ width: 22, display: "flex", justifyContent: "center" }}>{mark}</Box>
+      )}
       <Typography variant="body2" sx={{ flex: 1 }}>
         {label}
         {adjustment && (
@@ -94,8 +111,8 @@ function Tags({ label, items }) {
  *
  * @param {object} sheet the character's `sheet`
  * @param {number} level the character's level, for the proficiency bonus
- * @param {(sheet: object) => void} [onChange] given the sheet as it would be after a use is spent or a rest taken, to save;
- *   without it the uses are only shown
+ * @param {(sheet: object) => void} [onChange] given the sheet as it would be after a use is spent, a rest taken or a
+ *   proficiency changed, to save; without it they are only shown
  */
 export default function SheetFields({ sheet, level, onChange }) {
   const filled = ABILITIES.some(({ key }) => abilityModifier(sheet, key) !== null);
@@ -115,6 +132,8 @@ export default function SheetFields({ sheet, level, onChange }) {
               <Row
                 key={key}
                 mark={<Mark level={(sheet.saves ?? []).includes(key) ? "proficient" : "none"} />}
+                onMark={onChange && (() => onChange(withSaveToggled(sheet, key)))}
+                markLabel={`${label} saving throw proficiency: ${(sheet.saves ?? []).includes(key) ? "proficient" : "none"}. Change`}
                 label={label}
                 adjustment={adjustmentText(sheet, `save.${key}`)}
                 value={dash(saveBonus(sheet, key, level) === null ? null : signed(saveBonus(sheet, key, level)))}
@@ -126,6 +145,8 @@ export default function SheetFields({ sheet, level, onChange }) {
               <Row
                 key={key}
                 mark={<Mark level={skillLevel(sheet, key)} />}
+                onMark={onChange && (() => onChange(withSkillCycled(sheet, key)))}
+                markLabel={`${label} proficiency: ${skillLevel(sheet, key)}. Change`}
                 label={`${label} (${ability.toUpperCase()})`}
                 adjustment={adjustmentText(sheet, `skill.${key}`)}
                 value={dash(skillBonus(sheet, key, level) === null ? null : signed(skillBonus(sheet, key, level)))}

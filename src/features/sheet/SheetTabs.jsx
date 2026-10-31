@@ -52,7 +52,7 @@ export default function SheetTabs({ player, onChange }) {
         {tab === "Features" && (sheet.features?.length ? <SheetLists sheet={sheet} onChange={onChange} show="features" /> : hint("No features yet. Add them with Edit stats."))}
         {tab === "Description" && (
           <>
-            <SheetDescription sheet={sheet} />
+            <SheetDescription sheet={sheet} onChange={onChange} />
             {player.notes && (
               <Paper variant="outlined" component="section" aria-label="Notes" sx={{ p: 2 }}>
                 <Typography variant="subtitle2" component="h2" gutterBottom>

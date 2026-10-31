@@ -4,6 +4,8 @@ import { Edit, EditNote, Favorite, Star, StarBorder } from "@mui/icons-material"
 import HpBar from "../players/HpBar";
 import { describePlayer, formatBonus, rulesetLabel } from "../players/players";
 import { vitalsOf } from "../players/vitals";
+import EditableField from "./EditableField";
+import { walkProblem, withWalkingSpeed } from "./sheetEdits";
 import { proficiencyBonus, signed } from "./sheetModel";
 
 const wholeNumber = (text) => (/^\d+$/.test(text.trim()) ? parseInt(text, 10) : NaN);
@@ -83,8 +85,9 @@ function HpManager({ player, onChange }) {
  * @param {(changes: object) => void} onVitals saves a change to what changes during play
  * @param {() => void} [onEditDetails] opens the details editor
  * @param {() => void} [onEditStats] opens the editor of the sheet's numbers
+ * @param {(sheet: object) => void} [onSheet] saves a change to the sheet (the walking speed); without it the speed is only read
  */
-export default function SheetHeader({ player, onVitals, onEditDetails, onEditStats }) {
+export default function SheetHeader({ player, onVitals, onEditDetails, onEditStats, onSheet }) {
   const [anchor, setAnchor] = useState(null);
   const vitals = vitalsOf(player);
   const speed = player.sheet?.speed?.walk;
@@ -114,7 +117,13 @@ export default function SheetHeader({ player, onVitals, onEditDetails, onEditSta
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "stretch" }}>
         <Stat label="Armor class" value={player.armorClass} />
         <Stat label="Initiative" value={formatBonus(player.initiativeBonus)} />
-        <Stat label="Speed" value={speed === undefined ? null : `${speed} ft.`} />
+        <Stat label="Speed">
+          <EditableField label="Walking speed" value={speed === undefined ? "" : String(speed)} hint="Feet" problem={walkProblem} onSave={onSheet && ((text) => onSheet(withWalkingSpeed(player.sheet ?? {}, text)))}>
+            <Typography variant="h5" component="p">
+              {speed === undefined ? "—" : `${speed} ft.`}
+            </Typography>
+          </EditableField>
+        </Stat>
         <Stat label="Proficiency" value={signed(proficiencyBonus(player.level))} />
         <Stat label="Inspiration">
           <Button

@@ -388,3 +388,87 @@ describe("the tabs", () => {
     expect(screen.queryByText("Longsword")).not.toBeInTheDocument();
   });
 });
+
+describe("changing things in place", () => {
+  const plain = { ...thorin, version: 2, sheet: { speed: { walk: 30 }, senses: ["Darkvision 60 ft."], defenses: { resistances: ["fire"] } } };
+
+  /** A backend that keeps what it is sent, so that the sheet's look at it afterwards finds the change. */
+  function keeping(character) {
+    let saved = character;
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...saved, version: saved.version + 1, sheet: body.sheet }),
+    });
+    return { fetchMock, sheet: () => saved.sheet };
+  }
+
+  it("sets the walking speed from the header, and refuses what isn't feet", async () => {
+    const backend = keeping(plain);
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Walking speed" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Walking speed" }), { target: { value: "fast" } });
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    fireEvent.change(screen.getByRole("textbox", { name: "Walking speed" }), { target: { value: "40" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(backend.sheet().speed).toEqual({ walk: 40 }));
+    expect(await screen.findByText("40 ft.")).toBeInTheDocument();
+    expect(backend.sheet().senses).toEqual(["Darkvision 60 ft."]); // the rest is as it was
+  });
+
+  it("changes the senses, one a line", async () => {
+    const backend = keeping(plain);
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Senses" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Senses" }), { target: { value: "Darkvision 120 ft.\nBlindsight 10 ft." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(backend.sheet().senses).toEqual(["Darkvision 120 ft.", "Blindsight 10 ft."]));
+  });
+
+  it("changes a list and a personal detail on the Description tab, which shows the empty ones too", async () => {
+    const backend = keeping(plain);
+    render(<SheetPage playerId={7} />);
+    await openTab("Description");
+
+    expect(screen.getByText("Immunities: none")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Edit Resistances" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Resistances" }), { target: { value: "fire\nnecrotic" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(backend.sheet().defenses).toEqual({ resistances: ["fire", "necrotic"] }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Alignment" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Alignment" }), { target: { value: "Chaotic Good" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(backend.sheet().personal).toEqual({ alignment: "Chaotic Good" }));
+    expect(await screen.findByText("Alignment: Chaotic Good")).toBeInTheDocument();
+  });
+
+  it("leaves it unchanged on Cancel", async () => {
+    const backend = keeping(plain);
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Senses" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Senses" }), { target: { value: "nothing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(backend.fetchMock.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(false);
+  });
+
+  it("shows a DM's view of a party member without a pencil", async () => {
+    stubApi({ "GET /api/players/7": { ...plain, role: "PARTY" } });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+    await openTab("Description");
+
+    expect(screen.queryByRole("button", { name: /^Edit (Walking speed|Senses|Resistances|Alignment)/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Resistances" })).toHaveTextContent("fire");
+    expect(screen.queryByText("Immunities: none")).not.toBeInTheDocument();
+  });
+});
+

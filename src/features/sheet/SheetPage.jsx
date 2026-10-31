@@ -104,6 +104,7 @@ export default function SheetPage({ playerId }) {
         onVitals={change}
         onEditDetails={() => setEditingDetails(true)}
         onEditStats={player.role === "PARTY" ? undefined : () => setEditing(true)}
+        onSheet={player.role === "PARTY" ? undefined : changeSheet}
       />
 
       {error && <Alert severity="warning">{error} Showing the last it was loaded.</Alert>}

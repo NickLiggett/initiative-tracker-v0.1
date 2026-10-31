@@ -36,7 +36,7 @@ export default function SheetTabs({ player, onChange }) {
         ))}
       </Tabs>
       <Box role="tabpanel" id={`sheet-panel-${tab}`} aria-labelledby={`sheet-tab-${tab}`} sx={{ display: "grid", gap: 2 }}>
-        {tab === "Actions" && (sheet.attacks?.length ? <SheetLists sheet={sheet} onChange={onChange} show="attacks" /> : hint("No attacks yet. Add them with Edit stats."))}
+        {tab === "Actions" && (sheet.attacks?.length || onChange ? <SheetLists sheet={sheet} onChange={onChange} show="attacks" /> : hint("No attacks."))}
         {tab === "Spells" && (
           <>
             <SheetResources sheet={sheet} onChange={onChange} />
@@ -49,7 +49,7 @@ export default function SheetTabs({ player, onChange }) {
             <InventoryPanel player={player} readOnly={player.role === "PARTY"} />
           </Paper>
         )}
-        {tab === "Features" && (sheet.features?.length ? <SheetLists sheet={sheet} onChange={onChange} show="features" /> : hint("No features yet. Add them with Edit stats."))}
+        {tab === "Features" && (sheet.features?.length || onChange ? <SheetLists sheet={sheet} onChange={onChange} show="features" /> : hint("No features."))}
         {tab === "Description" && (
           <>
             <SheetDescription sheet={sheet} onChange={onChange} />

@@ -88,3 +88,34 @@ export function spendUse(sheet, index, by = 1) {
   );
   return { ...sheet, features };
 }
+
+/** A blank row for the dialog that adds an attack, or a feature. */
+export const blankAttack = () => ({ name: "", bonus: "", damage: "", notes: "" });
+export const blankFeature = () => ({ name: "", source: "", description: "", max: "", per: "", used: "0" });
+
+/** The sheet with the list `key` having `entry` at `index`, or added at the end when `index` is null. */
+function withEntry(sheet, key, index, entry) {
+  const list = [...(sheet[key] ?? [])];
+  if (index === null) {
+    list.push(entry);
+  } else {
+    list[index] = entry;
+  }
+  return { ...sheet, [key]: list };
+}
+
+/** The sheet without the entry at `index` of the list `key`; the list is left out when that was its last. */
+function withoutEntry(sheet, key, index) {
+  const { [key]: old, ...rest } = sheet;
+  const list = (old ?? []).filter((entry, at) => at !== index);
+  return list.length ? { ...rest, [key]: list } : rest;
+}
+
+/** The sheet with this attack (the dialog's row) added (`index` null) or in place of the one at `index`. */
+export const withAttack = (sheet, index, row) => withEntry(sheet, "attacks", index, attacksToSheet([row])[0]);
+export const withoutAttack = (sheet, index) => withoutEntry(sheet, "attacks", index);
+
+/** The same for a feature; the uses spent are kept as the row has them. */
+export const withFeature = (sheet, index, row) => withEntry(sheet, "features", index, featuresToSheet([row])[0]);
+export const withoutFeature = (sheet, index) => withoutEntry(sheet, "features", index);
+

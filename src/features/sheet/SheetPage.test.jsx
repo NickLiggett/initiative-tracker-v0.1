@@ -369,12 +369,12 @@ describe("the tabs", () => {
     await screen.findByRole("heading", { name: "Thorin" });
 
     expect(screen.getByRole("tab", { name: "Actions" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText("No attacks yet. Add them with Edit stats.")).toBeInTheDocument();
+    expect(screen.getByText("No attacks yet.")).toBeInTheDocument();
     await openTab("Spells");
     expect(screen.getByText("No spells or spell slots yet. Add them with Edit stats.")).toBeInTheDocument();
     await openTab("Features");
-    expect(screen.getByText("No features yet. Add them with Edit stats.")).toBeInTheDocument();
-    expect(screen.queryByText("No attacks yet. Add them with Edit stats.")).not.toBeInTheDocument();
+    expect(screen.getByText("No features yet.")).toBeInTheDocument();
+    expect(screen.queryByText("No attacks yet.")).not.toBeInTheDocument();
   });
 
   it("show the attacks on one tab and the features on another", async () => {
@@ -469,6 +469,95 @@ describe("changing things in place", () => {
     expect(screen.queryByRole("button", { name: /^Edit (Walking speed|Senses|Resistances|Alignment)/ })).not.toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Resistances" })).toHaveTextContent("fire");
     expect(screen.queryByText("Immunities: none")).not.toBeInTheDocument();
+  });
+});
+
+describe("attacks and features, in place", () => {
+  const armed = {
+    ...thorin,
+    version: 2,
+    sheet: { attacks: [{ name: "Longsword", bonus: "+9", damage: "1d8+5 slashing" }], features: [{ name: "Second Wind", source: "Fighter", uses: { max: 1, used: 1, per: "short" } }] },
+  };
+
+  function keeping(character) {
+    let saved = character;
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...saved, version: saved.version + 1, sheet: body.sheet }),
+    });
+    return { fetchMock, sheet: () => saved.sheet };
+  }
+  const fill = (label, value) => fireEvent.change(screen.getByRole("textbox", { name: label }), { target: { value } });
+
+  it("adds an attack, and refuses one with no name", async () => {
+    const backend = keeping(armed);
+    render(<SheetPage playerId={7} />);
+    await screen.findByText("Longsword");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add an attack" }));
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    fill("Name", "Dagger");
+    fill("Hit", "+7");
+    fill("Damage", "1d4+4 piercing");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(backend.sheet().attacks).toEqual([{ name: "Longsword", bonus: "+9", damage: "1d8+5 slashing" }, { name: "Dagger", bonus: "+7", damage: "1d4+4 piercing" }]));
+    expect(await screen.findByText("Dagger")).toBeInTheDocument();
+  });
+
+  it("changes an attack from its pencil, and deletes it", async () => {
+    const backend = keeping(armed);
+    render(<SheetPage playerId={7} />);
+    await screen.findByText("Longsword");
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Longsword" }));
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Longsword");
+    fill("Hit", "+10");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(backend.sheet().attacks[0].bonus).toBe("+10"));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Longsword" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(backend.sheet().attacks).toBeUndefined());
+    expect(backend.sheet().features).toHaveLength(1); // the rest is as it was
+    expect(await screen.findByText("No attacks yet.")).toBeInTheDocument();
+  });
+
+  it("adds a feature with uses, which must say when they come back", async () => {
+    const backend = keeping(armed);
+    render(<SheetPage playerId={7} />);
+    await openTab("Features");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add a feature" }));
+    fill("Name", "Action Surge");
+    fill("Uses", "2");
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled(); // no rest chosen yet
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Comes back on" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Long rest" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(backend.sheet().features[1]).toEqual({ name: "Action Surge", uses: { max: 2, used: 0, per: "long" } }));
+  });
+
+  it("keeps the uses spent when a feature is changed", async () => {
+    const backend = keeping(armed);
+    render(<SheetPage playerId={7} />);
+    await openTab("Features");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Edit Second Wind" }));
+    fill("Description", "Heal 1d10 + level.");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(backend.sheet().features[0]).toEqual({ name: "Second Wind", source: "Fighter", description: "Heal 1d10 + level.", uses: { max: 1, used: 1, per: "short" } }));
+  });
+
+  it("offers nothing to change to a DM seeing a party member", async () => {
+    stubApi({ "GET /api/players/7": { ...armed, role: "PARTY" } });
+    render(<SheetPage playerId={7} />);
+    await screen.findByText("Longsword");
+
+    expect(screen.queryByRole("button", { name: "Add an attack" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit Longsword" })).not.toBeInTheDocument();
   });
 });
 

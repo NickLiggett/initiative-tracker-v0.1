@@ -4,13 +4,14 @@ import ResourcePage from "../../components/resource/ResourcePage";
 import ResourceSearch from "../../components/resource/ResourceSearch";
 import ResultsSearch from "../../components/resource/ResultsSearch";
 import ClassComparison from "./ClassComparison";
+import ClassEditor from "./ClassEditor";
 import ClassFilters, { NO_FILTERS, searchFilters } from "./ClassFilters";
 import ClassStatBlock from "./ClassStatBlock";
 import { casterLabel, describeResult, hitDie, names } from "./classFormat";
 
 /**
- * Search for a class or subclass and read it: its level table and features. Compare two to weigh them up. There is
- * nothing to make or change here yet: classes are read, not edited. They are listed as a table at once, being few.
+ * Search for a class or subclass and read it: its level table and features. Compare two to weigh them up. Make one of
+ * your own, copy another to change, or edit and delete your own. They are listed as a table at once, being few.
  */
 export default function ClassesPage() {
   const [filters, setFilters] = useState(NO_FILTERS);
@@ -30,6 +31,9 @@ export default function ClassesPage() {
       )}
       renderStatBlock={(cls, { open }) => <ClassStatBlock cls={cls} open={open} />}
       renderComparison={(classes) => <ClassComparison classes={classes} />}
+      renderEditor={({ resource, onSaved, onCancel }) => <ClassEditor cls={resource} onSaved={onSaved} onCancel={onCancel} />}
+      copy={(cls) => classesApi.copy(cls.key)}
+      remove={(cls) => classesApi.remove(cls.key)}
     />
   );
 }

@@ -4,7 +4,8 @@ import { Refresh } from "@mui/icons-material";
 import { saveSheet, updateVitals } from "../../api/players";
 import PlayerEditor from "../players/PlayerEditor";
 import { CONDITIONS, MAX_EXHAUSTION, vitalsOf } from "../players/vitals";
-import SheetEditor from "./SheetEditor";
+import AdjustmentsDialog from "./AdjustmentsDialog";
+import { withAdjustments } from "./sheetAdjust";
 import SheetAbilities from "./SheetAbilities";
 import SheetFields from "./SheetFields";
 import SheetHeader from "./SheetHeader";
@@ -43,7 +44,7 @@ function Pips({ label, value, onChange }) {
 export default function SheetPage({ playerId }) {
   const { player, error, setPlayer, reload } = useLivePlayer(playerId);
   const [problem, setProblem] = useState(null);
-  const [editing, setEditing] = useState(false); // the sheet's numbers
+  const [adjusting, setAdjusting] = useState(false); // the adjustments to the sheet's numbers
   const [editingDetails, setEditingDetails] = useState(false); // who the character is: name, classes, level, AC
 
   useEffect(() => {
@@ -103,7 +104,7 @@ export default function SheetPage({ playerId }) {
         player={player}
         onVitals={change}
         onEditDetails={() => setEditingDetails(true)}
-        onEditStats={player.role === "PARTY" ? undefined : () => setEditing(true)}
+        onEditAdjustments={player.role === "PARTY" ? undefined : () => setAdjusting(true)}
         onSheet={player.role === "PARTY" ? undefined : changeSheet}
       />
 
@@ -163,14 +164,14 @@ export default function SheetPage({ playerId }) {
           {player.playedBy ? `Played by ${player.playedBy}. ` : ""}Made by {player.owner}. This page keeps itself up to date.
         </Typography>
       </Box>
-      {editing && (
-        <SheetEditor
-          player={player}
-          onSaved={(saved) => {
-            setPlayer(saved);
-            setEditing(false);
+      {adjusting && (
+        <AdjustmentsDialog
+          sheet={player.sheet ?? {}}
+          onSave={(rows) => {
+            setAdjusting(false);
+            changeSheet(withAdjustments(player.sheet ?? {}, rows));
           }}
-          onClose={() => setEditing(false)}
+          onClose={() => setAdjusting(false)}
         />
       )}
     </Box>

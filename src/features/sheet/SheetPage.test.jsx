@@ -311,7 +311,7 @@ describe("the header and the ability scores", () => {
     await screen.findByRole("heading", { name: "Thorin" });
 
     expect(screen.queryByRole("button", { name: /Strength .*Change/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Edit stats" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Adjustments" })).not.toBeInTheDocument();
     expect(screen.getByRole("listitem", { name: "Strength" })).toHaveTextContent("16");
   });
 
@@ -657,6 +657,62 @@ describe("spells, in place", () => {
     expect(screen.queryByRole("button", { name: "Edit Misty Step" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit slots and hit dice" })).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Spellcasting ability" })).not.toBeInTheDocument();
+  });
+});
+
+describe("adjustments", () => {
+  const dex = { ...thorin, version: 2, sheet: { abilities: { str: 10, dex: 18, con: 10, int: 10, wis: 10, cha: 10 } } };
+
+  it("adds one to a saving throw with a note, which shows in the number", async () => {
+    let saved = dex;
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...saved, version: saved.version + 1, sheet: body.sheet }),
+    });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Adjustments" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add an adjustment" }));
+    fireEvent.mouseDown(screen.getByLabelText("Adjusts, 1"));
+    fireEvent.click(await screen.findByRole("option", { name: "Saving throws: Dexterity saving throw" }));
+    fireEvent.change(screen.getByLabelText("Bonus, 1"), { target: { value: "+1" } });
+    fireEvent.change(screen.getByLabelText("Note, 1"), { target: { value: "Cloak of Protection" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0]).toMatchObject({ version: 2, sheet: { abilities: { dex: 18 }, adjustments: { "save.dex": { bonus: 1, note: "Cloak of Protection" } } } }));
+    expect(await screen.findByLabelText("Adjusted: +1 Cloak of Protection")).toBeInTheDocument();
+  });
+
+  it("will not save an adjustment with nothing chosen", async () => {
+    stubApi({ "GET /api/players/7": dex });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Adjustments" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add an adjustment" }));
+    fireEvent.change(screen.getByLabelText("Bonus, 1"), { target: { value: "2" } });
+
+    expect(screen.getByText("Choose what each adjustment is for, or remove it.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  it("takes the existing ones away when they are removed", async () => {
+    const withOne = { ...dex, sheet: { ...dex.sheet, adjustments: { "save.dex": { bonus: 1 } } } };
+    let saved = withOne;
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => saved,
+      "PUT /api/players/7/sheet": (body) => (saved = { ...saved, version: saved.version + 1, sheet: body.sheet }),
+    });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Adjustments" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove adjustment 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")).toHaveLength(1));
+    expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet.adjustments).toBeUndefined();
   });
 });
 

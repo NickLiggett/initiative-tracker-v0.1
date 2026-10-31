@@ -84,10 +84,10 @@ function HpManager({ player, onChange }) {
  * @param {object} player as the backend gives it
  * @param {(changes: object) => void} onVitals saves a change to what changes during play
  * @param {() => void} [onEditDetails] opens the details editor
- * @param {() => void} [onEditStats] opens the editor of the sheet's numbers
+ * @param {() => void} [onEditAdjustments] opens the adjustments, the one part of the sheet not changed where it is shown
  * @param {(sheet: object) => void} [onSheet] saves a change to the sheet (the walking speed); without it the speed is only read
  */
-export default function SheetHeader({ player, onVitals, onEditDetails, onEditStats, onSheet }) {
+export default function SheetHeader({ player, onVitals, onEditDetails, onEditAdjustments, onSheet }) {
   const [anchor, setAnchor] = useState(null);
   const vitals = vitalsOf(player);
   const speed = player.sheet?.speed?.walk;
@@ -107,9 +107,9 @@ export default function SheetHeader({ player, onVitals, onEditDetails, onEditSta
             Edit details
           </Button>
         )}
-        {onEditStats && (
-          <Button startIcon={<EditNote />} onClick={onEditStats}>
-            Edit stats
+        {onEditAdjustments && (
+          <Button startIcon={<EditNote />} onClick={onEditAdjustments}>
+            Adjustments
           </Button>
         )}
       </Box>

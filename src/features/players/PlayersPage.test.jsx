@@ -465,3 +465,30 @@ describe("coming back from a sheet", () => {
     expect(await screen.findByText("Level 6 Fighter · Dwarf")).toBeInTheDocument();
   });
 });
+
+describe("after making a character", () => {
+  it("offers to open its sheet, which opens in a new tab", async () => {
+    const open = vi.fn();
+    vi.stubGlobal("open", open);
+    await renderPage({ "POST /api/players": (body) => ({ ...thorin, ...body, id: 9, owner: "dev", role: "OWNER" }) });
+
+    openNew();
+    await listsLoaded();
+    type("Name", "Aria");
+    type("Class", "wizard");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const banner = await screen.findByText(/Aria is made/);
+    expect(banner).toBeInTheDocument();
+    expect(open).not.toHaveBeenCalled(); // not opened for them: a tab opened after the save is one browsers block
+    fireEvent.click(screen.getByRole("button", { name: "Open Aria's sheet" }));
+    expect(open).toHaveBeenCalledWith(expect.stringContaining("?sheet=9"), "_blank");
+  });
+
+  it("says nothing about a character that was only looked at, and goes when closed", async () => {
+    await renderPage();
+
+    expect(screen.queryByText(/is made/)).not.toBeInTheDocument();
+  });
+});
+

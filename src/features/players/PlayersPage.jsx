@@ -21,6 +21,7 @@ export default function PlayersPage() {
   const [editing, setEditing] = useState(null); // { player, start }: the character, null for a new one; start is a copy's draft
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState(null); // the character just made, with a way to open its sheet
   const [tab, setTab] = useState("players");
   const [requests, setRequests] = useState([]); // the parties the user has been asked to join or is in
 
@@ -61,6 +62,9 @@ export default function PlayersPage() {
   const waiting = requests.filter((request) => request.status === "PENDING").length;
 
   const saved = (player) => {
+    // Only a new character (or a copy) is announced; changing one happens on its sheet. A button, not a tab opened for
+    // them: a tab opened after the save has gone through is one browsers block.
+    setCreated(editing?.player ? null : player);
     setPlayers((current) => {
       const others = (current ?? []).filter((existing) => existing.id !== player.id);
       return [...others, player].sort((a, b) => a.name.localeCompare(b.name));
@@ -117,6 +121,19 @@ export default function PlayersPage() {
           {tab === "party" && <PartyPanel onInvitationsChange={setRequests} />}
 
           {tab === "players" && loadError && <Alert severity="error">{loadError}</Alert>}
+          {tab === "players" && created && (
+            <Alert
+              severity="success"
+              onClose={() => setCreated(null)}
+              action={
+                <Button color="inherit" size="small" aria-label={`Open ${created.name}'s sheet`} onClick={() => openSheet(created.id)}>
+                  Open sheet
+                </Button>
+              }
+            >
+              {created.name} is made. Open its sheet to fill in the abilities, spells, inventory and the rest.
+            </Alert>
+          )}
           {tab === "players" && error && (
             <Alert severity="error" onClose={() => setError(null)}>
               {error}

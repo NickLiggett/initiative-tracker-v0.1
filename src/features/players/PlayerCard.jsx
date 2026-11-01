@@ -1,5 +1,5 @@
 import { Box, Button, Chip, Link, Paper, Typography } from "@mui/material";
-import { ContentCopy, Delete, OpenInNew, Star } from "@mui/icons-material";
+import { ContentCopy, Delete, OpenInNew, PersonAdd, PersonRemove, Star } from "@mui/icons-material";
 import UserAvatar from "../../components/layout/UserAvatar";
 import HpBar from "./HpBar";
 import { describePlayer, formatBonus, rulesetLabel } from "./players";
@@ -28,10 +28,14 @@ function Stat({ label, value }) {
  * (hit points, inventory, the details) is changed there
  * @param {(player: object) => void} [onDuplicate] only offered for the user's own
  * @param {(player: object) => void} [onDelete] only offered for the user's own
+ * @param {object} [request] the request the owner has made to have someone play it (see api/characterRequests), waiting or turned down
+ * @param {(player: object) => void} [onAsk] asks someone to play it; only offered for the user's own
+ * @param {(request: object) => void} [onCancelRequest] withdraws a waiting request or dismisses a turned-down one
+ * @param {(player: object) => void} [onStepDown] stops playing it; only offered to whoever plays but doesn't own it
  */
-export default function PlayerCard({ player, busy, onOpenSheet, onDuplicate, onDelete }) {
+export default function PlayerCard({ player, busy, onOpenSheet, onDuplicate, onDelete, request, onAsk, onCancelRequest, onStepDown }) {
   const owned = player.role === "OWNER";
-  const hasActions = onOpenSheet || onDuplicate || onDelete;
+  const hasActions = onOpenSheet || onDuplicate || onDelete || onAsk || onStepDown;
   const vitals = vitalsOf(player);
   const afflicted = [...vitals.conditions, ...(vitals.exhaustion > 0 ? [`Exhaustion ${vitals.exhaustion}`] : [])];
 
@@ -95,7 +99,7 @@ export default function PlayerCard({ player, busy, onOpenSheet, onDuplicate, onD
         )}
         {owned && !player.playedBy && (
           <Typography variant="caption" color="text.secondary">
-            Not played by anyone with an account
+            Nobody plays this yet
           </Typography>
         )}
         {player.role === "PLAYER" && (
@@ -116,11 +120,34 @@ export default function PlayerCard({ player, busy, onOpenSheet, onDuplicate, onD
         )}
       </Box>
 
+      {owned && request && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <Typography variant="caption" color={request.status === "DENIED" ? "warning.main" : "text.secondary"} sx={{ flex: 1, overflowWrap: "anywhere" }}>
+            {request.status === "DENIED" ? `${request.email} turned this down` : `Waiting for ${request.email} to answer`}
+          </Typography>
+          {onCancelRequest && (
+            <Button size="small" disabled={busy} onClick={() => onCancelRequest(request)}>
+              {request.status === "DENIED" ? "Dismiss" : "Withdraw"}
+            </Button>
+          )}
+        </Box>
+      )}
+
       {hasActions && (
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {onOpenSheet && (
             <Button size="small" variant="contained" startIcon={<OpenInNew />} disabled={busy} onClick={() => onOpenSheet(player)}>
               Open sheet
+            </Button>
+          )}
+          {owned && onAsk && (
+            <Button size="small" startIcon={<PersonAdd />} disabled={busy} onClick={() => onAsk(player)}>
+              Ask someone to play
+            </Button>
+          )}
+          {player.role === "PLAYER" && onStepDown && (
+            <Button size="small" color="warning" startIcon={<PersonRemove />} disabled={busy} onClick={() => onStepDown(player)}>
+              Step down
             </Button>
           )}
           {owned && onDuplicate && (

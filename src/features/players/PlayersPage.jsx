@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Tab, Tabs, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Tab, Tabs, Typography } from "@mui/material";
 import { Add } from "@mui/icons-material";
 import { listPartyInvitations } from "../../api/party";
-import { deletePlayer, listPlayers } from "../../api/players";
+import { cancelRequest, listSentRequests } from "../../api/characterRequests";
+import { deletePlayer, listPlayers, stepDownFromPlayer } from "../../api/players";
 import ConfirmDeleteDialog from "../../components/resource/ConfirmDeleteDialog";
+import AskPlayerDialog from "./AskPlayerDialog";
+import CharacterRequestsPanel from "./CharacterRequestsPanel";
 import PartyPanel, { RequestsBadge } from "./PartyPanel";
 import PlayerCard from "./PlayerCard";
 import PlayerEditor from "./PlayerEditor";
@@ -24,6 +27,10 @@ export default function PlayersPage() {
   const [created, setCreated] = useState(null); // the character just made, with a way to open its sheet
   const [tab, setTab] = useState("players");
   const [requests, setRequests] = useState([]); // the parties the user has been asked to join or is in
+  const [sent, setSent] = useState([]); // the requests the user has made to have someone play a character
+  const [asking, setAsking] = useState(null); // the character being asked about
+  const [stepping, setStepping] = useState(null); // the character the user is asked to confirm stepping down from
+  const [notice, setNotice] = useState(null); // { severity, text } about a request just made
 
   const load = useCallback((signal) => {
     setLoadError(null);
@@ -51,6 +58,22 @@ export default function PlayersPage() {
   }, [load]);
 
   useEffect(() => {
+    // Whether each character has a request waiting or turned down; answers arrive while the page is open elsewhere, so look again on return.
+    const refresh = (signal) =>
+      listSentRequests({ signal })
+        .then(setSent)
+        .catch(() => {});
+    const controller = new AbortController();
+    refresh(controller.signal);
+    const onFocus = () => refresh();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      controller.abort();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  useEffect(() => {
     // Only for the badge on the Party tab; the tab itself says if the party can't be loaded.
     const controller = new AbortController();
     listPartyInvitations({ signal: controller.signal })
@@ -70,6 +93,43 @@ export default function PlayersPage() {
       return [...others, player].sort((a, b) => a.name.localeCompare(b.name));
     });
     setEditing(null);
+  };
+
+  const asked = (request) => {
+    setAsking(null);
+    setSent((current) => [...current.filter((one) => one.playerId !== request.playerId), request]);
+    setNotice(
+      request.emailSent === false
+        ? { severity: "warning", text: `The request for ${request.characterName} is made, but the email to ${request.email} couldn't be sent. They can still answer it if they sign in with that address.` }
+        : { severity: "success", text: `Asked ${request.email} to play ${request.characterName}. They play it only if they accept.` },
+    );
+  };
+
+  const withdraw = async (request) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await cancelRequest(request.id);
+      setSent((current) => current.filter((one) => one.id !== request.id));
+    } catch (e) {
+      setError(`Couldn't withdraw the request: ${e.message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmStepDown = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await stepDownFromPlayer(stepping.id);
+      setPlayers((current) => current.filter((existing) => existing.id !== stepping.id));
+    } catch (e) {
+      setError(`Couldn't step down from ${stepping.name}: ${e.message}`);
+    } finally {
+      setStepping(null);
+      setBusy(false);
+    }
   };
 
   const confirmDelete = async () => {
@@ -105,7 +165,7 @@ export default function PlayersPage() {
               </Typography>
               <Typography color="text.secondary">
                 The characters at your table, for the 2014 or the 2024 rules. Add one to your account and drop it into
-                initiative whenever it's in the fight. Name a friend who plays one and they'll see it too.
+                initiative whenever it's in the fight. Ask a friend to play one and, once they accept, they'll see it too.
               </Typography>
             </Box>
             {tab === "players" && (
@@ -114,6 +174,7 @@ export default function PlayersPage() {
               </Button>
             )}
           </Box>
+          <CharacterRequestsPanel onAnswered={(accepted) => accepted && load()} />
           <Tabs value={tab} onChange={(event, value) => setTab(value)} aria-label="Characters or party">
             <Tab value="players" label="Characters" />
             <Tab value="party" label={<RequestsBadge count={waiting}>Party</RequestsBadge>} aria-label={waiting ? `Party, ${waiting} waiting` : "Party"} />
@@ -132,6 +193,11 @@ export default function PlayersPage() {
               }
             >
               {created.name} is made. Open its sheet to fill in the abilities, spells, inventory and the rest.
+            </Alert>
+          )}
+          {tab === "players" && notice && (
+            <Alert severity={notice.severity} onClose={() => setNotice(null)}>
+              {notice.text}
             </Alert>
           )}
           {tab === "players" && error && (
@@ -155,6 +221,10 @@ export default function PlayersPage() {
                     onOpenSheet={(chosen) => openSheet(chosen.id)}
                     onDuplicate={(chosen) => setEditing({ player: null, start: duplicateDraft(chosen) })}
                     onDelete={setDeleting}
+                    request={sent.find((one) => one.playerId === player.id)}
+                    onAsk={setAsking}
+                    onCancelRequest={withdraw}
+                    onStepDown={setStepping}
                   />
                 </Box>
               ))}
@@ -163,6 +233,21 @@ export default function PlayersPage() {
         </Box>
       )}
 
+      {asking && <AskPlayerDialog player={asking} onAsked={asked} onClose={() => setAsking(null)} />}
+      <Dialog open={Boolean(stepping)} onClose={() => setStepping(null)} aria-labelledby="step-down-title">
+        <DialogTitle id="step-down-title">{`Step down from ${stepping?.name ?? ""}?`}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {stepping?.owner} keeps {stepping?.name} but you stop seeing it. They can ask you again.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStepping(null)}>Cancel</Button>
+          <Button color="warning" variant="contained" disabled={busy} onClick={confirmStepDown}>
+            Step down
+          </Button>
+        </DialogActions>
+      </Dialog>
       <ConfirmDeleteDialog
         open={Boolean(deleting)}
         name={deleting?.name}

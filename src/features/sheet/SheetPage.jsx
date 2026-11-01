@@ -103,7 +103,7 @@ export default function SheetPage({ playerId }) {
   }
 
   return (
-    <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
+    <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
       <SheetHeader
         player={{ ...player, ...derived }}
         onVitals={change}

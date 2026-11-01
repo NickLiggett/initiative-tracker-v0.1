@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box, Button, Chip, IconButton, Paper, Typography } from "@mui/material";
 import { Add, Edit } from "@mui/icons-material";
 import EntryDialog from "./EntryDialog";
-import { MAX_ATTACKS, MAX_FEATURES, attackDrafts, blankAttack, blankFeature, featureDrafts, spendUse, usesLeft, withAttack, withFeature, withoutAttack, withoutFeature } from "./sheetEntries";
+import { ATTACK_TYPES, MAX_ATTACKS, MAX_FEATURES, attackDrafts, attackType, blankAttack, blankFeature, featureDrafts, spendUse, usesLeft, withAttack, withFeature, withoutAttack, withoutFeature } from "./sheetEntries";
 
 /** A titled box of the sheet. */
 function Section({ title, action, children }) {
@@ -54,9 +54,11 @@ function Uses({ feature, index, sheet, onChange }) {
  */
 export default function SheetLists({ sheet, onChange, show }) {
   const [editing, setEditing] = useState(null); // { kind, index (null for a new one), row }
+  const [filter, setFilter] = useState("all"); // "all", or one of the types of attack
   const attacks = show === "features" ? [] : (sheet.attacks ?? []);
   const features = show === "attacks" ? [] : (sheet.features ?? []);
   const editable = Boolean(onChange);
+  const shownAttacks = attacks.map((attack, index) => ({ attack, index })).filter(({ attack }) => filter === "all" || attackType(attack) === filter);
   if (!editable && !attacks.length && !features.length) {
     return null;
   }
@@ -91,6 +93,24 @@ export default function SheetLists({ sheet, onChange, show }) {
             <Typography color="text.secondary">No attacks yet.</Typography>
           )}
           {attacks.length > 0 && (
+            <Box role="group" aria-label="Show" sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+              {[{ key: "all", label: "All" }, ...ATTACK_TYPES].map(({ key, label }) => (
+                <Chip
+                  key={key}
+                  size="small"
+                  label={label}
+                  color={filter === key ? "primary" : "default"}
+                  variant={filter === key ? "filled" : "outlined"}
+                  aria-pressed={filter === key}
+                  onClick={() => setFilter(key)}
+                />
+              ))}
+            </Box>
+          )}
+          {attacks.length > 0 && shownAttacks.length === 0 && (
+            <Typography color="text.secondary">Nothing of that kind yet.</Typography>
+          )}
+          {shownAttacks.length > 0 && (
           <Box component="table" sx={{ borderCollapse: "collapse", width: "100%", "& th, & td": { textAlign: "left", p: 0.75, borderBottom: "1px solid", borderColor: "divider", verticalAlign: "top" } }}>
             <thead>
               <tr>
@@ -102,9 +122,16 @@ export default function SheetLists({ sheet, onChange, show }) {
               </tr>
             </thead>
             <tbody>
-              {attacks.map((attack, index) => (
+              {shownAttacks.map(({ attack, index }) => (
                 <tr key={index}>
-                  <Typography component="td" variant="body2" sx={{ fontWeight: "bold" }}>{attack.name}</Typography>
+                  <Typography component="td" variant="body2" sx={{ fontWeight: "bold" }}>
+                    {attack.name}
+                    {attackType(attack) !== "attack" && (
+                      <Typography component="span" variant="caption" color="text.secondary" sx={{ display: "block", fontWeight: "normal" }}>
+                        {ATTACK_TYPES.find(({ key }) => key === attackType(attack)).label}
+                      </Typography>
+                    )}
+                  </Typography>
                   <Typography component="td" variant="body2">{attack.bonus ?? ""}</Typography>
                   <Typography component="td" variant="body2">{attack.damage ?? ""}</Typography>
                   <Typography component="td" variant="body2" color="text.secondary">{attack.notes ?? ""}</Typography>

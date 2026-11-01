@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, TextField } from "@mui/material";
-import { MAX_USES, listProblems } from "./sheetEntries";
+import { ATTACK_TYPES, MAX_USES, listProblems } from "./sheetEntries";
 
 const ATTACK_FIELDS = [
   { field: "name", label: "Name", flex: "2 1 160px" },
@@ -37,7 +37,16 @@ export default function EntryDialog({ kind, initial, isNew, onSave, onDelete, on
                 <TextField key={field} size="small" autoFocus={field === "name"} label={label} placeholder={placeholder} value={row[field]} onChange={change(field)} sx={{ flex }} />
               ))}
             </Box>
-            <TextField size="small" label="Notes" value={row.notes} onChange={change("notes")} />
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <TextField select size="small" label="Type" value={row.type ?? "attack"} onChange={change("type")} sx={{ flex: "1 1 160px" }}>
+                {ATTACK_TYPES.map(({ key, label }) => (
+                  <MenuItem key={key} value={key}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField size="small" label="Notes" value={row.notes} onChange={change("notes")} sx={{ flex: "3 1 220px" }} />
+            </Box>
           </>
         ) : (
           <>

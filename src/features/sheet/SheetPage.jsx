@@ -9,8 +9,9 @@ import { vitalsOf } from "../players/vitals";
 import AdjustmentsDialog from "./AdjustmentsDialog";
 import { withAdjustments } from "./sheetAdjust";
 import SheetAbilities from "./SheetAbilities";
-import SheetFields from "./SheetFields";
-import SheetHeader from "./SheetHeader";
+import { SavesSection, SensesSection, SheetDescription, SkillsSection } from "./SheetFields";
+import SheetHeader, { SheetCombat, SheetVitals } from "./SheetHeader";
+import { RestBar } from "./SheetSpells";
 import SheetTabs from "./SheetTabs";
 import useDerivedStats from "./useDerivedStats";
 import useLivePlayer from "./useLivePlayer";
@@ -102,15 +103,16 @@ export default function SheetPage({ playerId }) {
     );
   }
 
+  const readOnly = player.role === "PARTY";
+  const onSheet = readOnly ? undefined : changeSheet;
+  const sheet = player.sheet ?? {};
+  const shown = { ...player, ...derived };
+
   return (
-    <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
-      <SheetHeader
-        player={{ ...player, ...derived }}
-        onVitals={change}
-        onEditDetails={() => setEditingDetails(true)}
-        onEditAdjustments={player.role === "PARTY" ? undefined : () => setAdjusting(true)}
-        onSheet={player.role === "PARTY" ? undefined : changeSheet}
-      />
+    <Box sx={{ width: "100%", maxWidth: 1400, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
+      <SheetHeader player={shown} onEditDetails={() => setEditingDetails(true)} onEditAdjustments={readOnly ? undefined : () => setAdjusting(true)}>
+        <RestBar sheet={sheet} onChange={onSheet} />
+      </SheetHeader>
 
       {error && <Alert severity="warning">{error} Showing the last it was loaded.</Alert>}
       {problem && (
@@ -119,23 +121,45 @@ export default function SheetPage({ playerId }) {
         </Alert>
       )}
 
-      <SheetAbilities sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
-
-      <Paper variant="outlined" component="section" aria-label="Conditions" sx={{ p: 2, display: "grid", gap: 1.5 }}>
-        <ConditionPicker conditions={vitals.conditions} onToggle={toggleCondition} />
-        <ExhaustionMeter level={vitals.exhaustion} onChange={(level) => change({ exhaustion: level })} />
-        <Box sx={{ display: "grid", gap: 0.5 }}>
-          <Typography variant="subtitle2" component="h2">
-            Death saving throws
-          </Typography>
-          <Pips label="Successes" value={vitals.deathSaveSuccesses} onChange={(value) => change({ deathSaveSuccesses: value })} />
-          <Pips label="Failures" value={vitals.deathSaveFailures} onChange={(value) => change({ deathSaveFailures: value })} />
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "stretch" }}>
+        <Box sx={{ flex: "3 1 520px", minWidth: 0 }}>
+          <SheetAbilities sheet={sheet} level={player.level} onChange={onSheet} />
         </Box>
-      </Paper>
+        <Box sx={{ flex: "4 1 520px", minWidth: 0 }}>
+          <SheetVitals player={shown} onVitals={change} onSheet={onSheet} />
+        </Box>
+      </Box>
 
-      <SheetFields sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
-
-      <SheetTabs player={player} onChange={player.role === "PARTY" ? undefined : changeSheet} onInventorySaved={inventoryChanged} />
+      <Box sx={{ display: "grid", gap: 2, alignItems: "start", gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 3fr) minmax(0, 3fr) minmax(0, 5fr)" } }}>
+        <Box sx={{ display: "grid", gap: 2 }}>
+          <SavesSection sheet={sheet} level={player.level} onChange={onSheet} />
+          <SensesSection sheet={sheet} level={player.level} onChange={onSheet} />
+          <SheetDescription sheet={sheet} onChange={onSheet} only="training" />
+        </Box>
+        <Box sx={{ display: "grid", gap: 2 }}>
+          <SkillsSection sheet={sheet} level={player.level} onChange={onSheet} />
+        </Box>
+        <Box sx={{ display: "grid", gap: 2, minWidth: 0 }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", alignItems: "stretch" }}>
+            <SheetCombat player={shown} />
+            <Box sx={{ flex: "1 1 220px", display: "grid" }}>
+              <SheetDescription sheet={sheet} onChange={onSheet} only="defenses" />
+            </Box>
+          </Box>
+          <Paper variant="outlined" component="section" aria-label="Conditions" sx={{ p: 2, display: "grid", gap: 1.5 }}>
+            <ConditionPicker conditions={vitals.conditions} onToggle={toggleCondition} />
+            <ExhaustionMeter level={vitals.exhaustion} onChange={(level) => change({ exhaustion: level })} />
+            <Box sx={{ display: "grid", gap: 0.5 }}>
+              <Typography variant="subtitle2" component="h2">
+                Death saving throws
+              </Typography>
+              <Pips label="Successes" value={vitals.deathSaveSuccesses} onChange={(value) => change({ deathSaveSuccesses: value })} />
+              <Pips label="Failures" value={vitals.deathSaveFailures} onChange={(value) => change({ deathSaveFailures: value })} />
+            </Box>
+          </Paper>
+          <SheetTabs player={player} onChange={onSheet} onInventorySaved={inventoryChanged} />
+        </Box>
+      </Box>
 
       <Box sx={{ display: "flex", gap: 1 }}>
         <Button startIcon={<Refresh />} onClick={() => window.location.reload()}>

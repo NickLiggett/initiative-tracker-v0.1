@@ -133,9 +133,75 @@ function SpeedAndSenses({ sheet, speedText, onChange }) {
   );
 }
 
+const hasScores = (sheet) => ABILITIES.some(({ key }) => abilityModifier(sheet, key) !== null);
+
+/** The six saving throws, each with the mark of its proficiency (a button with `onChange`). Nothing until the abilities are set. */
+export function SavesSection({ sheet, level, onChange }) {
+  if (!hasScores(sheet)) {
+    return null;
+  }
+  return (
+    <Section title="Saving throws">
+      {ABILITIES.map(({ key, label }) => (
+        <Row
+          key={key}
+          mark={<Mark level={(sheet.saves ?? []).includes(key) ? "proficient" : "none"} />}
+          onMark={onChange && (() => onChange(withSaveToggled(sheet, key)))}
+          markLabel={`${label} saving throw proficiency: ${(sheet.saves ?? []).includes(key) ? "proficient" : "none"}. Change`}
+          label={label}
+          adjustment={adjustmentText(sheet, `save.${key}`)}
+          value={dash(saveBonus(sheet, key, level) === null ? null : signed(saveBonus(sheet, key, level)))}
+        />
+      ))}
+    </Section>
+  );
+}
+
+/** The skills, each with the mark of its proficiency (a button with `onChange`). Nothing until the abilities are set. */
+export function SkillsSection({ sheet, level, onChange }) {
+  if (!hasScores(sheet)) {
+    return null;
+  }
+  return (
+    <Section title="Skills">
+      {SKILLS.map(({ key, label, ability }) => (
+        <Row
+          key={key}
+          mark={<Mark level={skillLevel(sheet, key)} />}
+          onMark={onChange && (() => onChange(withSkillCycled(sheet, key)))}
+          markLabel={`${label} proficiency: ${skillLevel(sheet, key)}. Change`}
+          label={`${label} (${ability.toUpperCase()})`}
+          adjustment={adjustmentText(sheet, `skill.${key}`)}
+          value={dash(skillBonus(sheet, key, level) === null ? null : signed(skillBonus(sheet, key, level)))}
+        />
+      ))}
+    </Section>
+  );
+}
+
+/** The passive scores, the other speeds and the senses. Without abilities set, only the speeds and senses (and only if there are any, or they can be added). */
+export function SensesSection({ sheet, level, onChange }) {
+  const speed = sheet.speed ?? {};
+  const speedText = [speed.walk !== undefined ? `Walking ${speed.walk} ft.` : null, speed.other].filter(Boolean).join(" · ");
+  const filled = hasScores(sheet);
+  if (!filled && !(speedText || sheet.senses?.length || onChange)) {
+    return null;
+  }
+  return (
+    <Section title="Senses and speed">
+      {filled &&
+        PASSIVES.map(({ skill, label }) => (
+          <Row key={skill} label={label} adjustment={adjustmentText(sheet, `passive.${skill}`)} value={dash(passiveScore(sheet, skill, level))} />
+        ))}
+      <SpeedAndSenses sheet={sheet} speedText={speedText} onChange={onChange} />
+    </Section>
+  );
+}
+
 /**
  * Saving throws, skills and passive scores worked out from the ability scores (see SheetAbilities) and the character's
- * level, and speed and senses. Proficiencies can be changed from their marks. The rest of the sheet is in SheetTabs.
+ * level, and speed and senses, in one column. (The sheet page lays the parts out itself.) Proficiencies can be changed from
+ * their marks. The rest of the sheet is in SheetTabs.
  *
  * @param {object} sheet the character's `sheet`
  * @param {number} level the character's level, for the proficiency bonus
@@ -143,70 +209,26 @@ function SpeedAndSenses({ sheet, speedText, onChange }) {
  *   proficiency changed, to save; without it they are only shown
  */
 export default function SheetFields({ sheet, level, onChange }) {
-  const filled = ABILITIES.some(({ key }) => abilityModifier(sheet, key) !== null);
-  const speed = sheet.speed ?? {};
-  const speedText = [speed.walk !== undefined ? `Walking ${speed.walk} ft.` : null, speed.other].filter(Boolean).join(" · ");
-
   return (
     <>
-      {filled && (
-        <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", alignItems: "start" }}>
-          <Box sx={{ display: "grid", gap: 2 }}>
-          <Section title="Saving throws">
-            {ABILITIES.map(({ key, label }) => (
-              <Row
-                key={key}
-                mark={<Mark level={(sheet.saves ?? []).includes(key) ? "proficient" : "none"} />}
-                onMark={onChange && (() => onChange(withSaveToggled(sheet, key)))}
-                markLabel={`${label} saving throw proficiency: ${(sheet.saves ?? []).includes(key) ? "proficient" : "none"}. Change`}
-                label={label}
-                adjustment={adjustmentText(sheet, `save.${key}`)}
-                value={dash(saveBonus(sheet, key, level) === null ? null : signed(saveBonus(sheet, key, level)))}
-              />
-            ))}
-          </Section>
-          <Section title="Skills">
-            {SKILLS.map(({ key, label, ability }) => (
-              <Row
-                key={key}
-                mark={<Mark level={skillLevel(sheet, key)} />}
-                onMark={onChange && (() => onChange(withSkillCycled(sheet, key)))}
-                markLabel={`${label} proficiency: ${skillLevel(sheet, key)}. Change`}
-                label={`${label} (${ability.toUpperCase()})`}
-                adjustment={adjustmentText(sheet, `skill.${key}`)}
-                value={dash(skillBonus(sheet, key, level) === null ? null : signed(skillBonus(sheet, key, level)))}
-              />
-            ))}
-          </Section>
-          </Box>
-          <Section title="Senses and speed">
-            {PASSIVES.map(({ skill, label }) => (
-              <Row key={skill} label={label} adjustment={adjustmentText(sheet, `passive.${skill}`)} value={dash(passiveScore(sheet, skill, level))} />
-            ))}
-            <SpeedAndSenses sheet={sheet} speedText={speedText} onChange={onChange} />
-          </Section>
-        </Box>
-      )}
-      {!filled && (speedText || sheet.senses?.length || onChange) && (
-        <Section title="Senses and speed">
-          <SpeedAndSenses sheet={sheet} speedText={speedText} onChange={onChange} />
-        </Section>
-      )}
-
+      <SavesSection sheet={sheet} level={level} onChange={onChange} />
+      <SkillsSection sheet={sheet} level={level} onChange={onChange} />
+      <SensesSection sheet={sheet} level={level} onChange={onChange} />
     </>
   );
 }
 
 /**
  * Defenses, what the character is trained in, and the personal details. Read only, a part with nothing in it is not shown;
- * with `onChange` (given the sheet after a change, to save) every part is shown with a pencil beside it.
+ * with `onChange` (given the sheet after a change, to save) every part is shown with a pencil beside it. `only` ("defenses",
+ * "training" or "personal") shows just that part, for the sheet page to put where it wants it.
  */
-export function SheetDescription({ sheet, onChange }) {
+export function SheetDescription({ sheet, onChange, only }) {
   const editable = Boolean(onChange);
-  const defenses = DEFENSE_LISTS.filter(({ key }) => editable || sheet.defenses?.[key]?.length);
-  const training = TRAINING_LISTS.filter(({ key }) => editable || sheet.training?.[key]?.length);
-  const lines = PERSONAL_LINES.filter(({ key }) => editable || sheet.personal?.[key]);
-  const texts = PERSONAL_TEXTS.filter(({ key }) => editable || sheet.personal?.[key]);
+  const defenses = only && only !== "defenses" ? [] : DEFENSE_LISTS.filter(({ key }) => editable || sheet.defenses?.[key]?.length);
+  const training = only && only !== "training" ? [] : TRAINING_LISTS.filter(({ key }) => editable || sheet.training?.[key]?.length);
+  const lines = only && only !== "personal" ? [] : PERSONAL_LINES.filter(({ key }) => editable || sheet.personal?.[key]);
+  const texts = only && only !== "personal" ? [] : PERSONAL_TEXTS.filter(({ key }) => editable || sheet.personal?.[key]);
   const empty = (label) => (
     <Typography variant="body2" color="text.secondary">
       {label}: none

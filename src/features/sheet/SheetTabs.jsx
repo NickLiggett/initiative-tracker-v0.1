@@ -4,7 +4,7 @@ import { InventoryPanel } from "../players/InventoryDialog";
 import RuleFeatures from "./RuleFeatures";
 import { SheetDescription } from "./SheetFields";
 import SheetLists from "./SheetLists";
-import { RestBar, SheetResources, SheetSpells } from "./SheetSpells";
+import { SheetResources, SheetSpells } from "./SheetSpells";
 
 const TABS = ["Actions", "Spells", "Inventory", "Features", "Description"];
 
@@ -16,8 +16,7 @@ const hint = (text) => (
 
 /**
  * What a character has and does, in tabs as on D&D Beyond: Actions (attacks), Spells (slots, hit dice and the spell list),
- * Inventory, Features (with their uses) and Description (defenses, training, who they are and the notes). The rest buttons
- * sit above the tabs, since a rest gives back things on several of them.
+ * Inventory, Features (with their uses) and Description (who they are and the notes).
  *
  * @param {object} player as the backend gives it
  * @param {(sheet: object) => void} [onChange] saves the sheet after a use is spent, a rest taken or a spell prepared; without
@@ -31,7 +30,6 @@ export default function SheetTabs({ player, onChange, onInventorySaved }) {
 
   return (
     <Box sx={{ display: "grid", gap: 1.5 }}>
-      <RestBar sheet={sheet} onChange={onChange} />
       <Tabs value={tab} onChange={(event, value) => setTab(value)} variant="scrollable" scrollButtons="auto" aria-label="Character sheet sections">
         {TABS.map((name) => (
           <Tab key={name} value={name} label={name} id={`sheet-tab-${name}`} aria-controls={`sheet-panel-${name}`} />
@@ -59,7 +57,7 @@ export default function SheetTabs({ player, onChange, onInventorySaved }) {
         )}
         {tab === "Description" && (
           <>
-            <SheetDescription sheet={sheet} onChange={onChange} />
+            <SheetDescription sheet={sheet} onChange={onChange} only="personal" />
             {player.notes && (
               <Paper variant="outlined" component="section" aria-label="Notes" sx={{ p: 2 }}>
                 <Typography variant="subtitle2" component="h2" gutterBottom>

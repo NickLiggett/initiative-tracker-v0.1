@@ -77,74 +77,90 @@ function HpManager({ player, onChange }) {
 }
 
 /**
- * The top of a character's sheet, as on D&D Beyond: who they are with the ways to change that, the numbers a player looks
- * at most (armor class, initiative, speed, proficiency bonus, inspiration) and the hit points, which open a panel to
- * deal damage or heal.
+ * The top of a character's sheet, as on D&D Beyond: who they are, with the ways to change that. The numbers a player looks
+ * at most are beside it (SheetVitals and SheetCombat), where the sheet page puts them.
+ *
+ * @param {object} player as the backend gives it
+ * @param {() => void} [onEditDetails] opens the details editor
+ * @param {() => void} [onEditAdjustments] opens the adjustments, the one part of the sheet not changed where it is shown
+ * @param {React.ReactNode} [children] what goes on the right of the name, such as the rest buttons
+ */
+export default function SheetHeader({ player, onEditDetails, onEditAdjustments, children }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, flexWrap: "wrap" }}>
+      <Box sx={{ flex: 1, minWidth: 220 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: "bolder", overflowWrap: "anywhere" }}>
+          {player.name}
+        </Typography>
+        <Typography color="text.secondary">{describePlayer(player)}</Typography>
+      </Box>
+      <Chip size="small" label={rulesetLabel(player.ruleset)} />
+      {onEditDetails && (
+        <Button startIcon={<Edit />} onClick={onEditDetails}>
+          Edit details
+        </Button>
+      )}
+      {onEditAdjustments && (
+        <Button startIcon={<EditNote />} onClick={onEditAdjustments}>
+          Adjustments
+        </Button>
+      )}
+      {children}
+    </Box>
+  );
+}
+
+/** Initiative and armor class, which the sheet works out. */
+export function SheetCombat({ player }) {
+  return (
+    <Box sx={{ display: "flex", gap: 1.5, alignItems: "stretch" }}>
+      <Stat label="Initiative" value={formatBonus(player.initiativeBonus)} />
+      <Stat label="Armor class" value={player.armorClass} />
+    </Box>
+  );
+}
+
+/**
+ * Proficiency bonus, walking speed, inspiration and the hit points, which open a panel to deal damage or heal.
  *
  * @param {object} player as the backend gives it
  * @param {(changes: object) => void} onVitals saves a change to what changes during play
- * @param {() => void} [onEditDetails] opens the details editor
- * @param {() => void} [onEditAdjustments] opens the adjustments, the one part of the sheet not changed where it is shown
  * @param {(sheet: object) => void} [onSheet] saves a change to the sheet (the walking speed); without it the speed is only read
  */
-export default function SheetHeader({ player, onVitals, onEditDetails, onEditAdjustments, onSheet }) {
+export function SheetVitals({ player, onVitals, onSheet }) {
   const [anchor, setAnchor] = useState(null);
   const vitals = vitalsOf(player);
   const speed = player.sheet?.speed?.walk;
 
   return (
-    <Box sx={{ display: "grid", gap: 1.5 }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, flexWrap: "wrap" }}>
-        <Box sx={{ flex: 1, minWidth: 220 }}>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: "bolder", overflowWrap: "anywhere" }}>
-            {player.name}
+    <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "stretch" }}>
+      <Stat label="Proficiency" value={signed(proficiencyBonus(player.level))} />
+      <Stat label="Speed">
+        <EditableField label="Walking speed" value={speed === undefined ? "" : String(speed)} hint="Feet" problem={walkProblem} onSave={onSheet && ((text) => onSheet(withWalkingSpeed(player.sheet ?? {}, text)))}>
+          <Typography variant="h5" component="p">
+            {speed === undefined ? "—" : `${speed} ft.`}
           </Typography>
-          <Typography color="text.secondary">{describePlayer(player)}</Typography>
+        </EditableField>
+      </Stat>
+      <Stat label="Inspiration">
+        <Button
+          size="small"
+          aria-pressed={vitals.heroicInspiration}
+          aria-label="Heroic Inspiration"
+          onClick={() => onVitals({ heroicInspiration: !vitals.heroicInspiration })}
+          sx={{ minWidth: 0 }}
+        >
+          {vitals.heroicInspiration ? <Star color="warning" /> : <StarBorder />}
+        </Button>
+      </Stat>
+      <Paper variant="outlined" component="section" aria-label="Hit points" sx={{ p: 1.5, display: "grid", gap: 1, flex: "3 1 240px", alignContent: "center" }}>
+        <HpBar player={player} />
+        <Box>
+          <Button size="small" startIcon={<Favorite />} aria-haspopup="dialog" onClick={(event) => setAnchor(event.currentTarget)}>
+            Manage hit points
+          </Button>
         </Box>
-        <Chip size="small" label={rulesetLabel(player.ruleset)} />
-        {onEditDetails && (
-          <Button startIcon={<Edit />} onClick={onEditDetails}>
-            Edit details
-          </Button>
-        )}
-        {onEditAdjustments && (
-          <Button startIcon={<EditNote />} onClick={onEditAdjustments}>
-            Adjustments
-          </Button>
-        )}
-      </Box>
-
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "stretch" }}>
-        <Stat label="Armor class" value={player.armorClass} />
-        <Stat label="Initiative" value={formatBonus(player.initiativeBonus)} />
-        <Stat label="Speed">
-          <EditableField label="Walking speed" value={speed === undefined ? "" : String(speed)} hint="Feet" problem={walkProblem} onSave={onSheet && ((text) => onSheet(withWalkingSpeed(player.sheet ?? {}, text)))}>
-            <Typography variant="h5" component="p">
-              {speed === undefined ? "—" : `${speed} ft.`}
-            </Typography>
-          </EditableField>
-        </Stat>
-        <Stat label="Proficiency" value={signed(proficiencyBonus(player.level))} />
-        <Stat label="Inspiration">
-          <Button
-            size="small"
-            aria-pressed={vitals.heroicInspiration}
-            aria-label="Heroic Inspiration"
-            onClick={() => onVitals({ heroicInspiration: !vitals.heroicInspiration })}
-            sx={{ minWidth: 0 }}
-          >
-            {vitals.heroicInspiration ? <Star color="warning" /> : <StarBorder />}
-          </Button>
-        </Stat>
-        <Paper variant="outlined" component="section" aria-label="Hit points" sx={{ p: 1.5, display: "grid", gap: 1, flex: "3 1 260px", alignContent: "center" }}>
-          <HpBar player={player} />
-          <Box>
-            <Button size="small" startIcon={<Favorite />} aria-haspopup="dialog" onClick={(event) => setAnchor(event.currentTarget)}>
-              Manage hit points
-            </Button>
-          </Box>
-        </Paper>
-      </Box>
+      </Paper>
       <Popover open={Boolean(anchor)} anchorEl={anchor} onClose={() => setAnchor(null)} anchorOrigin={{ vertical: "bottom", horizontal: "left" }}>
         <HpManager player={player} onChange={onVitals} />
       </Popover>

@@ -142,9 +142,7 @@ describe("making a player", () => {
     type("Class", "wizard");
     type("Species", "Dwarf");
     type("Level", "4");
-    type("Armor class", "13");
     type("Hit points", "22");
-    type("Initiative bonus", "+2");
     type("Notes", "Studies hard");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -159,9 +157,9 @@ describe("making a player", () => {
         speciesKey: "srd_dwarf",
         speciesName: "Dwarf",
         level: 4,
-        armorClass: 13,
+        armorClass: null, // worked out on the sheet
         hitPoints: 22,
-        initiativeBonus: 2,
+        initiativeBonus: 0,
         notes: "Studies hard",
         playedBy: null,
       },
@@ -300,11 +298,11 @@ describe("making a player", () => {
     openNew();
 
     type("Name", "Aria");
-    type("Armor class", "16");
+    type("Notes", "Studies hard");
 
     const preview = within(screen.getByLabelText("Preview"));
     expect(preview.getByRole("group", { name: "Aria" })).toBeInTheDocument();
-    expect(preview.getByText("16")).toBeInTheDocument();
+    expect(preview.getByText("Studies hard")).toBeInTheDocument();
   });
 
   it("shows what the backend refuses, and keeps the form to fix", async () => {

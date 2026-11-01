@@ -81,3 +81,12 @@ export function saveInventory(id, inventory) {
 export function stepDownFromPlayer(id) {
   return apiSend("POST", `/api/players/${encodeURIComponent(id)}/step-down`).then(() => announcePlayerChanged(id));
 }
+
+/**
+ * Saves the armor class and initiative bonus the sheet works out itself (either, or both). It doesn't count as a save of the
+ * sheet: the version stays as it is. Its owner and whoever plays it can; a DM seeing it through their party can't.
+ */
+export function updateDerived(id, changes) {
+  return apiSend("PATCH", `/api/players/${encodeURIComponent(id)}/derived`, changes);
+}
+

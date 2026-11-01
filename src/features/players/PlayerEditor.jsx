@@ -183,10 +183,11 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
 
           <FormSection title="Numbers">
             <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))" }}>
-              <TextField size="small" label="Armor class" value={draft.armorClass} onChange={text("armorClass")} inputProps={{ inputMode: "numeric" }} />
               <TextField size="small" label="Hit points" value={draft.hitPoints} onChange={text("hitPoints")} inputProps={{ inputMode: "numeric" }} />
-              <TextField size="small" label="Initiative bonus" value={draft.initiativeBonus} onChange={text("initiativeBonus")} inputProps={{ inputMode: "numeric" }} />
             </Box>
+            <Typography variant="caption" color="text.secondary">
+              Armor class and initiative are worked out on the sheet, from the abilities and what is equipped.
+            </Typography>
             <TextField size="small" label="Notes" value={draft.notes} multiline minRows={3} inputProps={{ maxLength: 5000 }} onChange={text("notes")} />
           </FormSection>
 

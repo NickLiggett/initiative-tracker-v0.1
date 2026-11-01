@@ -758,3 +758,113 @@ describe("conditions and exhaustion", () => {
   });
 });
 
+describe("armor class and initiative, worked out", () => {
+  const armored = { ...thorin, version: 2, armorClass: 10, initiativeBonus: 0, sheet: { abilities: { str: 10, dex: 14, con: 10, int: 10, wis: 10, cha: 10 } } };
+  const chainMail = { key: "chain-mail", name: "Chain Mail", category: { key: "heavy-armor" }, armor: { acBase: 16, acAddDexmod: false, acCapDexmod: null } };
+  const shield = { key: "shield", name: "Shield", category: { key: "shield" }, armor: { acBase: 2, acAddDexmod: false, acCapDexmod: null } };
+
+  it("shows armor class from what is equipped and the Dex modifier, and saves it where the tracker reads it", async () => {
+    let kept = armored;
+    stubApi({
+      "GET /api/players/7": () => kept,
+      "GET /api/players/7/inventory": {
+        items: [
+          { itemKey: "chain-mail", kind: "ITEM", name: "Chain Mail", quantity: 1, equipped: true },
+          { itemKey: "shield", kind: "ITEM", name: "Shield", quantity: 1, equipped: true },
+          { itemKey: "plate", kind: "ITEM", name: "Plate", quantity: 1, equipped: false }, // carried, not worn
+        ],
+      },
+      "GET /api/items/chain-mail": chainMail,
+      "GET /api/items/shield": shield,
+      "PATCH /api/players/7/derived": (body) => (kept = { ...kept, ...body }),
+    });
+    const fetchMock = globalThis.fetch;
+    render(<SheetPage playerId={7} />);
+
+    await waitFor(() => expect(screen.getByText("Armor class").parentElement).toHaveTextContent("18"));
+    const sentBodies = bodiesSentTo(fetchMock, "PATCH /api/players/7/derived");
+    expect(Object.assign({}, ...sentBodies)).toEqual({ armorClass: 18, initiativeBonus: 2 });
+    expect(sentBodies.length).toBeLessThanOrEqual(2); // once for each number, not over and over
+    const armorClass = screen.getByText("Armor class").parentElement;
+    await waitFor(() => expect(armorClass).toHaveTextContent("18"));
+    expect(screen.getByText("Initiative").parentElement).toHaveTextContent("+2");
+    expect(fetchMock.mock.calls.some(([url]) => url === "/api/items/plate")).toBe(false);
+  });
+
+  it("is not saved by a DM seeing a party member, who still sees the numbers", async () => {
+    stubApi({
+      "GET /api/players/7": { ...armored, role: "PARTY" },
+      "GET /api/players/7/inventory": { items: [] },
+    });
+    const fetchMock = globalThis.fetch;
+    render(<SheetPage playerId={7} />);
+
+    await waitFor(() => expect(screen.getByText("Initiative").parentElement).toHaveTextContent("+2"));
+    expect(bodiesSentTo(fetchMock, "PATCH /api/players/7/derived")).toEqual([]);
+  });
+});
+
+describe("class and species features", () => {
+  const fighter = {
+    key: "srd_fighter",
+    name: "Fighter",
+    features: [
+      { name: "Second Wind", desc: "Regain hit points.", featureType: "CLASS_LEVEL_FEATURE", gainedAt: [{ level: 1 }] },
+      { name: "Extra Attack", desc: "Attack twice.", featureType: "CLASS_LEVEL_FEATURE", gainedAt: [{ level: 5 }] },
+      { name: "Hit Dice", desc: "d10", featureType: "HIT_DICE" },
+    ],
+  };
+  const dwarf = {
+    key: "srd_dwarf",
+    name: "Dwarf",
+    traits: [
+      { name: "Size", desc: "Medium", type: "SIZE", order: 0 },
+      { name: "Darkvision", desc: "See in the dark.", type: null, order: 2 },
+    ],
+  };
+  const built = { ...thorin, level: 3, speciesKey: "srd_dwarf" };
+
+  it("lists what the class gives up to the character's level, and the species' traits, beside their own", async () => {
+    stubApi({
+      "GET /api/players/7": { ...built, sheet: { features: [{ name: "Cloak trick", description: "Mine" }] } },
+      "GET /api/classes/srd_fighter": fighter,
+      "GET /api/species/srd_dwarf": dwarf,
+    });
+    render(<SheetPage playerId={7} />);
+    await openTab("Features");
+
+    const section = await screen.findByRole("region", { name: "Class and species features" });
+    expect(within(section).getByText("Second Wind")).toBeInTheDocument();
+    expect(within(section).getByText("Darkvision")).toBeInTheDocument();
+    expect(within(section).queryByText("Extra Attack")).not.toBeInTheDocument(); // not until level 5
+    expect(within(section).queryByText("Hit Dice")).not.toBeInTheDocument(); // not a feature gained
+    expect(within(section).queryByText("Size")).not.toBeInTheDocument(); // on the sheet already
+    expect(screen.getByText("Cloak trick")).toBeInTheDocument();
+  });
+
+  it("brings in the next feature when the character reaches its level", async () => {
+    stubApi({
+      "GET /api/players/7": { ...built, level: 5 },
+      "GET /api/classes/srd_fighter": fighter,
+      "GET /api/species/srd_dwarf": dwarf,
+    });
+    render(<SheetPage playerId={7} />);
+    await openTab("Features");
+
+    expect(await screen.findByText("Extra Attack")).toBeInTheDocument();
+  });
+
+  it("shows nothing for a class and species typed by hand, and says when they could not be loaded", async () => {
+    stubApi({ "GET /api/players/7": { ...thorin, classKey: null, speciesKey: null } });
+    const { unmount } = render(<SheetPage playerId={7} />);
+    await openTab("Features");
+    expect(screen.queryByRole("region", { name: "Class and species features" })).not.toBeInTheDocument();
+    unmount();
+
+    stubApi({ "GET /api/players/7": built });
+    render(<SheetPage playerId={7} />);
+    await openTab("Features");
+    expect(await screen.findByText("Couldn't load the class and species features.")).toBeInTheDocument();
+  });
+});
+

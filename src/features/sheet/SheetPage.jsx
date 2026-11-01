@@ -12,6 +12,7 @@ import SheetAbilities from "./SheetAbilities";
 import SheetFields from "./SheetFields";
 import SheetHeader from "./SheetHeader";
 import SheetTabs from "./SheetTabs";
+import useDerivedStats from "./useDerivedStats";
 import useLivePlayer from "./useLivePlayer";
 
 function Pips({ label, value, onChange }) {
@@ -45,6 +46,7 @@ function Pips({ label, value, onChange }) {
  */
 export default function SheetPage({ playerId }) {
   const { player, error, setPlayer, reload } = useLivePlayer(playerId);
+  const { derived, inventoryChanged } = useDerivedStats(player, setPlayer);
   const [problem, setProblem] = useState(null);
   const [adjusting, setAdjusting] = useState(false); // the adjustments to the sheet's numbers
   const [editingDetails, setEditingDetails] = useState(false); // who the character is: name, classes, level, AC
@@ -103,7 +105,7 @@ export default function SheetPage({ playerId }) {
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
       <SheetHeader
-        player={player}
+        player={{ ...player, ...derived }}
         onVitals={change}
         onEditDetails={() => setEditingDetails(true)}
         onEditAdjustments={player.role === "PARTY" ? undefined : () => setAdjusting(true)}
@@ -133,7 +135,7 @@ export default function SheetPage({ playerId }) {
 
       <SheetFields sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
 
-      <SheetTabs player={player} onChange={player.role === "PARTY" ? undefined : changeSheet} />
+      <SheetTabs player={player} onChange={player.role === "PARTY" ? undefined : changeSheet} onInventorySaved={inventoryChanged} />
 
       <Box sx={{ display: "flex", gap: 1 }}>
         <Button startIcon={<Refresh />} onClick={() => window.location.reload()}>

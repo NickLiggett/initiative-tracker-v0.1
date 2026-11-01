@@ -146,7 +146,6 @@ describe("making a player", () => {
     type("Hit points", "22");
     type("Initiative bonus", "+2");
     type("Notes", "Studies hard");
-    type("Played by (username)", "@Anna");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument());
@@ -164,7 +163,7 @@ describe("making a player", () => {
         hitPoints: 22,
         initiativeBonus: 2,
         notes: "Studies hard",
-        playedBy: "anna",
+        playedBy: null,
       },
     ]);
     expect(card("Aria").getByText("Level 4 wizard · Dwarf")).toBeInTheDocument();
@@ -308,17 +307,16 @@ describe("making a player", () => {
     expect(preview.getByText("16")).toBeInTheDocument();
   });
 
-  it("says what to do when the player named has no account", async () => {
+  it("shows what the backend refuses, and keeps the form to fix", async () => {
     await renderPage({
-      "POST /api/players": () => new Response(JSON.stringify({ detail: "No user 'ghost'" }), { status: 404 }),
+      "POST /api/players": () => new Response(JSON.stringify({ detail: "You can't assign anna as the player" }), { status: 400 }),
     });
     openNew();
     type("Name", "Aria");
-    type("Played by (username)", "ghost");
 
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("There's no user called ghost.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("You can't assign anna as the player");
     expect(screen.getByRole("button", { name: "Save" })).toBeEnabled(); // still there, to fix
   });
 
@@ -342,7 +340,7 @@ describe("duplicating a player", () => {
 
     expect(screen.getByRole("heading", { name: "New Character Creation" })).toBeInTheDocument();
     expect(field("Name")).toHaveValue("Thorin (copy)");
-    expect(field("Played by (username)")).toHaveValue("");
+    expect(screen.getByText("Nobody plays this character yet.")).toBeInTheDocument();
     expect(field("Level")).toHaveValue("5");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
@@ -400,10 +398,10 @@ describe("playing your own character", () => {
 
     openNew();
     type("Name", "Me");
-    expect(field("Played by (username)")).toHaveValue("");
+    expect(screen.getByText("Nobody plays this character yet.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "I play this character" }));
 
-    expect(field("Played by (username)")).toHaveValue("dev");
+    expect(screen.getByText("Played by dev.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "I play this character" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(bodiesSentTo(fetchMock, "POST /api/players")).toHaveLength(1));

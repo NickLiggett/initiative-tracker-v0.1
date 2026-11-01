@@ -76,3 +76,8 @@ export function getInventory(id, { signal } = {}) {
 export function saveInventory(id, inventory) {
   return apiSend("PUT", `/api/players/${encodeURIComponent(id)}/inventory`, inventory);
 }
+
+/** Stops playing a character someone else owns; the owner keeps it. */
+export function stepDownFromPlayer(id) {
+  return apiSend("POST", `/api/players/${encodeURIComponent(id)}/step-down`).then(() => announcePlayerChanged(id));
+}

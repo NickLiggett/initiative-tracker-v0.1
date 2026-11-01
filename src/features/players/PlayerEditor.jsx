@@ -191,21 +191,25 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
           </FormSection>
 
           <FormSection title="The Player">
-            <TextField
-              size="small"
-              label="Played by (username)"
-              value={draft.playedBy}
-              disabled={limited}
-              onChange={text("playedBy")}
-              helperText="Optional. The person who plays this character needs to have signed in to the app once. They'll see it and can keep its numbers up to date."
-            />
-            {username && !limited && draft.playedBy.trim().replace(/^@+/, "").toLowerCase() !== username && (
-              <Box>
-                <Button size="small" onClick={() => change({ playedBy: username })}>
-                  I play this character
-                </Button>
+            <Typography>{draft.playedBy ? `Played by ${draft.playedBy}.` : "Nobody plays this character yet."}</Typography>
+            {!limited && (
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                {username && draft.playedBy !== username && (
+                  <Button size="small" onClick={() => change({ playedBy: username })}>
+                    I play this character
+                  </Button>
+                )}
+                {draft.playedBy && (
+                  <Button size="small" onClick={() => change({ playedBy: "" })}>
+                    Nobody plays it
+                  </Button>
+                )}
               </Box>
             )}
+            <Typography variant="caption" color="text.secondary">
+              To have a friend play this character, use Ask someone to play on its card once it's saved. They get an email and
+              play it only if they accept.
+            </Typography>
           </FormSection>
         </Box>
       }

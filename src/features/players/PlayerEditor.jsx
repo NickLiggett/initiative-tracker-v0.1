@@ -196,18 +196,18 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {username && draft.playedBy !== username && (
                   <Button size="small" onClick={() => change({ playedBy: username })}>
-                    I play this character
+                    Assign to me
                   </Button>
                 )}
                 {draft.playedBy && (
                   <Button size="small" onClick={() => change({ playedBy: "" })}>
-                    Nobody plays it
+                    Unassign from me
                   </Button>
                 )}
               </Box>
             )}
             <Typography variant="caption" color="text.secondary">
-              To have a friend play this character, use Ask someone to play on its card once it's saved. They get an email and
+              To have a friend play this character, use Request assignment on its card once it's saved. They get an email and
               play it only if they accept.
             </Typography>
           </FormSection>

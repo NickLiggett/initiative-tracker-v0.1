@@ -32,6 +32,7 @@ describe("PlayerSheetDialog", () => {
     await screen.findByText("Level 6 Fighter · Dwarf");
 
     fireEvent.click(screen.getByRole("button", { name: "Hit points" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show the other conditions" }));
     fireEvent.click(screen.getByRole("button", { name: "Prone" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 

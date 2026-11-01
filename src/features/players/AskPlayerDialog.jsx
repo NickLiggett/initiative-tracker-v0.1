@@ -31,7 +31,7 @@ export default function AskPlayerDialog({ player, onAsked, onClose }) {
 
   return (
     <Dialog open onClose={sending ? undefined : onClose} fullWidth maxWidth="xs" aria-labelledby="ask-player-title">
-      <DialogTitle id="ask-player-title">{`Ask someone to play ${player.name}`}</DialogTitle>
+      <DialogTitle id="ask-player-title">{`Request assignment of ${player.name}`}</DialogTitle>
       <DialogContent sx={{ display: "grid", gap: 2, alignContent: "start" }}>
         <DialogContentText>
           They get an email, and play {player.name} only if they accept. They answer signed in with this address, so use the

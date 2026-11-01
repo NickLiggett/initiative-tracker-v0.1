@@ -75,6 +75,7 @@ describe("the character sheet", () => {
     const fetchMock = open();
     await screen.findByRole("heading", { name: "Thorin" });
 
+    fireEvent.click(screen.getByRole("button", { name: "Show the other conditions" }));
     fireEvent.click(screen.getByRole("button", { name: "Prone" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Prone" })).toHaveAttribute("aria-pressed", "true"));
     fireEvent.click(screen.getByRole("button", { name: "Heroic Inspiration" }));
@@ -183,6 +184,7 @@ describe("the character sheet", () => {
     const fetchMock = open({ ...thorin, role: "PARTY", owner: "anna" });
     await screen.findByRole("heading", { name: "Thorin" });
 
+    fireEvent.click(screen.getByRole("button", { name: "Show the other conditions" }));
     fireEvent.click(screen.getByRole("button", { name: "Stunned" }));
 
     await waitFor(() => expect(patches(fetchMock)).toEqual([{ conditions: ["Stunned"] }]));
@@ -713,6 +715,46 @@ describe("adjustments", () => {
 
     await waitFor(() => expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")).toHaveLength(1));
     expect(bodiesSentTo(fetchMock, "PUT /api/players/7/sheet")[0].sheet.adjustments).toBeUndefined();
+  });
+});
+
+describe("conditions and exhaustion", () => {
+  it("shows only the conditions that apply, with the rest behind the arrow", async () => {
+    open({ ...thorin, vitals: { ...thorin.vitals, conditions: ["Poisoned"] } });
+    await screen.findByRole("heading", { name: "Thorin" });
+
+    const applied = within(screen.getByRole("list", { name: "Applied conditions" }));
+    expect(applied.getByRole("button", { name: "Poisoned" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: "Prone" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show the other conditions" }));
+    const others = within(screen.getByRole("list", { name: "Other conditions" }));
+    expect(others.getByRole("button", { name: "Prone" })).toBeInTheDocument();
+    expect(others.queryByRole("button", { name: "Poisoned" })).not.toBeInTheDocument(); // it is already above
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide the other conditions" }));
+    expect(screen.queryByRole("button", { name: "Prone" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Poisoned" })).toBeInTheDocument(); // still shown
+  });
+
+  it("sets exhaustion on a bar of six steps, and lowers it by tapping the level it is at", async () => {
+    let kept = { ...thorin, vitals: { ...thorin.vitals, exhaustion: 2 } };
+    const fetchMock = stubApi({
+      "GET /api/players/7": () => kept,
+      "PATCH /api/players/7/vitals": (body) => (kept = { ...kept, vitals: { ...kept.vitals, ...body } }),
+    });
+    render(<SheetPage playerId={7} />);
+    await screen.findByRole("heading", { name: "Thorin" });
+    expect(screen.getByText("Level 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Exhaustion level 2" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Exhaustion level 3" })).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Exhaustion level 4" }));
+    await waitFor(() => expect(screen.getByText("Level 4")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Exhaustion level 4" }));
+    await waitFor(() => expect(screen.getByText("Level 3")).toBeInTheDocument());
+
+    expect(patches(fetchMock)).toEqual([{ exhaustion: 4 }, { exhaustion: 3 }]);
   });
 });
 

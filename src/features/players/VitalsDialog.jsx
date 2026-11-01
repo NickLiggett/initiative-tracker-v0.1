@@ -9,14 +9,15 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  MenuItem,
   Switch,
   TextField,
   Typography,
 } from "@mui/material";
 import { updateVitals } from "../../api/players";
 import { applyHpInput } from "../tracker/combatants";
-import { CONDITIONS, MAX_EXHAUSTION, vitalsChanges, vitalsOf } from "./vitals";
+import ConditionPicker from "./ConditionPicker";
+import ExhaustionMeter from "./ExhaustionMeter";
+import { vitalsChanges, vitalsOf } from "./vitals";
 
 /** A whole number from what was typed, or NaN. */
 const whole = (text) => (/^\d+$/.test(String(text).trim()) ? parseInt(text, 10) : NaN);
@@ -117,31 +118,8 @@ export default function VitalsDialog({ player, onSaved, onClose }) {
             helperText={tempProblem}
           />
         </Box>
-        <Box>
-          <Typography variant="subtitle2" component="p" gutterBottom>
-            Conditions
-          </Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-            {CONDITIONS.map((condition) => (
-              <Chip
-                key={condition}
-                size="small"
-                label={condition}
-                aria-pressed={conditions.includes(condition)}
-                color={conditions.includes(condition) ? "warning" : "default"}
-                variant={conditions.includes(condition) ? "filled" : "outlined"}
-                onClick={() => toggle(condition)}
-              />
-            ))}
-          </Box>
-        </Box>
-        <TextField select label="Exhaustion" value={exhaustion} onChange={(event) => setExhaustion(Number(event.target.value))}>
-          {Array.from({ length: MAX_EXHAUSTION + 1 }, (_, level) => (
-            <MenuItem key={level} value={level}>
-              {level === 0 ? "None" : `Level ${level}`}
-            </MenuItem>
-          ))}
-        </TextField>
+        <ConditionPicker conditions={conditions} onToggle={toggle} />
+        <ExhaustionMeter level={exhaustion} onChange={setExhaustion} />
         <FormControlLabel
           control={<Switch checked={inspired} onChange={(event) => setInspired(event.target.checked)} />}
           label="Heroic Inspiration"

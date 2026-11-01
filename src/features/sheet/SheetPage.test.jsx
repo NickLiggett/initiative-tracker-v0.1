@@ -508,6 +508,33 @@ describe("attacks and features, in place", () => {
     expect(await screen.findByText("Dagger")).toBeInTheDocument();
   });
 
+  it("keeps the type of an entry, and the chips show one kind at a time", async () => {
+    const backend = keeping(armed);
+    render(<SheetPage playerId={7} />);
+    await screen.findByText("Longsword");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add an attack" }));
+    fill("Name", "Second Wind");
+    fireEvent.mouseDown(screen.getByRole("combobox", { name: "Type" }));
+    fireEvent.click(screen.getByRole("option", { name: "Bonus Action" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(backend.sheet().attacks[1]).toEqual({ name: "Second Wind", type: "bonus" })); // an attack has no type written
+    await screen.findByText("Second Wind");
+
+    const chip = (name) => screen.getByRole("button", { name });
+    expect(chip("All")).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(chip("Bonus Action"));
+    expect(screen.getByText("Second Wind")).toBeInTheDocument();
+    expect(screen.queryByText("Longsword")).not.toBeInTheDocument();
+    fireEvent.click(chip("Attack"));
+    expect(screen.getByText("Longsword")).toBeInTheDocument();
+    expect(screen.queryByText("Second Wind")).not.toBeInTheDocument();
+    fireEvent.click(chip("Action"));
+    expect(screen.getByText("Nothing of that kind yet.")).toBeInTheDocument();
+    fireEvent.click(chip("All"));
+    expect(screen.getByText("Longsword")).toBeInTheDocument();
+  });
+
   it("changes an attack from its pencil, and deletes it", async () => {
     const backend = keeping(armed);
     render(<SheetPage playerId={7} />);

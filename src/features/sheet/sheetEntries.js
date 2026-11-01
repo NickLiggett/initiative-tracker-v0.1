@@ -1,6 +1,7 @@
 // The lists on a character's sheet: attacks, and features and traits (with uses that come back on a rest).
 //
-//   attacks    [{name, bonus, damage, notes}]: text as it is written on the sheet ("+9", "1d8+5 slashing")
+//   attacks    [{name, bonus, damage, notes, type}]: text as it is written on the sheet ("+9", "1d8+5 slashing"); `type` is
+//              "action" or "bonus" for something that isn't an attack (left out for an attack)
 //   features   [{name, source, description, uses: {max, used, per}}]: `uses` only for a limited one; `per` is "short" or "long"
 
 export const MAX_ATTACKS = 50;
@@ -9,9 +10,19 @@ export const MAX_USES = 99;
 
 const text = (value) => (typeof value === "string" ? value : "");
 
+/** What an entry of the Actions tab is, as the chips there sort them. An attack is the one that isn't written down. */
+export const ATTACK_TYPES = [
+  { key: "attack", label: "Attack" },
+  { key: "action", label: "Action" },
+  { key: "bonus", label: "Bonus Action" },
+];
+
+/** The type of an attack as it is on the sheet: "attack" unless it says otherwise. */
+export const attackType = (attack) => (ATTACK_TYPES.some(({ key }) => key === attack?.type) ? attack.type : "attack");
+
 /** The attack rows of the editor for the attacks on the sheet. */
 export function attackDrafts(attacks) {
-  return (Array.isArray(attacks) ? attacks : []).map((one) => ({ name: text(one?.name), bonus: text(one?.bonus), damage: text(one?.damage), notes: text(one?.notes) }));
+  return (Array.isArray(attacks) ? attacks : []).map((one) => ({ name: text(one?.name), bonus: text(one?.bonus), damage: text(one?.damage), notes: text(one?.notes), type: attackType(one) }));
 }
 
 /** The feature rows of the editor for the features on the sheet. */
@@ -59,7 +70,7 @@ export function listProblems({ attacks, features }) {
 export function attacksToSheet(rows) {
   return rows
     .filter((row) => !blank(row, ["name", "bonus", "damage", "notes"]))
-    .map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [key, value.trim()]).filter(([, value]) => value)));
+    .map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [key, value.trim()]).filter(([key, value]) => value && !(key === "type" && value === "attack"))));
 }
 
 /** The features to keep for the editor's rows. Uses spent are kept, never more than there are. */
@@ -90,7 +101,7 @@ export function spendUse(sheet, index, by = 1) {
 }
 
 /** A blank row for the dialog that adds an attack, or a feature. */
-export const blankAttack = () => ({ name: "", bonus: "", damage: "", notes: "" });
+export const blankAttack = () => ({ name: "", bonus: "", damage: "", notes: "", type: "attack" });
 export const blankFeature = () => ({ name: "", source: "", description: "", max: "", per: "", used: "0" });
 
 /** The sheet with the list `key` having `entry` at `index`, or added at the end when `index` is null. */

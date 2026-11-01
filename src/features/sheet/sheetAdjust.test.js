@@ -48,11 +48,11 @@ describe("adjusting a worked-out number", () => {
     expect([adjustmentText(adjusted, "a"), adjustmentText(adjusted, "b"), adjustmentText(adjusted, "c"), adjustmentText(adjusted, "d")]).toEqual(["+2 Cloak", "Advantage", "-1", ""]);
   });
 
-  it("can be made for every save, skill, passive score and spell number", () => {
+  it("can be made for armor class, initiative, every save, skill, passive score and spell number", () => {
     const keys = adjustmentTargets().map(({ key }) => key);
 
-    expect(keys).toHaveLength(6 + 18 + 3 + 2);
-    expect(keys).toEqual(expect.arrayContaining(["save.dex", "skill.sleightOfHand", "passive.insight", "spell.dc", "spell.attack"]));
+    expect(keys).toHaveLength(2 + 6 + 18 + 3 + 2);
+    expect(keys).toEqual(expect.arrayContaining(["ac", "initiative", "save.dex", "skill.sleightOfHand", "passive.insight", "spell.dc", "spell.attack"]));
   });
 });
 

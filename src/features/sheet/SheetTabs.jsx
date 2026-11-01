@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import { InventoryPanel } from "../players/InventoryDialog";
+import RuleFeatures from "./RuleFeatures";
 import { SheetDescription } from "./SheetFields";
 import SheetLists from "./SheetLists";
 import { RestBar, SheetResources, SheetSpells } from "./SheetSpells";
@@ -21,8 +22,9 @@ const hint = (text) => (
  * @param {object} player as the backend gives it
  * @param {(sheet: object) => void} [onChange] saves the sheet after a use is spent, a rest taken or a spell prepared; without
  *   it the sheet is only read
+ * @param {() => void} [onInventorySaved] told when the inventory is saved, which can change the armor class
  */
-export default function SheetTabs({ player, onChange }) {
+export default function SheetTabs({ player, onChange, onInventorySaved }) {
   const [tab, setTab] = useState("Actions");
   const sheet = player.sheet ?? {};
   const casts = sheet.spells?.length || sheet.spellcasting || Object.keys(sheet.slots ?? {}).length || sheet.pact || sheet.hitDice;
@@ -46,10 +48,15 @@ export default function SheetTabs({ player, onChange }) {
         )}
         {tab === "Inventory" && (
           <Paper variant="outlined" component="section" aria-label="Inventory" sx={{ p: 2 }}>
-            <InventoryPanel player={player} readOnly={player.role === "PARTY"} />
+            <InventoryPanel player={player} readOnly={player.role === "PARTY"} onSaved={onInventorySaved} />
           </Paper>
         )}
-        {tab === "Features" && (sheet.features?.length || onChange ? <SheetLists sheet={sheet} onChange={onChange} show="features" /> : hint("No features."))}
+        {tab === "Features" && (
+          <>
+            <RuleFeatures player={player} />
+            {sheet.features?.length || onChange ? <SheetLists sheet={sheet} onChange={onChange} show="features" /> : hint("No features of your own.")}
+          </>
+        )}
         {tab === "Description" && (
           <>
             <SheetDescription sheet={sheet} onChange={onChange} />

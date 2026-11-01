@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, Chip, CircularProgress, MenuItem, Paper, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, Paper, Typography } from "@mui/material";
 import { Refresh } from "@mui/icons-material";
 import { saveSheet, updateVitals } from "../../api/players";
 import PlayerEditor from "../players/PlayerEditor";
-import { CONDITIONS, MAX_EXHAUSTION, vitalsOf } from "../players/vitals";
+import ConditionPicker from "../players/ConditionPicker";
+import ExhaustionMeter from "../players/ExhaustionMeter";
+import { vitalsOf } from "../players/vitals";
 import AdjustmentsDialog from "./AdjustmentsDialog";
 import { withAdjustments } from "./sheetAdjust";
 import SheetAbilities from "./SheetAbilities";
 import SheetFields from "./SheetFields";
 import SheetHeader from "./SheetHeader";
 import SheetTabs from "./SheetTabs";
+import useDerivedStats from "./useDerivedStats";
 import useLivePlayer from "./useLivePlayer";
 
 function Pips({ label, value, onChange }) {
@@ -43,6 +46,7 @@ function Pips({ label, value, onChange }) {
  */
 export default function SheetPage({ playerId }) {
   const { player, error, setPlayer, reload } = useLivePlayer(playerId);
+  const { derived, inventoryChanged } = useDerivedStats(player, setPlayer);
   const [problem, setProblem] = useState(null);
   const [adjusting, setAdjusting] = useState(false); // the adjustments to the sheet's numbers
   const [editingDetails, setEditingDetails] = useState(false); // who the character is: name, classes, level, AC
@@ -101,7 +105,7 @@ export default function SheetPage({ playerId }) {
   return (
     <Box sx={{ width: "100%", maxWidth: 900, mx: "auto", p: 2, boxSizing: "border-box", display: "grid", gap: 2 }}>
       <SheetHeader
-        player={player}
+        player={{ ...player, ...derived }}
         onVitals={change}
         onEditDetails={() => setEditingDetails(true)}
         onEditAdjustments={player.role === "PARTY" ? undefined : () => setAdjusting(true)}
@@ -118,31 +122,8 @@ export default function SheetPage({ playerId }) {
       <SheetAbilities sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
 
       <Paper variant="outlined" component="section" aria-label="Conditions" sx={{ p: 2, display: "grid", gap: 1.5 }}>
-        <Typography variant="subtitle2" component="h2">
-          Conditions
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-          {CONDITIONS.map((condition) => (
-            <Chip
-              key={condition}
-              size="small"
-              label={condition}
-              aria-pressed={vitals.conditions.includes(condition)}
-              color={vitals.conditions.includes(condition) ? "warning" : "default"}
-              variant={vitals.conditions.includes(condition) ? "filled" : "outlined"}
-              onClick={() => toggleCondition(condition)}
-            />
-          ))}
-        </Box>
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
-          <TextField select size="small" label="Exhaustion" value={vitals.exhaustion} onChange={(event) => change({ exhaustion: Number(event.target.value) })} sx={{ width: 160 }}>
-            {Array.from({ length: MAX_EXHAUSTION + 1 }, (_, level) => (
-              <MenuItem key={level} value={level}>
-                {level === 0 ? "None" : `Level ${level}`}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Box>
+        <ConditionPicker conditions={vitals.conditions} onToggle={toggleCondition} />
+        <ExhaustionMeter level={vitals.exhaustion} onChange={(level) => change({ exhaustion: level })} />
         <Box sx={{ display: "grid", gap: 0.5 }}>
           <Typography variant="subtitle2" component="h2">
             Death saving throws
@@ -154,7 +135,7 @@ export default function SheetPage({ playerId }) {
 
       <SheetFields sheet={player.sheet ?? {}} level={player.level} onChange={player.role === "PARTY" ? undefined : changeSheet} />
 
-      <SheetTabs player={player} onChange={player.role === "PARTY" ? undefined : changeSheet} />
+      <SheetTabs player={player} onChange={player.role === "PARTY" ? undefined : changeSheet} onInventorySaved={inventoryChanged} />
 
       <Box sx={{ display: "flex", gap: 1 }}>
         <Button startIcon={<Refresh />} onClick={() => window.location.reload()}>

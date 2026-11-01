@@ -142,7 +142,7 @@ export default function PlayerCard({ player, busy, onOpenSheet, onDuplicate, onD
           )}
           {owned && onAsk && (
             <Button size="small" startIcon={<PersonAdd />} disabled={busy} onClick={() => onAsk(player)}>
-              Ask someone to play
+              Request assignment
             </Button>
           )}
           {player.role === "PLAYER" && onStepDown && (

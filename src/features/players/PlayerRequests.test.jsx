@@ -37,7 +37,7 @@ describe("asking someone to play", () => {
       "POST /api/players/1/requests": (body) => ({ ...waiting, email: body.email, emailSent: true }),
     });
 
-    fireEvent.click(card("Thorin").getByRole("button", { name: "Ask someone to play" }));
+    fireEvent.click(card("Thorin").getByRole("button", { name: "Request assignment" }));
     const send = screen.getByRole("button", { name: "Send request" });
     expect(send).toBeDisabled();
     fireEvent.change(screen.getByLabelText("Their email address"), { target: { value: "Anna@Example.com" } });
@@ -51,7 +51,7 @@ describe("asking someone to play", () => {
   it("says when the email could not be sent, which does not undo the request", async () => {
     await renderPage({ "POST /api/players/1/requests": { ...waiting, emailSent: false } });
 
-    fireEvent.click(card("Thorin").getByRole("button", { name: "Ask someone to play" }));
+    fireEvent.click(card("Thorin").getByRole("button", { name: "Request assignment" }));
     fireEvent.change(screen.getByLabelText("Their email address"), { target: { value: "anna@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send request" }));
 
@@ -64,7 +64,7 @@ describe("asking someone to play", () => {
       "POST /api/players/1/requests": () => new Response(JSON.stringify({ detail: "anna@example.com turned this request down" }), { status: 409 }),
     });
 
-    fireEvent.click(card("Thorin").getByRole("button", { name: "Ask someone to play" }));
+    fireEvent.click(card("Thorin").getByRole("button", { name: "Request assignment" }));
     fireEvent.change(screen.getByLabelText("Their email address"), { target: { value: "anna@example.com" } });
     fireEvent.click(screen.getByRole("button", { name: "Send request" }));
 

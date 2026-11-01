@@ -3,7 +3,8 @@
 //
 //   adjustments  {"save.dex": {bonus: 1, note: "Cloak of Protection"}, "skill.religion": {note: "Advantage"}, ...}
 //
-// A target is `save.<ability>`, `skill.<skill>`, `passive.<skill>` (on top of the skill's own), `spell.dc` or `spell.attack`.
+// A target is `ac` or `initiative` (on top of the number worked out from the abilities and what is equipped), `save.<ability>`,
+// `skill.<skill>`, `passive.<skill>` (on top of the skill's own), `spell.dc` or `spell.attack`.
 // A bonus is added to the number the sheet works out; a note is shown beside it. Either may be left out, not both.
 
 import { ABILITIES, PASSIVES, SKILLS } from "./sheetModel";
@@ -14,6 +15,8 @@ export const MAX_NOTE = 200;
 /** Every number that can be adjusted, as `{key, label, group}`, in the order the sheet shows them. */
 export function adjustmentTargets() {
   return [
+    { key: "ac", label: "Armor class", group: "Combat" },
+    { key: "initiative", label: "Initiative", group: "Combat" },
     ...ABILITIES.map(({ key, label }) => ({ key: `save.${key}`, label: `${label} saving throw`, group: "Saving throws" })),
     ...SKILLS.map(({ key, label }) => ({ key: `skill.${key}`, label, group: "Skills" })),
     ...PASSIVES.map(({ skill, label }) => ({ key: `passive.${skill}`, label, group: "Passive scores" })),

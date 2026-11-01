@@ -34,6 +34,7 @@ describe("the vitals dialog", () => {
     const { fetchMock, onSaved } = open();
 
     fireEvent.change(screen.getByLabelText("Temporary hit points"), { target: { value: "5" } });
+    fireEvent.click(screen.getByRole("button", { name: "Show the other conditions" }));
     fireEvent.click(screen.getByRole("button", { name: "Poisoned" }));
     fireEvent.click(screen.getByRole("button", { name: "Poisoned" })); // and back
     fireEvent.click(screen.getByRole("button", { name: "Prone" }));

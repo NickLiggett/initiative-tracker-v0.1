@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Autocomplete, Box, Button, IconButton, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { Add, Close } from "@mui/icons-material";
 import { createPlayer, updatePlayer } from "../../api/players";
@@ -8,6 +8,7 @@ import FormSection from "../../components/resource/FormSection";
 import { useSettings } from "../../settings/SettingsContext";
 import { sharingErrorMessage } from "../sharing/sharing";
 import PlayerCard from "./PlayerCard";
+import SubclassField from "./SubclassField";
 import { EMPTY_DRAFT, draftProblems, previewOf, toDraft, toRequest, totalLevel } from "./playerDraft";
 import { RULESETS, optionNamed, optionsFor } from "./players";
 
@@ -52,13 +53,13 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
 
   const changeClass = (index, changes) =>
     setDraft((current) => ({ ...current, classes: current.classes.map((row, at) => (at === index ? { ...row, ...changes } : row)) }));
-  const addClass = () => change({ classes: [...draft.classes, { key: null, name: "", level: "1" }] });
+  const addClass = () => change({ classes: [...draft.classes, { key: null, name: "", level: "1", subclassKey: null, subclassName: "" }] });
   const removeClass = (index) => change({ classes: draft.classes.filter((row, at) => at !== index) });
 
   const changeRuleset = (ruleset) => {
     if (ruleset && ruleset !== draft.ruleset) {
       // The same name can be another resource under other rules (the 2024 Fighter), so the keys are found again.
-      change({ ruleset, classes: draft.classes.map((row) => ({ ...row, key: null })), speciesKey: null });
+      change({ ruleset, classes: draft.classes.map((row) => ({ ...row, key: null, subclassKey: null, subclassName: "" })), speciesKey: null });
     }
   };
 
@@ -150,8 +151,9 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
 
           <FormSection title="Class and level">
             {draft.classes.map((row, index) => (
-              <Box key={index} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-                {nameField(index === 0 ? "Class" : `Class ${index + 1}`, row.name, (name) => changeClass(index, { name, key: null }), classOptions)}
+              <Fragment key={index}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                {nameField(index === 0 ? "Class" : `Class ${index + 1}`, row.name, (name) => changeClass(index, { name, key: null, subclassKey: null, subclassName: "" }), classOptions)}
                 <TextField
                   size="small"
                   label={index === 0 ? "Level" : `Level ${index + 1}`}
@@ -166,6 +168,15 @@ export default function PlayerEditor({ player, start, onSaved, onCancel }) {
                   </IconButton>
                 )}
               </Box>
+              {(row.key ?? optionNamed(classOptions, row.name)?.key) && (
+                <SubclassField
+                  classKey={row.key ?? optionNamed(classOptions, row.name).key}
+                  label={several ? `Subclass of ${row.name.trim()}` : "Subclass"}
+                  value={row.subclassName ?? ""}
+                  onChange={(changes) => changeClass(index, changes)}
+                />
+              )}
+              </Fragment>
             ))}
             {!limited && (
               <Box>

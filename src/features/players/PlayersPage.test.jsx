@@ -153,7 +153,7 @@ describe("making a player", () => {
         ruleset: "5e-2014",
         classKey: "srd_wizard",
         className: "wizard",
-        classes: [{ classKey: "srd_wizard", className: "wizard", level: 4 }],
+        classes: [{ classKey: "srd_wizard", className: "wizard", level: 4, subclassKey: null, subclassName: null }],
         speciesKey: "srd_dwarf",
         speciesName: "Dwarf",
         level: 4,

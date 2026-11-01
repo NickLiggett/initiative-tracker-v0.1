@@ -24,8 +24,14 @@ export function toDraft(player) {
     name: player.name,
     ruleset: player.ruleset,
     classes: player.classes?.length
-      ? player.classes.map(({ classKey, className, level }) => ({ key: classKey ?? null, name: className, level: String(level) }))
-      : [{ key: player.classKey ?? null, name: player.className ?? "", level: String(player.level) }],
+      ? player.classes.map(({ classKey, className, level, subclassKey, subclassName }) => ({
+          key: classKey ?? null,
+          name: className,
+          level: String(level),
+          subclassKey: subclassKey ?? null,
+          subclassName: subclassName ?? "",
+        }))
+      : [{ key: player.classKey ?? null, name: player.className ?? "", level: String(player.level), subclassKey: null, subclassName: "" }],
     speciesKey: player.speciesKey ?? null,
     speciesName: player.speciesName ?? "",
     armorClass: player.armorClass == null ? "" : String(player.armorClass),
@@ -104,7 +110,13 @@ export function toRequest(draft) {
   const optionalNumber = (text) => (String(text).trim() === "" ? null : whole(text));
   const optionalText = (text) => text.trim() || null;
   const speciesName = optionalText(draft.speciesName);
-  const classes = namedClasses(draft).map(({ key, name, level }) => ({ classKey: key, className: name.trim(), level: whole(level) }));
+  const classes = namedClasses(draft).map(({ key, name, level, subclassKey, subclassName }) => ({
+    classKey: key,
+    className: name.trim(),
+    level: whole(level),
+    subclassKey: subclassName?.trim() ? subclassKey ?? null : null,
+    subclassName: subclassName?.trim() || null,
+  }));
   return {
     name: draft.name.trim(),
     ruleset: draft.ruleset,

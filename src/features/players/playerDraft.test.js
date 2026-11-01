@@ -24,7 +24,7 @@ describe("toDraft", () => {
     expect(toDraft(player)).toEqual({
       name: "Thorin",
       ruleset: "5e-2014",
-      classes: [{ key: "srd_fighter", name: "Fighter", level: "5" }],
+      classes: [{ key: "srd_fighter", name: "Fighter", level: "5", subclassKey: null, subclassName: "" }],
       speciesKey: null,
       speciesName: "Dwarf",
       armorClass: "18",
@@ -41,10 +41,22 @@ describe("toDraft for a multiclass character", () => {
     const mixed = { ...player, level: 5, classes: [{ classKey: "srd_fighter", className: "Fighter", level: 3 }, { classKey: null, className: "Wizard", level: 2 }] };
 
     expect(toDraft(mixed).classes).toEqual([
-      { key: "srd_fighter", name: "Fighter", level: "3" },
-      { key: null, name: "Wizard", level: "2" },
+      { key: "srd_fighter", name: "Fighter", level: "3", subclassKey: null, subclassName: "" },
+      { key: null, name: "Wizard", level: "2", subclassKey: null, subclassName: "" },
     ]);
-    expect(toDraft({ ...player, classKey: null, className: null, level: 4 }).classes).toEqual([{ key: null, name: "", level: "4" }]);
+    expect(toDraft({ ...player, classKey: null, className: null, level: 4 }).classes).toEqual([
+      { key: null, name: "", level: "4", subclassKey: null, subclassName: "" },
+    ]);
+  });
+
+  it("keeps the subclass of a class, and sends it only when it has a name", () => {
+    const champion = { ...player, classes: [{ classKey: "srd_fighter", className: "Fighter", level: 3, subclassKey: "srd_champion", subclassName: "Champion" }] };
+    const draft = toDraft(champion);
+
+    expect(draft.classes[0]).toMatchObject({ subclassKey: "srd_champion", subclassName: "Champion" });
+    expect(toRequest(draft).classes[0]).toMatchObject({ subclassKey: "srd_champion", subclassName: "Champion" });
+    const cleared = { ...draft, classes: [{ ...draft.classes[0], subclassName: "  " }] };
+    expect(toRequest(cleared).classes[0]).toMatchObject({ subclassKey: null, subclassName: null });
   });
 });
 
@@ -109,7 +121,7 @@ describe("toRequest", () => {
       ruleset: "5e-2014",
       classKey: "srd_fighter",
       className: "Fighter",
-      classes: [{ classKey: "srd_fighter", className: "Fighter", level: 5 }],
+      classes: [{ classKey: "srd_fighter", className: "Fighter", level: 5, subclassKey: null, subclassName: null }],
       speciesKey: null,
       speciesName: "Dwarf",
       level: 5,
@@ -142,8 +154,8 @@ describe("toRequest", () => {
       className: "Fighter",
       level: 5,
       classes: [
-        { classKey: "srd_fighter", className: "Fighter", level: 3 },
-        { classKey: null, className: "Wizard", level: 2 },
+        { classKey: "srd_fighter", className: "Fighter", level: 3, subclassKey: null, subclassName: null },
+        { classKey: null, className: "Wizard", level: 2, subclassKey: null, subclassName: null },
       ],
     });
   });

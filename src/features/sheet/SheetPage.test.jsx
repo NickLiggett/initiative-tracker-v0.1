@@ -842,6 +842,33 @@ describe("class and species features", () => {
     expect(screen.getByText("Cloak trick")).toBeInTheDocument();
   });
 
+  it("adds the features of the subclass the character has, up to their level", async () => {
+    const champion = {
+      key: "srd_champion",
+      name: "Champion",
+      features: [
+        { name: "Improved Critical", desc: "Crit on 19.", featureType: "CLASS_LEVEL_FEATURE", gainedAt: [{ level: 3 }] },
+        { name: "Remarkable Athlete", desc: "Half proficiency.", featureType: "CLASS_LEVEL_FEATURE", gainedAt: [{ level: 7 }] },
+      ],
+    };
+    stubApi({
+      "GET /api/players/7": {
+        ...built,
+        classes: [{ classKey: "srd_fighter", className: "Fighter", level: 3, subclassKey: "srd_champion", subclassName: "Champion" }],
+      },
+      "GET /api/classes/srd_fighter": fighter,
+      "GET /api/classes/srd_champion": champion,
+      "GET /api/species/srd_dwarf": dwarf,
+    });
+    render(<SheetPage playerId={7} />);
+    await openTab("Features");
+
+    const section = await screen.findByRole("region", { name: "Class and species features" });
+    expect(within(section).getByText("Improved Critical")).toBeInTheDocument();
+    expect(within(section).getByText("Fighter (Champion), level 3")).toBeInTheDocument();
+    expect(within(section).queryByText("Remarkable Athlete")).not.toBeInTheDocument(); // not until level 7
+  });
+
   it("brings in the next feature when the character reaches its level", async () => {
     stubApi({
       "GET /api/players/7": { ...built, level: 5 },

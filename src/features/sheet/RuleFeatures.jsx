@@ -7,7 +7,7 @@ import { speciesApi } from "../../api/species";
 /** The classes of a character, each with its level: a character with no list of classes has the one in `classKey`. */
 function classesOf(player) {
   if (player.classes?.length) {
-    return player.classes.map(({ classKey, className, level }) => ({ key: classKey, name: className, level }));
+    return player.classes.map(({ classKey, className, level, subclassKey, subclassName }) => ({ key: classKey, name: className, level, subclassKey, subclassName }));
   }
   return player.classKey ? [{ key: player.classKey, name: player.className, level: player.level }] : [];
 }
@@ -29,8 +29,22 @@ export function speciesTraits(species) {
     .map(({ name, desc }) => ({ name, desc }));
 }
 
+/** A class's group: its features up to the level, and those of its subclass if it has one that can be found, in the order gained. */
+async function classGroup(one, signal) {
+  const [cls, subclass] = await Promise.all([
+    classesApi.get(one.key, { signal }),
+    one.subclassKey ? classesApi.get(one.subclassKey, { signal }).catch((e) => (e.name === "AbortError" ? Promise.reject(e) : null)) : null,
+  ]);
+  const name = one.name ?? cls.name;
+  const features = [
+    ...classFeaturesUpTo(cls, one.level).map((feature) => ({ ...feature, from: `${name} ${feature.level}` })),
+    ...classFeaturesUpTo(subclass, one.level).map((feature) => ({ ...feature, from: `${subclass.name} ${feature.level}` })),
+  ].sort((a, b) => a.level - b.level);
+  return { title: `${name}${subclass ? ` (${subclass.name})` : ""}, level ${one.level}`, features };
+}
+
 /**
- * The features and traits that come from a character's classes (up to their level in each) and species, read from the
+ * The features and traits that come from a character's classes and subclasses (up to their level in each) and species, read from the
  * rules data as it is now, so that a level gained brings its features and a change to the class shows. They can't be
  * changed here; the character's own features are kept beside them.
  *
@@ -40,7 +54,7 @@ export default function RuleFeatures({ player }) {
   const [groups, setGroups] = useState(null); // [{title, features}]
   const [failed, setFailed] = useState(false);
   const classes = classesOf(player);
-  const wanted = JSON.stringify([classes.map((one) => [one.key, one.name, one.level]), player.speciesKey, player.speciesName]);
+  const wanted = JSON.stringify([classes.map((one) => [one.key, one.name, one.level, one.subclassKey]), player.speciesKey, player.speciesName]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -48,7 +62,7 @@ export default function RuleFeatures({ player }) {
     setFailed(false);
     const wantedClasses = classesOf(player).filter((one) => one.key);
     Promise.all([
-      Promise.all(wantedClasses.map((one) => classesApi.get(one.key, { signal }).then((cls) => ({ title: `${one.name ?? cls.name}, level ${one.level}`, features: classFeaturesUpTo(cls, one.level).map((feature) => ({ ...feature, from: `${one.name ?? cls.name} ${feature.level}` })) })))),
+      Promise.all(wantedClasses.map((one) => classGroup(one, signal))),
       player.speciesKey ? speciesApi.get(player.speciesKey, { signal }).then((species) => ({ title: player.speciesName ?? species.name, features: speciesTraits(species).map((trait) => ({ ...trait, from: player.speciesName ?? species.name })) })) : null,
     ])
       .then(([fromClasses, fromSpecies]) => setGroups([...fromClasses, ...(fromSpecies ? [fromSpecies] : [])].filter((group) => group.features.length)))

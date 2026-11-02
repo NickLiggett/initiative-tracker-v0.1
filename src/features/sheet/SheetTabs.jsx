@@ -3,7 +3,7 @@ import { Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import { InventoryPanel } from "../players/InventoryDialog";
 import RuleFeatures from "./RuleFeatures";
 import { SheetDescription } from "./SheetFields";
-import { unarmedStrike } from "./sheetDerived";
+import { unarmedStrike, weaponAttacks } from "./sheetDerived";
 import SheetLists from "./SheetLists";
 import { SheetResources, SheetSpells } from "./SheetSpells";
 
@@ -22,9 +22,11 @@ const hint = (text) => (
  * @param {object} player as the backend gives it
  * @param {(sheet: object) => void} [onChange] saves the sheet after a use is spent, a rest taken or a spell prepared; without
  *   it the sheet is only read
+ * @param {object[]} [weapons] the weapon items the character carries, whose attacks the Actions tab lists
+ * @param {string[]} [weaponTraining] what the class says about weapon training, for whether the character is trained in them
  * @param {() => void} [onInventorySaved] told when the inventory is saved, which can change the armor class
  */
-export default function SheetTabs({ player, onChange, onInventorySaved }) {
+export default function SheetTabs({ player, weapons = [], weaponTraining = [], onChange, onInventorySaved }) {
   const [tab, setTab] = useState("Actions");
   const sheet = player.sheet ?? {};
   const casts = sheet.spells?.length || sheet.spellcasting || Object.keys(sheet.slots ?? {}).length || sheet.pact || sheet.hitDice;
@@ -37,7 +39,7 @@ export default function SheetTabs({ player, onChange, onInventorySaved }) {
         ))}
       </Tabs>
       <Box role="tabpanel" id={`sheet-panel-${tab}`} aria-labelledby={`sheet-tab-${tab}`} sx={{ display: "grid", gap: 2 }}>
-        {tab === "Actions" && <SheetLists sheet={sheet} onChange={onChange} show="attacks" unarmed={unarmedStrike(sheet, player.level, player.ruleset)} />}
+        {tab === "Actions" && <SheetLists sheet={sheet} onChange={onChange} show="attacks" automatic={[...weaponAttacks(sheet, player.level, weapons, weaponTraining), unarmedStrike(sheet, player.level, player.ruleset)]} />}
         {tab === "Spells" && (
           <>
             <SheetResources sheet={sheet} onChange={onChange} />

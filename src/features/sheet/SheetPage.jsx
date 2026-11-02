@@ -47,7 +47,7 @@ function Pips({ label, value, onChange }) {
  */
 export default function SheetPage({ playerId }) {
   const { player, error, setPlayer, reload } = useLivePlayer(playerId);
-  const { derived, inventoryChanged } = useDerivedStats(player, setPlayer);
+  const { derived, weapons, weaponTraining, inventoryChanged } = useDerivedStats(player, setPlayer);
   const [problem, setProblem] = useState(null);
   const [adjusting, setAdjusting] = useState(false); // the adjustments to the sheet's numbers
   const [editingDetails, setEditingDetails] = useState(false); // who the character is: name, classes, level, AC
@@ -157,7 +157,7 @@ export default function SheetPage({ playerId }) {
               <Pips label="Failures" value={vitals.deathSaveFailures} onChange={(value) => change({ deathSaveFailures: value })} />
             </Box>
           </Paper>
-          <SheetTabs player={player} onChange={onSheet} onInventorySaved={inventoryChanged} />
+          <SheetTabs player={player} weapons={weapons} weaponTraining={weaponTraining} onChange={onSheet} onInventorySaved={inventoryChanged} />
         </Box>
       </Box>
 

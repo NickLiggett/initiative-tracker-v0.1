@@ -371,13 +371,25 @@ describe("the tabs", () => {
     await screen.findByRole("heading", { name: "Thorin" });
 
     expect(screen.getByRole("tab", { name: "Actions" })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText("No attacks yet.")).toBeInTheDocument();
+    expect(screen.getByText("No attacks of your own yet.")).toBeInTheDocument();
     await openTab("Spells");
     expect(screen.getByText("No spells yet.")).toBeInTheDocument();
     expect(screen.getByText("No spell slots or hit dice yet.")).toBeInTheDocument();
     await openTab("Features");
     expect(screen.getByText("No features yet.")).toBeInTheDocument();
-    expect(screen.queryByText("No attacks yet.")).not.toBeInTheDocument();
+    expect(screen.queryByText("No attacks of your own yet.")).not.toBeInTheDocument();
+  });
+
+  it("list an unarmed strike for every character, worked out from Strength, which can't be changed", async () => {
+    stubApi({ "GET /api/players/7": { ...thorin, level: 5, sheet: { abilities: { str: 16 } } } });
+    render(<SheetPage playerId={7} />);
+
+    const row = (await screen.findByText("Unarmed Strike")).closest("tr");
+    expect(within(row).getByText("+6")).toBeInTheDocument();
+    expect(within(row).getByText("4 bludgeoning")).toBeInTheDocument();
+    expect(within(row).queryByRole("button")).not.toBeInTheDocument(); // no pencil
+    fireEvent.click(screen.getByRole("button", { name: "Bonus Action" }));
+    expect(screen.queryByText("Unarmed Strike")).not.toBeInTheDocument();
   });
 
   it("show the attacks on one tab and the features on another", async () => {
@@ -550,7 +562,7 @@ describe("attacks and features, in place", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
     await waitFor(() => expect(backend.sheet().attacks).toBeUndefined());
     expect(backend.sheet().features).toHaveLength(1); // the rest is as it was
-    expect(await screen.findByText("No attacks yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No attacks of your own yet.")).toBeInTheDocument();
   });
 
   it("adds a feature with uses, which must say when they come back", async () => {

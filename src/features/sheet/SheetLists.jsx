@@ -50,19 +50,22 @@ function Uses({ feature, index, sheet, onChange }) {
  * The attacks, and the features and traits with the uses they have, of a character's sheet. With `onChange` the uses can
  * be spent and a rest taken (it is given the sheet as it would then be, to save); without it, they are only shown.
  * `show` is "attacks" or "features" for one of the two; without it both are. With `onChange` an attack or feature can be added,
- * changed or deleted, in a box of its own, and the lists are shown even when empty.
+ * changed or deleted, in a box of its own, and the lists are shown even when empty. `unarmed` is the row every character has
+ * for an unarmed strike (see sheetDerived.js), shown first among the attacks of the type Attack and not to be changed.
  */
-export default function SheetLists({ sheet, onChange, show }) {
+export default function SheetLists({ sheet, onChange, show, unarmed }) {
   const [editing, setEditing] = useState(null); // { kind, index (null for a new one), row }
   const [filter, setFilter] = useState("all"); // "all", or one of the types of attack
   const attacks = show === "features" ? [] : (sheet.attacks ?? []);
   const features = show === "attacks" ? [] : (sheet.features ?? []);
   const editable = Boolean(onChange);
-  const shownAttacks = attacks.map((attack, index) => ({ attack, index })).filter(({ attack }) => filter === "all" || attackType(attack) === filter);
-  if (!editable && !attacks.length && !features.length) {
+  const own = attacks.map((attack, index) => ({ attack, index })).filter(({ attack }) => filter === "all" || attackType(attack) === filter);
+  const shownAttacks = show !== "features" && unarmed && (filter === "all" || filter === "attack") ? [{ attack: unarmed, index: null }, ...own] : own;
+  const anyAttacks = attacks.length > 0 || (show !== "features" && Boolean(unarmed));
+  if (!editable && !anyAttacks && !features.length) {
     return null;
   }
-  const showAttacks = show !== "features" && (editable || attacks.length > 0);
+  const showAttacks = show !== "features" && (editable || anyAttacks);
   const showFeatures = show !== "attacks" && (editable || features.length > 0);
   const add = (kind, count, max, blank, label) => (
     <Button size="small" startIcon={<Add />} disabled={count >= max} onClick={() => setEditing({ kind, index: null, row: blank() })}>
@@ -90,9 +93,9 @@ export default function SheetLists({ sheet, onChange, show }) {
       {showAttacks && (
         <Section title="Attacks" action={editable && add("attack", attacks.length, MAX_ATTACKS, blankAttack, "Add an attack")}>
           {attacks.length === 0 && (
-            <Typography color="text.secondary">No attacks yet.</Typography>
+            <Typography color="text.secondary">{unarmed ? "No attacks of your own yet." : "No attacks yet."}</Typography>
           )}
-          {attacks.length > 0 && (
+          {anyAttacks && (
             <Box role="group" aria-label="Show" sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
               {[{ key: "all", label: "All" }, ...ATTACK_TYPES].map(({ key, label }) => (
                 <Chip
@@ -107,7 +110,7 @@ export default function SheetLists({ sheet, onChange, show }) {
               ))}
             </Box>
           )}
-          {attacks.length > 0 && shownAttacks.length === 0 && (
+          {anyAttacks && shownAttacks.length === 0 && (
             <Typography color="text.secondary">Nothing of that kind yet.</Typography>
           )}
           {shownAttacks.length > 0 && (
@@ -123,7 +126,7 @@ export default function SheetLists({ sheet, onChange, show }) {
             </thead>
             <tbody>
               {shownAttacks.map(({ attack, index }) => (
-                <tr key={index}>
+                <tr key={index ?? "unarmed"}>
                   <Typography component="td" variant="body2" sx={{ fontWeight: "bold" }}>
                     {attack.name}
                     {attackType(attack) !== "attack" && (
@@ -135,7 +138,7 @@ export default function SheetLists({ sheet, onChange, show }) {
                   <Typography component="td" variant="body2">{attack.bonus ?? ""}</Typography>
                   <Typography component="td" variant="body2">{attack.damage ?? ""}</Typography>
                   <Typography component="td" variant="body2" color="text.secondary">{attack.notes ?? ""}</Typography>
-                  {editable && <td>{pencil("attack", index, attackDrafts([attack])[0], attack.name)}</td>}
+                  {editable && <td>{index !== null && pencil("attack", index, attackDrafts([attack])[0], attack.name)}</td>}
                 </tr>
               ))}
             </tbody>

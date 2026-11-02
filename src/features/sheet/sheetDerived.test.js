@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { armorClassOf, initiativeOf } from "./sheetDerived";
+import { armorClassOf, initiativeOf, unarmedStrike } from "./sheetDerived";
 
 const sheet = (abilities = {}, adjustments) => ({ abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10, ...abilities }, ...(adjustments && { adjustments }) });
 const armor = (acBase, { dex = false, cap = null, category = "light" } = {}) => ({ category: { key: category }, armor: { acBase, acAddDexmod: dex, acCapDexmod: cap } });
@@ -57,3 +57,21 @@ describe("initiative", () => {
     expect(initiativeOf({})).toBe(0);
   });
 });
+
+describe("the unarmed strike", () => {
+  it("hits with Strength and proficiency, for 1 + Strength modifier bludgeoning", () => {
+    expect(unarmedStrike(sheet({ str: 16 }), 5, "5e-2014")).toMatchObject({ name: "Unarmed Strike", bonus: "+6", damage: "4 bludgeoning" });
+    expect(unarmedStrike(sheet({ str: 8 }), 1, "5e-2014")).toMatchObject({ bonus: "+1", damage: "1 bludgeoning" });
+  });
+
+  it("does no less than none damage, and works with no abilities written", () => {
+    expect(unarmedStrike(sheet({ str: 3 }), 1, "5e-2014").damage).toBe("0 bludgeoning");
+    expect(unarmedStrike({}, 9, "5e-2014")).toMatchObject({ bonus: "+4", damage: "1 bludgeoning" });
+  });
+
+  it("can grapple or shove instead under the 2024 rules, against a save DC, and not under the 2014 rules", () => {
+    expect(unarmedStrike(sheet({ str: 16 }), 5, "5e-2024").notes).toContain("DC 14"); // 8 + 3 + 3
+    expect(unarmedStrike(sheet({ str: 16 }), 5, "5e-2014").notes).not.toContain("DC");
+  });
+});
+

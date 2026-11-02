@@ -3,6 +3,7 @@ import { Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import { InventoryPanel } from "../players/InventoryDialog";
 import RuleFeatures from "./RuleFeatures";
 import { SheetDescription } from "./SheetFields";
+import { unarmedStrike } from "./sheetDerived";
 import SheetLists from "./SheetLists";
 import { SheetResources, SheetSpells } from "./SheetSpells";
 
@@ -36,7 +37,7 @@ export default function SheetTabs({ player, onChange, onInventorySaved }) {
         ))}
       </Tabs>
       <Box role="tabpanel" id={`sheet-panel-${tab}`} aria-labelledby={`sheet-tab-${tab}`} sx={{ display: "grid", gap: 2 }}>
-        {tab === "Actions" && (sheet.attacks?.length || onChange ? <SheetLists sheet={sheet} onChange={onChange} show="attacks" /> : hint("No attacks."))}
+        {tab === "Actions" && <SheetLists sheet={sheet} onChange={onChange} show="attacks" unarmed={unarmedStrike(sheet, player.level, player.ruleset)} />}
         {tab === "Spells" && (
           <>
             <SheetResources sheet={sheet} onChange={onChange} />

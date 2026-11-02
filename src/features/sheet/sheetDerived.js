@@ -1,7 +1,7 @@
-// Numbers the sheet works out for itself, which nobody types: armor class and initiative.
+// Numbers the sheet works out for itself, which nobody types: armor class, initiative and the unarmed strike.
 
 import { adjustmentBonus } from "./sheetAdjust";
-import { abilityModifier } from "./sheetModel";
+import { abilityModifier, proficiencyBonus, signed } from "./sheetModel";
 
 /** Armor class with nothing worn, and what a shield with no armor class of its own adds. */
 export const UNARMORED = 10;
@@ -52,4 +52,26 @@ export function armorClassOf(sheet, classNames, equipped) {
 /** Initiative: the Dex modifier and the sheet's adjustment of it ("initiative"). */
 export function initiativeOf(sheet) {
   return abilityModifier(sheet, "dex") + adjustmentBonus(sheet, "initiative");
+}
+
+/**
+ * The unarmed strike every character can make, as a row of the attacks: proficient with it, Strength to hit, and 1 + Strength
+ * modifier bludgeoning damage (never less than none). The 2024 rules let a hit grapple or shove instead, against a Dex or Str
+ * save of 8 + Strength modifier + proficiency bonus.
+ *
+ * @param {object} sheet the character's `sheet`
+ * @param {number} level the character's level
+ * @param {string} [ruleset] the character's rule set key, such as "5e-2024"
+ * @returns {{name: string, bonus: string, damage: string, notes: string}}
+ */
+export function unarmedStrike(sheet, level, ruleset) {
+  const strength = abilityModifier(sheet, "str") ?? 0;
+  const proficiency = proficiencyBonus(level);
+  const grapple = ruleset === "5e-2024" ? ` Instead of damage: grapple or shove, Str or Dex save DC ${8 + strength + proficiency}.` : "";
+  return {
+    name: "Unarmed Strike",
+    bonus: signed(strength + proficiency),
+    damage: `${Math.max(0, 1 + strength)} bludgeoning`,
+    notes: `Melee, 5 ft.${grapple}`,
+  };
 }

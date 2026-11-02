@@ -61,7 +61,7 @@ describe("initiative", () => {
 describe("the unarmed strike", () => {
   it("hits with Strength and proficiency, for 1 + Strength modifier bludgeoning", () => {
     expect(unarmedStrike(sheet({ str: 16 }), 5, "5e-2014")).toMatchObject({ name: "Unarmed Strike", bonus: "+6", damage: "4 bludgeoning" });
-    expect(unarmedStrike(sheet({ str: 8 }), 1, "5e-2014")).toMatchObject({ bonus: "+1", damage: "1 bludgeoning" });
+    expect(unarmedStrike(sheet({ str: 8 }), 1, "5e-2014")).toMatchObject({ bonus: "+1", damage: "0 bludgeoning" });
   });
 
   it("does no less than none damage, and works with no abilities written", () => {

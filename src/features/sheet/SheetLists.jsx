@@ -50,18 +50,20 @@ function Uses({ feature, index, sheet, onChange }) {
  * The attacks, and the features and traits with the uses they have, of a character's sheet. With `onChange` the uses can
  * be spent and a rest taken (it is given the sheet as it would then be, to save); without it, they are only shown.
  * `show` is "attacks" or "features" for one of the two; without it both are. With `onChange` an attack or feature can be added,
- * changed or deleted, in a box of its own, and the lists are shown even when empty. `unarmed` is the row every character has
- * for an unarmed strike (see sheetDerived.js), shown first among the attacks of the type Attack and not to be changed.
+ * changed or deleted, in a box of its own, and the lists are shown even when empty. `automatic` are the rows the sheet
+ * works out itself (the attacks of the weapons carried, and the unarmed strike every character has; see sheetDerived.js), shown
+ * before the character's own among the attacks of the type Attack and not to be changed.
  */
-export default function SheetLists({ sheet, onChange, show, unarmed }) {
+export default function SheetLists({ sheet, onChange, show, automatic = [] }) {
   const [editing, setEditing] = useState(null); // { kind, index (null for a new one), row }
   const [filter, setFilter] = useState("all"); // "all", or one of the types of attack
   const attacks = show === "features" ? [] : (sheet.attacks ?? []);
   const features = show === "attacks" ? [] : (sheet.features ?? []);
   const editable = Boolean(onChange);
   const own = attacks.map((attack, index) => ({ attack, index })).filter(({ attack }) => filter === "all" || attackType(attack) === filter);
-  const shownAttacks = show !== "features" && unarmed && (filter === "all" || filter === "attack") ? [{ attack: unarmed, index: null }, ...own] : own;
-  const anyAttacks = attacks.length > 0 || (show !== "features" && Boolean(unarmed));
+  const worked = show !== "features" && (filter === "all" || filter === "attack") ? automatic.map((attack) => ({ attack, index: null })) : [];
+  const shownAttacks = [...worked, ...own];
+  const anyAttacks = attacks.length > 0 || (show !== "features" && automatic.length > 0);
   if (!editable && !anyAttacks && !features.length) {
     return null;
   }
@@ -93,7 +95,7 @@ export default function SheetLists({ sheet, onChange, show, unarmed }) {
       {showAttacks && (
         <Section title="Attacks" action={editable && add("attack", attacks.length, MAX_ATTACKS, blankAttack, "Add an attack")}>
           {attacks.length === 0 && (
-            <Typography color="text.secondary">{unarmed ? "No attacks of your own yet." : "No attacks yet."}</Typography>
+            <Typography color="text.secondary">{automatic.length ? "No attacks of your own yet." : "No attacks yet."}</Typography>
           )}
           {anyAttacks && (
             <Box role="group" aria-label="Show" sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
@@ -126,7 +128,7 @@ export default function SheetLists({ sheet, onChange, show, unarmed }) {
             </thead>
             <tbody>
               {shownAttacks.map(({ attack, index }) => (
-                <tr key={index ?? "unarmed"}>
+                <tr key={index ?? `worked-${attack.name}`}>
                   <Typography component="td" variant="body2" sx={{ fontWeight: "bold" }}>
                     {attack.name}
                     {attackType(attack) !== "attack" && (

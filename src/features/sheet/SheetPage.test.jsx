@@ -392,6 +392,31 @@ describe("the tabs", () => {
     expect(screen.queryByText("Unarmed Strike")).not.toBeInTheDocument();
   });
 
+  it("list an attack for each weapon in the inventory, with the proficiency bonus only if the class trains it", async () => {
+    const weapon = (key, name, dice, isSimple) => ({ key, name, weapon: { name, damageDice: dice, damageType: { name: "Slashing" }, isSimple, isMartial: !isSimple, properties: [] } });
+    stubApi({
+      "GET /api/players/7": { ...thorin, level: 5, classKey: "srd_wizard", className: "Wizard", sheet: { abilities: { str: 16 } } },
+      "GET /api/classes/srd_wizard": { key: "srd_wizard", features: [{ name: "Proficiencies", desc: "**Armor:** None\r\n**Weapons:** Daggers, darts\r\n**Tools:** None" }] },
+      "GET /api/players/7/inventory": {
+        items: [
+          { itemKey: "longsword", kind: "ITEM", name: "Longsword", quantity: 1, equipped: false },
+          { itemKey: "dagger", kind: "ITEM", name: "Dagger", quantity: 2, equipped: true },
+        ],
+      },
+      "GET /api/items/longsword": weapon("longsword", "Longsword", "1d8", false),
+      "GET /api/items/dagger": weapon("dagger", "Dagger", "1d4", true),
+    });
+    render(<SheetPage playerId={7} />);
+
+    const sword = (await screen.findByText("Longsword")).closest("tr");
+    expect(within(sword).getByText("+3")).toBeInTheDocument(); // Strength alone: a Wizard isn't trained in martial weapons
+    expect(within(sword).getByText("1d8+3 slashing")).toBeInTheDocument();
+    expect(within(sword).getByText(/Not proficient/)).toBeInTheDocument();
+    const dagger = screen.getByText("Dagger").closest("tr");
+    expect(within(dagger).getByText("+6")).toBeInTheDocument(); // Strength and proficiency
+    expect(screen.getByText("Unarmed Strike")).toBeInTheDocument();
+  });
+
   it("show the attacks on one tab and the features on another", async () => {
     stubApi({ "GET /api/players/7": { ...thorin, sheet: { attacks: [{ name: "Longsword" }], features: [{ name: "Second Wind" }] } } });
     render(<SheetPage playerId={7} />);
@@ -827,7 +852,7 @@ describe("armor class and initiative, worked out", () => {
     const armorClass = screen.getByText("Armor class").parentElement;
     await waitFor(() => expect(armorClass).toHaveTextContent("18"));
     expect(screen.getByText("Initiative").parentElement).toHaveTextContent("+2");
-    expect(fetchMock.mock.calls.some(([url]) => url === "/api/items/plate")).toBe(false);
+    expect(fetchMock.mock.calls.some(([url]) => url === "/api/items/plate")).toBe(true); // looked at (it may be a weapon), but not worn, so not counted
   });
 
   it("is not saved by a DM seeing a party member, who still sees the numbers", async () => {

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { classesApi } from "../../api/classes";
 import { itemsApi, magicItemsApi } from "../../api/items";
 import { getInventory, updateDerived } from "../../api/players";
-import { armorClassOf, initiativeOf } from "./sheetDerived";
+import { armorClassOf, classWeaponTraining, initiativeOf } from "./sheetDerived";
 
 /** The classes of a character as names, for the class features that change armor class. */
 const classNamesOf = (player) =>
@@ -17,12 +18,15 @@ const classNamesOf = (player) =>
  *
  * @param {?object} player the character, null while loading
  * @param {Function} setPlayer replaces the character shown, given the new one or a function of the old
- * @returns {{derived: object, inventoryChanged: () => void}} `derived` has `initiativeBonus`, and `armorClass` once known;
- *   `inventoryChanged` is to be called when the inventory is saved, to work armor class out again
+ * @returns {{derived: object, weapons: object[], weaponTraining: string[], inventoryChanged: () => void}} `derived` has `initiativeBonus`, and `armorClass` once
+ *   known; `weapons` are the weapon items carried (for their attacks) and `weaponTraining` what the class says about weapon
+ *   training (for whether it is trained in them); `inventoryChanged` is to be called when the inventory is
+ *   saved, to work armor class out again
  */
 export default function useDerivedStats(player, setPlayer) {
-  const [equipped, setEquipped] = useState(null); // the armor items equipped, null until read
+  const [carried, setCarried] = useState(null); // [{equipped, item}] for each line of the inventory that is an item, null until read
   const [reads, setReads] = useState(0);
+  const [weaponTraining, setWeaponTraining] = useState([]); // what the first class says about weapon training
   const cache = useRef(new Map());
   const sent = useRef({}); // the value of each number last sent
   const id = player?.id;
@@ -41,25 +45,43 @@ export default function useDerivedStats(player, setPlayer) {
       return cache.current.get(cacheKey);
     };
     getInventory(id, { signal: controller.signal })
-      .then((inventory) => Promise.all((inventory.items ?? []).filter((line) => line.equipped && line.itemKey).map(lookup)))
-      .then((items) => !controller.signal.aborted && setEquipped(items.filter((item) => item?.armor)))
+      .then((inventory) =>
+        Promise.all((inventory.items ?? []).filter((line) => line.itemKey).map((line) => lookup(line).then((item) => ({ equipped: Boolean(line.equipped), item })))),
+      )
+      .then((lines) => !controller.signal.aborted && setCarried(lines.filter(({ item }) => item)))
       .catch(() => {}); // the kept armor class stands
     return () => controller.abort();
   }, [id, reads]);
 
+  const firstClassKey = player?.classes?.[0]?.classKey ?? player?.classKey;
+  useEffect(() => {
+    setWeaponTraining([]);
+    if (!firstClassKey) {
+      return undefined;
+    }
+    const controller = new AbortController();
+    classesApi
+      .get(firstClassKey, { signal: controller.signal })
+      .then((cls) => setWeaponTraining([classWeaponTraining(cls)].filter(Boolean)))
+      .catch(() => {}); // the sheet's own list of training stands
+    return () => controller.abort();
+  }, [firstClassKey]);
+
   const sheet = player?.sheet;
+  const equippedArmor = useMemo(() => (carried ?? []).filter(({ equipped, item }) => equipped && item.armor).map(({ item }) => item), [carried]);
+  const weapons = useMemo(() => (carried ?? []).filter(({ item }) => item.weapon).map(({ item }) => item), [carried]);
   const classKey = classNamesOf(player ?? {}).join("|");
   const derived = useMemo(() => {
     if (!player) {
       return {};
     }
     const numbers = { initiativeBonus: initiativeOf(sheet ?? {}) };
-    if (equipped) {
-      numbers.armorClass = armorClassOf(sheet ?? {}, classKey ? classKey.split("|") : [], equipped);
+    if (carried) {
+      numbers.armorClass = armorClassOf(sheet ?? {}, classKey ? classKey.split("|") : [], equippedArmor);
     }
     return numbers;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the character's sheet and classes are what the numbers come from
-  }, [Boolean(player), sheet, classKey, equipped]);
+  }, [Boolean(player), sheet, classKey, equippedArmor, carried]);
 
   const storedArmorClass = player?.armorClass;
   const storedInitiative = player?.initiativeBonus;
@@ -90,5 +112,5 @@ export default function useDerivedStats(player, setPlayer) {
   }, [id, role, derived, storedArmorClass, storedInitiative, setPlayer]);
 
   const inventoryChanged = useCallback(() => setReads((count) => count + 1), []);
-  return { derived, inventoryChanged };
+  return { derived, weapons, weaponTraining, inventoryChanged };
 }

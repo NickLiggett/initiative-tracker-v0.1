@@ -392,15 +392,16 @@ describe("the tabs", () => {
     expect(screen.queryByText("Unarmed Strike")).not.toBeInTheDocument();
   });
 
-  it("list an attack for each weapon in the inventory, with the proficiency bonus only if the class trains it", async () => {
+  it("list an attack for each weapon equipped, with the proficiency bonus only if the class trains it", async () => {
     const weapon = (key, name, dice, isSimple) => ({ key, name, weapon: { name, damageDice: dice, damageType: { name: "Slashing" }, isSimple, isMartial: !isSimple, properties: [] } });
     stubApi({
       "GET /api/players/7": { ...thorin, level: 5, classKey: "srd_wizard", className: "Wizard", sheet: { abilities: { str: 16 } } },
       "GET /api/classes/srd_wizard": { key: "srd_wizard", features: [{ name: "Proficiencies", desc: "**Armor:** None\r\n**Weapons:** Daggers, darts\r\n**Tools:** None" }] },
       "GET /api/players/7/inventory": {
         items: [
-          { itemKey: "longsword", kind: "ITEM", name: "Longsword", quantity: 1, equipped: false },
+          { itemKey: "longsword", kind: "ITEM", name: "Longsword", quantity: 1, equipped: true },
           { itemKey: "dagger", kind: "ITEM", name: "Dagger", quantity: 2, equipped: true },
+          { itemKey: "greataxe", kind: "ITEM", name: "Greataxe", quantity: 1, equipped: false }, // carried, not in hand
         ],
       },
       "GET /api/items/longsword": weapon("longsword", "Longsword", "1d8", false),
@@ -415,6 +416,7 @@ describe("the tabs", () => {
     const dagger = screen.getByText("Dagger").closest("tr");
     expect(within(dagger).getByText("+6")).toBeInTheDocument(); // Strength and proficiency
     expect(screen.getByText("Unarmed Strike")).toBeInTheDocument();
+    expect(screen.queryByText("Greataxe")).not.toBeInTheDocument();
   });
 
   it("show the attacks on one tab and the features on another", async () => {
@@ -852,7 +854,7 @@ describe("armor class and initiative, worked out", () => {
     const armorClass = screen.getByText("Armor class").parentElement;
     await waitFor(() => expect(armorClass).toHaveTextContent("18"));
     expect(screen.getByText("Initiative").parentElement).toHaveTextContent("+2");
-    expect(fetchMock.mock.calls.some(([url]) => url === "/api/items/plate")).toBe(true); // looked at (it may be a weapon), but not worn, so not counted
+    expect(fetchMock.mock.calls.some(([url]) => url === "/api/items/plate")).toBe(false);
   });
 
   it("is not saved by a DM seeing a party member, who still sees the numbers", async () => {

@@ -19,12 +19,12 @@ const classNamesOf = (player) =>
  * @param {?object} player the character, null while loading
  * @param {Function} setPlayer replaces the character shown, given the new one or a function of the old
  * @returns {{derived: object, weapons: object[], weaponTraining: string[], inventoryChanged: () => void}} `derived` has `initiativeBonus`, and `armorClass` once
- *   known; `weapons` are the weapon items carried (for their attacks) and `weaponTraining` what the class says about weapon
+ *   known; `weapons` are the weapon items equipped (for their attacks) and `weaponTraining` what the class says about weapon
  *   training (for whether it is trained in them); `inventoryChanged` is to be called when the inventory is
  *   saved, to work armor class out again
  */
 export default function useDerivedStats(player, setPlayer) {
-  const [carried, setCarried] = useState(null); // [{equipped, item}] for each line of the inventory that is an item, null until read
+  const [carried, setCarried] = useState(null); // [{equipped, item}] for each equipped line of the inventory that is an item, null until read
   const [reads, setReads] = useState(0);
   const [weaponTraining, setWeaponTraining] = useState([]); // what the first class says about weapon training
   const cache = useRef(new Map());
@@ -46,7 +46,7 @@ export default function useDerivedStats(player, setPlayer) {
     };
     getInventory(id, { signal: controller.signal })
       .then((inventory) =>
-        Promise.all((inventory.items ?? []).filter((line) => line.itemKey).map((line) => lookup(line).then((item) => ({ equipped: Boolean(line.equipped), item })))),
+        Promise.all((inventory.items ?? []).filter((line) => line.equipped && line.itemKey).map((line) => lookup(line).then((item) => ({ equipped: Boolean(line.equipped), item })))),
       )
       .then((lines) => !controller.signal.aborted && setCarried(lines.filter(({ item }) => item)))
       .catch(() => {}); // the kept armor class stands

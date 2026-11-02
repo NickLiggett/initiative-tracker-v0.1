@@ -121,7 +121,7 @@ function trainedIn(trainings, weapon, name, propertyNames) {
 }
 
 /**
- * The attacks of the weapons a character carries, one row for each as `{name, bonus, damage, notes}`: Strength to hit and
+ * The attacks of the weapons a character has equipped, one row for each as `{name, bonus, damage, notes}`: Strength to hit and
  * damage, Dexterity for a weapon with ammunition, the better of the two for a finesse weapon; the proficiency bonus when
  * trained in it, by the training the sheet lists for weapons and the class's (`classTraining`); and the +1, +2 or +3 of a magic
  * weapon (read from its name) on both. With no training known at all, any weapon but an improvised one is taken to be trained
@@ -129,7 +129,7 @@ function trainedIn(trainings, weapon, name, propertyNames) {
  *
  * @param {object} sheet the character's `sheet`
  * @param {number} level the character's level
- * @param {object[]} items the items (or magic items) carried; those that are not weapons are left out
+ * @param {object[]} items the items (or magic items) equipped; those that are not weapons are left out
  * @param {string[]} [classTraining] what the character's class says about weapon training (see `classWeaponTraining`)
  */
 export function weaponAttacks(sheet, level, items, classTraining = []) {
